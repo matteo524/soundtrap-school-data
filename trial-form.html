@@ -1,0 +1,2446 @@
+<meta charset="utf-8">
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  SOUNDTRAP TRIAL REQUEST FORM — Prototype                       ║
+  ║  Demonstrates GitHub-hosted JSON school/district data lookup.   ║
+  ║  No backend required — data served from GitHub Pages CDN.       ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+
+<!-- Bebas Neue for headings (Google Fonts — free, matches brand secondary headline spec) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
+<!-- ── CONFIGURATION (edit these three values) ──────────────── -->
+<script>
+  var PQF_CONFIG = {
+    indexUrl:       'https://matteo524.github.io/soundtrap-school-data/index.json',
+    schoolsBaseUrl: 'https://matteo524.github.io/soundtrap-school-data/schools-',
+  };
+</script>
+<!-- ──────────────────────────────────────────────────────────── -->
+
+<style>
+/*
+  Brand tokens — Soundtrap Brand Guidelines 2026
+  ─────────────────────────────────────────────
+  Purple Rain (primary)  : #6551F2
+  Black Sabbath (dark)   : #161616
+  Deep Purple            : #271B7A
+  Violette Echo          : #8F8FFF
+  Lilac Fade             : #D5CCF5
+  Barry White (near-white): #FDFDF5
+  UI Background          : #F2F2F5
+  Highlighted surface    : #F4F4F5
+  Negative (error)       : #B40748
+  Body font              : 'Helvetica Neue', Helvetica, Arial (Matter fallback)
+  Headline font          : 'Bebas Neue' (brand secondary headline / Google Fonts)
+  Spacing grid           : 8px base — fields: 16px, sections: 40px, nano: 4px
+*/
+
+/* ── Reset (scoped) ────────────────────────────────────────── */
+.pqf-wrap *,
+.pqf-wrap *::before,
+.pqf-wrap *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Outer wrapper ─────────────────────────────────────────── */
+.pqf-wrap {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  color: #161616;
+  background: #F2F2F5;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* ── Card — flat surface, no shadow (brand: depth via spacing) */
+.pqf-card {
+  background: #FDFDF5;
+  border-radius: 16px;
+  /* overflow:hidden removed — combobox dropdowns need to escape the card boundary */
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.pqf-header {
+  background: #161616;           /* Black Sabbath */
+  padding: 32px 40px 28px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;  /* clip header bg to card's top corners */
+}
+
+/* Purple Rain accent bar along the top edge */
+.pqf-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: #6551F2;
+}
+
+/* Decorative soft purple glow — bottom-right corner */
+.pqf-header::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; right: -40px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(101,81,242,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.pqf-logo {
+  display: block;
+  width: 148px;
+  height: auto;
+  margin-bottom: 16px;
+  margin-left: -11px;
+  position: relative;
+  opacity: 0.95;
+}
+
+.pqf-header h1 {
+  font-family: 'Bebas Neue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 36px;
+  font-weight: 400;           /* Bebas Neue has only one weight */
+  letter-spacing: 1.5px;
+  color: #FDFDF5;
+  margin-bottom: 8px;
+  line-height: 1.1;
+  position: relative;
+}
+
+.pqf-header p {
+  font-size: 13px;
+  color: rgba(253, 253, 245, 0.6);
+  line-height: 1.6;
+  position: relative;
+}
+
+/* ── Sections — 40px separation per brand spacing spec ─────── */
+.pqf-section {
+  padding: 40px 40px 0;
+}
+.pqf-section:first-of-type {
+  padding-top: 32px;
+}
+
+/* Section title — uppercase label, spacing-based separation (no border) */
+.pqf-section-title {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #6551F2;              /* Purple Rain */
+  margin-bottom: 16px;
+}
+
+/* ── Grid — 16px gap between form fields (brand spec) ─────── */
+.pqf-grid {
+  display: grid;
+  gap: 16px;
+}
+.pqf-grid-2 { grid-template-columns: 1fr 1fr; }
+.pqf-grid-1 { grid-template-columns: 1fr; }
+
+/* ── Intro text block ──────────────────────────────────────── */
+.pqf-intro {
+  padding: 32px 40px 0;
+}
+.pqf-intro-lead {
+  font-size: 14px;
+  font-weight: 600;
+  color: #161616;
+  margin-bottom: 8px;
+}
+.pqf-intro-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+}
+.pqf-intro-list li {
+  font-size: 14px;
+  color: #161616;
+  line-height: 1.6;
+  padding-left: 16px;
+  position: relative;
+}
+.pqf-intro-list li::before {
+  content: '\2022';
+  color: #6551F2;
+  font-weight: 700;
+  position: absolute;
+  left: 0;
+}
+.pqf-intro-note {
+  font-size: 13px;
+  color: rgba(22, 22, 22, 0.65);
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.pqf-intro-link {
+  color: #6551F2;
+  text-decoration: none;
+}
+.pqf-intro-link:hover { text-decoration: underline; }
+
+@media (max-width: 520px) {
+  .pqf-grid-2 { grid-template-columns: 1fr; }
+  .pqf-header  { padding: 28px 24px 24px; }
+  .pqf-section { padding-left: 24px; padding-right: 24px; }
+  .pqf-intro   { padding-left: 24px; padding-right: 24px; }
+  .pqf-footer  { padding: 24px; }
+  .pqf-header h1 { font-size: 28px; }
+}
+
+/* ── Field ─────────────────────────────────────────────────── */
+.pqf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;                    /* 4px nano-spacing for label→input (brand spec) */
+}
+
+.pqf-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #161616;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.1px;
+}
+.pqf-required {
+  color: #6551F2;              /* purple asterisk, not alarming red */
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* ── Inputs & Selects ──────────────────────────────────────── */
+.pqf-input,
+.pqf-select {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid #D5CCF5;  /* Lilac Fade — subtle purple tint */
+  border-radius: 8px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #161616;
+  background: #FDFDF5;          /* Barry White elevated surface */
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+/* Custom chevron — purple tinted */
+.pqf-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236551F2' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+.pqf-select:disabled {
+  background-color: #F4F4F5;   /* Highlighted surface — brand disabled state */
+  color: rgba(22, 22, 22, 0.35);
+  cursor: not-allowed;
+  border-color: #E8E4FF;
+}
+
+.pqf-input:focus,
+.pqf-select:focus {
+  border-color: #6551F2;
+  box-shadow: 0 0 0 3px rgba(101, 81, 242, 0.14);
+  background: #FDFDF5;
+}
+
+/* ── Loading spinner ───────────────────────────────────────── */
+.pqf-select-wrap { position: relative; }
+.pqf-spinner {
+  display: none;
+  position: absolute;
+  right: 34px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #D5CCF5;
+  border-top-color: #6551F2;
+  border-radius: 50%;
+  animation: pqf-spin 0.7s linear infinite;
+  pointer-events: none;
+}
+.pqf-select-wrap.pqf-loading .pqf-spinner { display: block; }
+.pqf-select-wrap.pqf-loading .pqf-select  { padding-right: 56px; }
+
+@keyframes pqf-spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+/* ── Hint / inline error — 4px nano-spacing ────────────────── */
+.pqf-hint {
+  font-size: 12px;
+  color: rgba(101, 81, 242, 0.65);  /* #6551F2 at 65% — matches brand purple */
+  min-height: 16px;
+  transition: color 0.18s;
+  padding-top: 0;
+}
+.pqf-hint.pqf-error { color: #B40748; font-size: 13px; }  /* Negative color — brand spec */
+.pqf-hint.pqf-info  { color: #6551F2; }
+
+
+
+/* ── Number input ──────────────────────────────────────────── */
+input[type="number"].pqf-input::-webkit-inner-spin-button,
+input[type="number"].pqf-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type="number"].pqf-input { -moz-appearance: textfield; }
+
+/* ── Footer & submit ───────────────────────────────────────── */
+.pqf-footer {
+  padding: 40px 40px 40px;
+}
+
+/* Primary action button — Purple Rain, flat (brand: no gradient on primary) */
+.pqf-submit {
+  width: 100%;
+  height: 48px;
+  background: #6551F2;
+  color: #FDFDF5;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.1s;
+}
+.pqf-submit:hover   { background: #7B6AF4; }   /* Violette Echo tint on hover */
+.pqf-submit:active  { transform: scale(0.99); background: #5541D8; }
+.pqf-submit:disabled { background: #8F8FFF; opacity: 0.55; cursor: not-allowed; }
+
+/* ── Welcome-back banner ───────────────────────────────────── */
+#pqf_welcome_back {
+  background: #EEE9FF;
+  border: 1px solid #C4B5FD;
+  border-radius: 8px;
+  padding: 14px 20px;
+  margin-bottom: 8px;
+}
+.pqf-welcome-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.pqf-welcome-text { font-size: 14px; color: #271B7A; }
+.pqf-welcome-text strong { color: #3D27B4; }
+.pqf-welcome-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+.pqf-welcome-btn-primary {
+  background: #6551F2; color: #fff; border: none;
+  border-radius: 4px; padding: 8px 16px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.pqf-welcome-btn-primary:hover { background: #5441D8; }
+.pqf-welcome-btn-ghost {
+  background: transparent; color: #6551F2; border: none;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  text-decoration: underline; padding: 8px 4px;
+}
+
+/* ── Banners ───────────────────────────────────────────────── */
+.pqf-banner {
+  display: none;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+.pqf-banner.pqf-success {
+  background: #EBE9FF;         /* Lilac Fade tint */
+  border-left: 3px solid #6551F2;
+  color: #271B7A;              /* Deep Purple text */
+}
+.pqf-banner.pqf-error-banner {
+  background: #FFF0F4;
+  border-left: 3px solid #B40748;
+  color: #B40748;
+}
+.pqf-banner.pqf-visible { display: block; }
+
+/* ── Use-case textarea ─────────────────────────────────────── */
+.pqf-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #D5CCF5;
+  border-radius: 10px;
+  background: #FDFDF5;
+  font-family: inherit;
+  font-size: 15px;
+  color: #161616;
+  resize: vertical;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+  margin-top: 6px;
+}
+.pqf-textarea:focus {
+  outline: none;
+  border-color: #6551F2;
+  box-shadow: 0 0 0 3px rgba(101,81,242,0.12);
+}
+.pqf-textarea::placeholder { color: rgba(22,22,22,0.35); }
+
+
+/* ── "Can't find your school?" trigger ────────────────────── */
+.pqf-cant-find-wrap {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 8px;
+}
+.pqf-cant-find {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6551F2;
+  text-decoration: underline;
+  text-decoration-color: rgba(101, 81, 242, 0.35);
+  text-underline-offset: 2px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.pqf-cant-find:hover {
+  color: #5541D8;
+  text-decoration-color: #5541D8;
+}
+
+/* ── School type toggle (Public / Private) ─────────────────── */
+.pqf-school-type-wrap {
+  display: flex;
+  gap: 10px;
+}
+.pqf-school-type-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #161616;
+  padding: 10px 16px;
+  border: 1.5px solid #D5CCF5;
+  border-radius: 8px;
+  background: #FDFDF5;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  user-select: none;
+}
+.pqf-school-type-btn input[type="radio"] {
+  accent-color: #6551F2;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+}
+.pqf-school-type-btn.pqf-school-type-active {
+  border-color: #6551F2;
+  background: #EBE9FF;
+  color: #271B7A;
+  font-weight: 600;
+}
+
+/* ── Manual entry panel ────────────────────────────────────── */
+.pqf-manual-panel {
+  margin-top: 16px;
+  background: #F4F4F5;          /* Highlighted surface — brand spec */
+  border-left: 3px solid #6551F2;
+  border-radius: 0 8px 8px 0;
+  padding: 20px;
+  animation: pqf-fade-in 0.2s ease;
+}
+@keyframes pqf-fade-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.pqf-manual-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.pqf-manual-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #6551F2;
+}
+.pqf-manual-back {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(22, 22, 22, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+.pqf-manual-back:hover { color: #161616; }
+
+/* ── Combobox / typeahead ───────────────────────────────────── */
+.pqf-combo-wrap { position: relative; }
+
+.pqf-combo-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 34px 0 12px;
+  border: 1.5px solid #D5CCF5;
+  border-radius: 8px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #161616;
+  background: #FDFDF5 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236551F2' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+}
+.pqf-combo-input:focus {
+  border-color: #6551F2;
+  box-shadow: 0 0 0 3px rgba(101,81,242,0.14);
+}
+.pqf-combo-input:disabled {
+  background-color: #F4F4F5;
+  color: rgba(22,22,22,0.35);
+  cursor: not-allowed;
+  border-color: #E8E4FF;
+}
+.pqf-combo-input.pqf-locked {
+  background-image: none;
+  padding-right: 12px;
+  background-color: #F4F4F5;
+  color: rgba(22,22,22,0.55);
+  border-color: #E8E4FF;
+  cursor: default;
+}
+.pqf-combo-wrap.pqf-locked-wrap { pointer-events: none; }
+.pqf-combo-input::placeholder { color: rgba(22,22,22,0.4); }
+
+.pqf-combo-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #FDFDF5;
+  border: 1.5px solid #D5CCF5;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(101,81,242,0.13);
+  z-index: 200;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+}
+.pqf-combo-item {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #161616;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.pqf-combo-item:hover,
+.pqf-combo-item.pqf-combo-active {
+  background: #EBE9FF;
+  color: #4437CC;
+}
+.pqf-combo-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: rgba(22,22,22,0.4);
+  font-style: italic;
+}
+
+.pqf-manual-back::before {
+  content: '';   /* arrow is set dynamically in JS */
+}
+
+/* Inputs inside the manual panel sit on white */
+.pqf-manual-panel .pqf-input {
+  background: #FDFDF5;
+}
+
+/* ── Read-only / auto-filled fields ───────────────────────── */
+.pqf-input[readonly] {
+  background: #F4F4F5;        /* Highlighted surface — brand spec */
+  color: rgba(22, 22, 22, 0.55);
+  cursor: default;
+  border-color: #E8E4FF;
+}
+.pqf-input[readonly]:focus {
+  border-color: #D5CCF5;
+  box-shadow: none;
+}
+</style>
+
+<div class="pqf-wrap">
+  <div class="pqf-card">
+
+    <!-- Header -->
+    <div class="pqf-header">
+      <svg class="pqf-logo" viewBox="0 0 8921 1683" xmlns="http://www.w3.org/2000/svg" aria-label="Soundtrap" role="img">
+        <path d="M2071.98 837.55H1102.55C1064.38 837.55 1033.44 806.6 1033.44 768.44C1033.44 730.28 1064.39 699.33 1102.55 699.33H2071.99C2110.15 699.33 2141.1 730.28 2141.1 768.44C2141.1 806.6 2110.15 837.55 2071.99 837.55H2071.98Z" fill="white"/>
+        <path d="M963.33 1253.87C945.61 1253.87 927.89 1247.11 914.37 1233.59C657.88 977.1 657.88 559.77 914.36 303.28C941.41 276.25 985.24 276.25 1012.29 303.28C1039.34 330.32 1039.34 374.17 1012.29 401.21C809.8 603.7 809.8 933.18 1012.29 1135.67C1039.34 1162.71 1039.34 1206.56 1012.29 1233.6C998.77 1247.12 981.05 1253.88 963.33 1253.88V1253.87Z" fill="white"/>
+        <path d="M2211.19 1253.88C2193.47 1253.88 2175.75 1247.12 2162.23 1233.6C2135.19 1206.56 2135.19 1162.71 2162.23 1135.67C2364.72 933.18 2364.72 603.7 2162.23 401.2C2135.19 374.16 2135.19 330.31 2162.23 303.27C2189.29 276.24 2233.12 276.24 2260.16 303.27C2516.65 559.76 2516.65 977.1 2260.16 1233.59C2246.64 1247.11 2228.92 1253.87 2211.2 1253.87L2211.19 1253.88Z" fill="white"/>
+        <path d="M2940.72 940.1L3066.39 901.34C3080.49 1007.05 3161.53 1076.34 3260.19 1076.34C3358.85 1076.34 3421.1 1030.54 3421.1 960.06C3421.1 765.09 2971.25 871.98 2971.25 576C2971.25 445.62 3092.23 355.18 3253.14 355.18C3414.05 355.18 3527.97 437.4 3551.46 560.73L3428.13 611.23C3411.68 527.84 3347.08 474.98 3253.13 474.98C3159.18 474.98 3109.83 512.56 3109.83 576C3109.83 741.6 3560.85 626.5 3560.85 957.72C3560.85 1101.01 3439.88 1196.14 3255.48 1196.14C3095.74 1196.14 2964.19 1090.44 2940.7 940.1H2940.72Z" fill="white"/>
+        <path d="M4088.24 890.77C4088.24 776.84 4016.59 696.97 3912.06 696.97C3807.53 696.97 3735.89 776.84 3735.89 890.77C3735.89 1004.7 3806.35 1084.56 3912.06 1084.56C4017.77 1084.56 4088.24 1004.69 4088.24 890.77ZM3606.69 890.77C3606.69 713.41 3733.54 585.39 3912.06 585.39C4090.58 585.39 4217.44 713.41 4217.44 890.77C4217.44 1068.13 4089.41 1196.14 3912.06 1196.14C3734.71 1196.14 3606.69 1068.13 3606.69 890.77Z" fill="white"/>
+        <path d="M4804.7 1186.74H4676.69V1088.08C4636.76 1151.5 4568.63 1196.13 4481.71 1196.13C4356.04 1196.13 4267.96 1112.74 4267.96 984.72V594.78H4395.98V955.36C4395.98 1029.35 4441.78 1081.03 4516.95 1081.03C4616.78 1081.03 4676.69 996.47 4676.69 854.35V594.78H4804.7V1186.74Z" fill="white"/>
+        <path d="M4866.97 594.78H4995V693.44C5034.93 630.01 5103.05 585.38 5189.97 585.38C5315.64 585.38 5403.73 668.77 5403.73 796.79V1186.73H5275.71V826.16C5275.71 752.16 5229.91 700.48 5154.74 700.48C5054.9 700.48 4995 785.05 4995 927.16V1186.73H4866.97V594.78Z" fill="white"/>
+        <path d="M5927.57 890.77C5927.57 773.32 5859.45 696.97 5756.09 696.97C5652.73 696.97 5584.61 773.32 5584.61 890.77C5584.61 1008.22 5652.73 1084.56 5756.09 1084.56C5859.45 1084.56 5927.57 1007.05 5927.57 890.77ZM5456.59 890.77C5456.59 712.23 5558.78 585.39 5737.3 585.39C5813.64 585.39 5882.94 619.45 5918.18 668.78V355.18H6046.2V1186.74H5918.18V1111.57C5890 1160.9 5818.34 1196.13 5739.66 1196.13C5558.78 1196.13 5456.6 1069.29 5456.6 890.76L5456.59 890.77Z" fill="white"/>
+        <path d="M6391.52 1196.13C6279.95 1196.13 6196.55 1135.06 6196.55 999.99V704.01H6093.19V594.78H6196.55V418.6H6324.57V594.78H6477.26V704.01H6324.57V992.94C6324.57 1051.67 6357.45 1082.2 6405.61 1082.2C6427.92 1082.2 6454.94 1078.68 6477.25 1068.11L6485.47 1182.03C6457.28 1191.43 6424.4 1196.12 6391.51 1196.12L6391.52 1196.13Z" fill="white"/>
+        <path d="M6835.46 705.19C6748.56 705.19 6672.23 782.7 6672.23 965.93V1186.74H6544.21V594.78H6672.23V707.53C6703.96 637.06 6781.44 585.38 6853.11 585.38C6875.41 585.38 6901.24 588.9 6918.89 595.95L6911.83 719.28C6890.71 709.89 6862.53 705.19 6835.45 705.19H6835.46Z" fill="white"/>
+        <path d="M7318.24 931.87V907.2L7205.51 920.12C7109.19 930.69 7059.82 965.93 7059.82 1017.6C7059.82 1064.58 7098.6 1097.47 7158.49 1097.47C7258.34 1097.47 7317.06 1028.17 7318.24 931.86V931.87ZM7443.92 817.94V1186.74H7318.24V1096.3C7284.17 1156.2 7211.33 1196.13 7132.66 1196.13C7015.22 1196.13 6934.13 1122.14 6934.13 1021.13C6934.13 904.85 7024.56 842.61 7206.61 823.82L7318.23 812.07V803.85C7318.23 731.02 7267.68 686.4 7190.2 686.4C7118.53 686.4 7068.05 728.68 7059.81 799.15L6944.72 778.01C6963.49 661.73 7064.51 585.39 7190.19 585.39C7340.52 585.39 7443.91 669.95 7443.91 817.94H7443.92Z" fill="white"/>
+        <path d="M7966.58 890.77C7966.58 773.32 7898.44 696.97 7795.06 696.97C7691.68 696.97 7623.61 773.32 7623.61 890.77C7623.61 1008.22 7691.75 1084.56 7795.06 1084.56C7898.37 1084.56 7966.58 1007.05 7966.58 890.77ZM7503.81 594.79H7631.84V669.96C7664.73 621.81 7734.05 585.4 7816.24 585.4C7991.22 585.4 8094.61 712.24 8094.61 890.78C8094.61 1069.32 7986.52 1196.15 7809.18 1196.15C7737.51 1196.15 7668.26 1165.62 7631.84 1118.64V1400.52H7503.81V594.78V594.79Z" fill="white"/>
+        <path d="M8122.32 424.05C8125.3 424.05 8128.14 423.95 8130.77 423.75C8133.4 423.56 8135.76 423.01 8137.83 422.1C8139.91 421.19 8141.57 419.8 8142.82 417.92C8144.07 416.05 8144.69 413.43 8144.69 410.06C8144.69 407.21 8144.14 404.94 8143.03 403.25C8141.92 401.57 8140.47 400.27 8138.74 399.37C8137.01 398.46 8135 397.84 8132.72 397.51C8130.43 397.19 8128.22 397.03 8126 397.03H8108.55V424.04H8122.33L8122.32 424.05ZM8128.14 386.36C8138.25 386.36 8145.73 388.37 8150.58 392.38C8155.43 396.4 8157.85 402.49 8157.85 410.65C8157.85 418.29 8155.7 423.9 8151.48 427.46C8147.19 431.02 8141.85 433.13 8135.55 433.78L8159.79 471.28H8145.66L8122.53 434.75H8108.54V471.28H8095.31V386.38H8128.13L8128.14 386.36Z" fill="white"/>
+        <path d="M8123.21 365.1C8088.1 365.1 8059.5 393.68 8059.5 428.81C8059.5 463.94 8088.1 492.52 8123.21 492.52C8158.32 492.52 8186.92 463.94 8186.92 428.81C8186.92 393.68 8158.32 365.1 8123.21 365.1ZM8123.21 503.59C8081.94 503.59 8048.43 470.04 8048.43 428.81C8048.43 387.58 8081.94 354.03 8123.21 354.03C8164.48 354.03 8198 387.58 8198 428.81C8198 470.04 8164.42 503.59 8123.21 503.59Z" fill="white"/>
+      </svg>
+      <h1>Tell us about you</h1>
+          </div>
+
+    <form id="pqfForm" novalidate>
+
+      <!-- ── Intro ──────────────────────────────────────────── -->
+
+      <!-- ── WELCOME BACK BANNER ──────────────────────────────── -->
+      <div id="pqf_welcome_back" style="display:none;">
+        <div class="pqf-welcome-inner">
+          <div class="pqf-welcome-text">
+            Welcome back, <strong id="pqf_welcome_name"></strong><span id="pqf_welcome_school"></span>. Want to pre-fill your saved details?
+          </div>
+          <div class="pqf-welcome-actions">
+            <button type="button" id="pqf_welcome_use" class="pqf-welcome-btn-primary">Yes, pre-fill</button>
+            <button type="button" id="pqf_welcome_clear" class="pqf-welcome-btn-ghost">Start fresh</button>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── CONTACT INFORMATION ────────────────────────────── -->
+      <div class="pqf-section" style="padding-top:40px;">
+        <div class="pqf-section-title">Contact Information</div>
+        <div class="pqf-grid pqf-grid-2">
+
+          <!-- First Name — HS internal name: firstname -->
+          <div class="pqf-field">
+            <label class="pqf-label" for="pqf_firstname">
+              First Name <span class="pqf-required">*</span>
+            </label>
+            <input
+              id="pqf_firstname"
+              name="firstname"
+              type="text"
+              class="pqf-input"
+              placeholder="Jane"
+              autocomplete="given-name"
+              required
+            />
+            <span class="pqf-hint" id="pqf_firstname_hint"></span>
+          </div>
+
+          <!-- Last Name — HS internal name: lastname -->
+          <div class="pqf-field">
+            <label class="pqf-label" for="pqf_lastname">
+              Last Name <span class="pqf-required">*</span>
+            </label>
+            <input
+              id="pqf_lastname"
+              name="lastname"
+              type="text"
+              class="pqf-input"
+              placeholder="Smith"
+              autocomplete="family-name"
+              required
+            />
+            <span class="pqf-hint" id="pqf_lastname_hint"></span>
+          </div>
+
+          <!-- Email — HS internal name: email -->
+          <div class="pqf-field pqf-grid-2" style="grid-column: 1 / -1;">
+            <label class="pqf-label" for="pqf_email">
+              Email Address <span class="pqf-required">*</span>
+            </label>
+            <input
+              id="pqf_email"
+              name="email"
+              type="email"
+              class="pqf-input"
+              placeholder="jane.smith@district.edu"
+              autocomplete="email"
+              required
+            />
+            <span class="pqf-hint" id="pqf_email_hint"></span>
+          </div>
+
+          <!-- What do you teach? — HS internal name: your_role -->
+          <div class="pqf-field pqf-grid-2" style="grid-column: 1 / -1;">
+            <label class="pqf-label" for="pqf_role">
+              What do you teach? <span class="pqf-required">*</span>
+            </label>
+            <select
+              id="pqf_role"
+              name="your_role"
+              class="pqf-input"
+              required
+            >
+              <option value="">Select subject</option>
+              <option value="Music">Music</option>
+              <option value="All subjects (Elementary)">All subjects (Elementary)</option>
+              <option value="Art">Art</option>
+              <option value="Career and Technical Education">Career and Technical Education</option>
+              <option value="Counselling">Counselling</option>
+              <option value="Dance">Dance</option>
+              <option value="Digital/Creative Media">Digital/Creative Media</option>
+              <option value="Electives">Electives</option>
+              <option value="Health &amp; Physical Education">Health &amp; Physical Education</option>
+              <option value="Journalism">Journalism</option>
+              <option value="Language">Language</option>
+              <option value="Math">Math</option>
+              <option value="Pre-Service Teacher Training">Pre-Service Teacher Training</option>
+              <option value="Science/Technology">Science/Technology</option>
+              <option value="Social Studies">Social Studies</option>
+              <option value="Special Education">Special Education</option>
+              <option value="Theatre/Drama">Theatre/Drama</option>
+              <option value="Other">Other</option>
+            </select>
+            <span class="pqf-hint" id="pqf_role_hint"></span>
+          </div>
+
+
+
+        </div>
+      </div>
+
+      <!-- ── SCHOOL DETAILS ──────────────────────────────────── -->
+      <div class="pqf-section" style="padding-top:40px;">
+        <div class="pqf-section-title">School Details</div>
+
+        <!-- ── School type ───────────────────────────────────── -->
+        <div class="pqf-field" style="margin-bottom:20px;">
+          <label class="pqf-label">School Type <span class="pqf-required">*</span></label>
+          <div class="pqf-school-type-wrap" id="pqf_school_type_wrap">
+            <label class="pqf-school-type-btn pqf-school-type-active" id="pqf_lbl_public">
+              <input type="radio" name="pqf_school_type" id="pqf_school_type_public" value="Public" checked>
+              Public School
+            </label>
+            <label class="pqf-school-type-btn" id="pqf_lbl_private">
+              <input type="radio" name="pqf_school_type" id="pqf_school_type_private" value="Private">
+              Private School
+            </label>
+          </div>
+        </div>
+
+        <div id="pqf_dropdown_grid" class="pqf-grid pqf-grid-1">
+
+          <!-- Country — HS internal name: country -->
+          <div class="pqf-field">
+            <label class="pqf-label" for="pqf_country_input">
+              Country <span class="pqf-required">*</span>
+            </label>
+            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_country_wrap">
+              <input type="text" id="pqf_country_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a country…">
+              <div class="pqf-combo-drop" id="pqf_country_drop"></div>
+              <select id="pqf_country" name="country" style="display:none;" aria-hidden="true" required><option value=""></option></select>
+              <span class="pqf-spinner"></span>
+            </div>
+            <span class="pqf-hint" id="pqf_country_hint"></span>
+          </div>
+
+          <!-- State — HS internal name: state -->
+          <div class="pqf-field" id="pqf_state_field">
+            <label class="pqf-label" for="pqf_state" id="pqf_state_label">
+              State <span class="pqf-required">*</span>
+            </label>
+            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_state_wrap">
+              <input type="text" id="pqf_state_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a country first" disabled>
+              <div class="pqf-combo-drop" id="pqf_state_drop"></div>
+              <select id="pqf_state" name="state" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
+              <span class="pqf-spinner"></span>
+            </div>
+            <span class="pqf-hint" id="pqf_state_hint"></span>
+          </div>
+
+          <!-- City — HS internal name: city -->
+          <div class="pqf-field" id="pqf_city_field">
+            <label class="pqf-label" for="pqf_city">
+              City <span class="pqf-required">*</span>
+            </label>
+            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_city_wrap">
+              <input type="text" id="pqf_city_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a state first" disabled>
+              <div class="pqf-combo-drop" id="pqf_city_drop"></div>
+              <select id="pqf_city" name="city" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
+              <span class="pqf-spinner"></span>
+            </div>
+            <span class="pqf-hint" id="pqf_city_hint"></span>
+          </div>
+
+          <!-- Private school city (non-US private schools — shown instead of cascade city) -->
+          <div class="pqf-field" id="pqf_private_city_field" style="display:none;">
+            <label class="pqf-label" for="pqf_private_city">
+              City <span class="pqf-required">*</span>
+            </label>
+            <input
+              id="pqf_private_city"
+              name="private_city"
+              type="text"
+              class="pqf-input"
+              placeholder="e.g. Boston"
+              autocomplete="address-level2"
+            />
+            <span class="pqf-hint" id="pqf_private_city_hint"></span>
+          </div>
+
+          <!-- School District — HS internal name: school_district -->
+          <div class="pqf-field" id="pqf_district_field">
+            <label class="pqf-label" for="pqf_district">
+              School District <span class="pqf-required">*</span>
+            </label>
+            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_district_wrap">
+              <input type="text" id="pqf_district_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a city first" disabled>
+              <div class="pqf-combo-drop" id="pqf_district_drop"></div>
+              <select id="pqf_district" name="school_district" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
+              <span class="pqf-spinner"></span>
+            </div>
+            <span class="pqf-hint" id="pqf_district_hint"></span>
+            <div id="pqf_cant_find_district_wrap" class="pqf-cant-find-wrap" style="display:none;">
+              <button type="button" id="pqf_cant_find" class="pqf-cant-find">I can't find my district</button>
+            </div>
+          </div>
+
+          <!-- District Enrollment — auto-filled from NCES data, read-only -->
+          <div class="pqf-field" id="pqf_enrollment_field">
+            <label class="pqf-label" for="pqf_enrollment">District Student Population</label>
+            <input
+              id="pqf_enrollment"
+              name="district_enrollment"
+              type="text"
+              class="pqf-input"
+              readonly
+              tabindex="-1"
+            />
+            <span class="pqf-hint">Total student enrollment from NCES data (2022–23). <strong>⚠️ For testing only</strong> — this field should be hidden in the final version of the trial form.</span>
+          </div>
+
+          <!-- School — HS internal name: school_name -->
+          <div class="pqf-field" id="pqf_school_field">
+            <label class="pqf-label" for="pqf_school">
+              School <span class="pqf-required">*</span>
+            </label>
+            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_school_wrap">
+              <input type="text" id="pqf_school_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a district first" disabled>
+              <div class="pqf-combo-drop" id="pqf_school_drop"></div>
+              <select id="pqf_school" name="school_name" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
+              <span class="pqf-spinner"></span>
+            </div>
+            <span class="pqf-hint" id="pqf_school_hint"></span>
+            <div id="pqf_cant_find_wrap" class="pqf-cant-find-wrap" style="display:none;">
+              <span class="pqf-hint" id="pqf_cant_find_school_hint" style="margin-right:8px;"></span>
+              <button type="button" id="pqf_cant_find_school" class="pqf-cant-find">I can't find my school</button>
+            </div>
+          </div>
+
+          <!-- NCES Number — HS internal name: nces_number (auto-filled, read-only) -->
+          <div class="pqf-field" id="pqf_nces_field">
+            <label class="pqf-label" for="pqf_nces">
+              NCES ID
+            </label>
+            <input
+              id="pqf_nces"
+              name="nces_number"
+              type="text"
+              class="pqf-input"
+              placeholder="Auto-filled when a school is selected"
+              readonly
+              tabindex="-1"
+            />
+            <span class="pqf-hint" id="pqf_nces_hint">Automatically populated based on your school selection. <strong>⚠️ For testing only</strong> — this field should be hidden in the final version of the trial form.</span>
+          </div>
+
+          <!-- Private school name (shown in private mode instead of cascade school) -->
+          <div class="pqf-field" id="pqf_private_school_field" style="display:none;">
+            <label class="pqf-label" for="pqf_private_school_name">
+              School Name <span class="pqf-required">*</span>
+            </label>
+            <input
+              id="pqf_private_school_name"
+              name="private_school_name"
+              type="text"
+              class="pqf-input"
+              placeholder="e.g. St. Mary's Academy"
+            />
+            <span class="pqf-hint" id="pqf_private_school_name_hint"></span>
+          </div>
+
+        </div><!-- /pqf_dropdown_grid -->
+
+        <!-- ── Manual entry panel (hidden by default) ──────── -->
+        <div id="pqf_manual_panel" class="pqf-manual-panel" style="display:none;">
+
+          <div class="pqf-manual-header">
+            <span class="pqf-manual-title">Enter your school details manually</span>
+            <button type="button" id="pqf_manual_back" class="pqf-manual-back">
+              Back to search
+            </button>
+          </div>
+
+          <div class="pqf-grid pqf-grid-2">
+
+            <!-- Manual Country — HS internal name: country -->
+            <div class="pqf-field" id="pqf_manual_country_field" style="grid-column: 1 / -1;">
+              <label class="pqf-label" for="pqf_manual_country">
+                Country <span class="pqf-required">*</span>
+              </label>
+              <input
+                id="pqf_manual_country"
+                name="manual_country"
+                type="text"
+                class="pqf-input"
+                placeholder="e.g. United States"
+                autocomplete="country-name"
+              />
+              <span class="pqf-hint" id="pqf_manual_country_hint"></span>
+            </div>
+
+            <!-- Manual State — HS internal name: state (US only) -->
+            <div class="pqf-field" id="pqf_manual_state_field" style="display:none; grid-column: 1 / -1;">
+              <label class="pqf-label" for="pqf_manual_state_input" id="pqf_manual_state_label">
+                State <span class="pqf-required">*</span>
+              </label>
+              <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_manual_state_wrap">
+                <input type="text" id="pqf_manual_state_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a state…">
+                <div class="pqf-combo-drop" id="pqf_manual_state_drop"></div>
+                <select id="pqf_manual_state" name="manual_state" style="display:none;" aria-hidden="true"><option value=""></option></select>
+              </div>
+              <span class="pqf-hint" id="pqf_manual_state_hint"></span>
+            </div>
+
+            <!-- Manual City — HS internal name: city -->
+            <div class="pqf-field" id="pqf_manual_city_field">
+              <label class="pqf-label" for="pqf_manual_city">
+                City <span class="pqf-required">*</span>
+              </label>
+              <input
+                id="pqf_manual_city"
+                name="manual_city"
+                type="text"
+                class="pqf-input"
+                placeholder="e.g. Los Angeles"
+                autocomplete="address-level2"
+              />
+              <span class="pqf-hint" id="pqf_manual_city_hint"></span>
+            </div>
+
+            <!-- Manual School District — HS internal name: school_district -->
+            <div class="pqf-field" id="pqf_manual_district_field">
+              <label class="pqf-label" for="pqf_manual_district" id="pqf_manual_district_label">
+                School District <span class="pqf-required">*</span>
+              </label>
+              <input
+                id="pqf_manual_district"
+                name="manual_school_district"
+                type="text"
+                class="pqf-input"
+                placeholder="e.g. Los Angeles Unified"
+              />
+              <span class="pqf-hint" id="pqf_manual_district_hint"></span>
+            </div>
+
+            <!-- Manual School Name — HS internal name: school_name -->
+            <div class="pqf-field" style="grid-column: 1 / -1;">
+              <label class="pqf-label" for="pqf_manual_school">
+                School Name <span class="pqf-required">*</span>
+              </label>
+              <input
+                id="pqf_manual_school"
+                name="manual_school_name"
+                type="text"
+                class="pqf-input"
+                placeholder="e.g. Lincoln High School"
+              />
+              <span class="pqf-hint" id="pqf_manual_school_hint"></span>
+            </div>
+
+            <!-- School Website — HS internal name: school_website (optional) -->
+            <div class="pqf-field" style="grid-column: 1 / -1;">
+              <label class="pqf-label" for="pqf_manual_website">
+                School Website
+              </label>
+              <input
+                id="pqf_manual_website"
+                name="school_website"
+                type="url"
+                class="pqf-input"
+                placeholder="https://www.schoolname.edu"
+                autocomplete="url"
+              />
+              <span class="pqf-hint" id="pqf_manual_website_hint">Optional — helps us verify your school.</span>
+            </div>
+
+          </div>
+        </div><!-- /pqf_manual_panel -->
+
+      </div>
+
+
+
+      <!-- ── SUBMIT ─────────────────────────────────────────── -->
+      <div class="pqf-footer">
+        <div id="pqf_success" class="pqf-banner pqf-success">
+          Thank you! Your quote request has been submitted. A member of our team will be in touch shortly.
+        </div>
+        <div id="pqf_error_banner" class="pqf-banner pqf-error-banner">
+          Something went wrong submitting your request. Please try again or contact us directly.
+        </div>
+
+        <button type="submit" id="pqf_submit" class="pqf-submit">
+          Submit
+</button>
+
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Config ───────────────────────────────────────────────── */
+  var CFG = window.PQF_CONFIG || {};
+  var INDEX_URL        = CFG.indexUrl        || '';
+  var SCHOOLS_BASE_URL = CFG.schoolsBaseUrl  || '';
+
+  /* ── Manual-entry mode state ──────────────────────────────── */
+  var manualMode       = false;
+  var schoolManualMode = false; // school-only mode: district locked from cascade, only school typed
+  var privateMode      = false; // private school: no district/cascade-school; city is text for non-US
+
+  /* ── Index cache (loaded once on page init) ────────────────── */
+  var _index = null;  // { countries, states, stateData }
+
+  /* ── Per-state school prefetch ─────────────────────────────── */
+  var _stateSchools        = null;   // { district_lc: [{name, nces}] } for current state
+  var _stateSchoolsPromise = null;   // in-flight fetch promise
+  var _stateSchoolsKey     = '';     // slug of the currently loaded/loading state
+
+  /* ── District enrollment (populated from _enrollment key in state JSON) ── */
+  var _districtEnrollment  = {};    // { "district name lc": enrollment_int }
+
+
+
+  /* ── DOM refs ─────────────────────────────────────────────── */
+  var form          = document.getElementById('pqfForm');
+  var submitBtn     = document.getElementById('pqf_submit');
+  var successBanner = document.getElementById('pqf_success');
+  var errorBanner   = document.getElementById('pqf_error_banner');
+
+  var sel = {
+    country:  document.getElementById('pqf_country'),
+    state:    document.getElementById('pqf_state'),
+    city:     document.getElementById('pqf_city'),
+    district: document.getElementById('pqf_district'),
+    school:   document.getElementById('pqf_school'),
+  };
+
+  /* ── Combobox registry & factory ─────────────────────────── */
+  var combos = {};
+
+  function makeCombobox(key) {
+    var inputEl   = document.getElementById('pqf_' + key + '_input');
+    var dropEl    = document.getElementById('pqf_' + key + '_drop');
+    var hiddenSel = sel[key] || document.getElementById('pqf_' + key);
+
+    var _items  = [];
+    var _isObj  = false; // true for school (items are {name,nces})
+    var _active = -1;
+
+    function lbl(item) { return _isObj ? item.name : item; }
+    function nc(item)  { return _isObj ? (item.nces || '') : ''; }
+
+    function renderDrop(q) {
+      dropEl.innerHTML = '';
+      _active = -1;
+      var lq = (q || '').toLowerCase().trim();
+      var matched = lq
+        ? _items.filter(function(it) { return lbl(it).toLowerCase().indexOf(lq) >= 0; })
+        : _items;
+
+      if (!matched.length) {
+        if (lq && _items.length) {
+          var msg = document.createElement('div');
+          msg.className = 'pqf-combo-empty';
+          msg.textContent = 'No matches';
+          dropEl.appendChild(msg);
+          dropEl.style.display = 'block';
+        } else {
+          dropEl.style.display = 'none';
+        }
+        return;
+      }
+
+      matched.forEach(function(item) {
+        var div = document.createElement('div');
+        div.className = 'pqf-combo-item';
+        div.textContent = lbl(item);
+        div.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          commit(item);
+        });
+        dropEl.appendChild(div);
+      });
+      dropEl.style.display = 'block';
+    }
+
+    function commit(item) {
+      var label = lbl(item);
+      var nces  = nc(item);
+      inputEl.value = label;
+      var esc = label.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      hiddenSel.innerHTML = '<option value="' + esc + '" data-nces="' + nces + '" selected>' + esc + '</option>';
+      hiddenSel.value = label;
+      dropEl.style.display = 'none';
+      _active = -1;
+      hiddenSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function moveFocus(dir) {
+      var els = dropEl.querySelectorAll('.pqf-combo-item');
+      if (!els.length) return;
+      _active = Math.max(0, Math.min(els.length - 1, _active + dir));
+      Array.prototype.forEach.call(els, function(el, i) {
+        el.classList.toggle('pqf-combo-active', i === _active);
+        if (i === _active) el.scrollIntoView({ block: 'nearest' });
+      });
+    }
+
+    inputEl.addEventListener('input', function() {
+      if (!inputEl.value) hiddenSel.value = '';
+      renderDrop(inputEl.value);
+    });
+
+    inputEl.addEventListener('focus', function() { renderDrop(inputEl.value); });
+
+    inputEl.addEventListener('blur', function() {
+      setTimeout(function() {
+        dropEl.style.display = 'none';
+        var typed = inputEl.value.trim();
+        if (typed && !hiddenSel.value) {
+          // typed something but didn't pick — check for exact match
+          var found = null;
+          for (var i = 0; i < _items.length; i++) {
+            if (lbl(_items[i]).toLowerCase() === typed.toLowerCase()) { found = _items[i]; break; }
+          }
+          if (found) { commit(found); } else { inputEl.value = ''; }
+        } else if (!typed) {
+          hiddenSel.value = '';
+        }
+      }, 200);
+    });
+
+    inputEl.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (dropEl.style.display === 'none') renderDrop(inputEl.value);
+        moveFocus(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        moveFocus(-1);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        var active = dropEl.querySelector('.pqf-combo-active') || dropEl.querySelector('.pqf-combo-item');
+        if (active) active.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      } else if (e.key === 'Escape') {
+        dropEl.style.display = 'none';
+        inputEl.blur();
+      }
+    });
+
+    combos[key] = {
+      setOptions: function(items, isObj, placeholder) {
+        _items  = items || [];
+        _isObj  = !!isObj;
+        inputEl.placeholder = placeholder || '';
+        inputEl.value       = '';
+        inputEl.disabled    = _items.length === 0;
+        hiddenSel.value     = '';
+        dropEl.style.display = 'none';
+      },
+      reset: function(placeholder) {
+        _items  = [];
+        _isObj  = false;
+        inputEl.value       = '';
+        inputEl.placeholder = placeholder || '';
+        inputEl.disabled    = true;
+        hiddenSel.value     = '';
+        dropEl.style.display = 'none';
+      },
+      setDisabled: function(on) { inputEl.disabled = on; },
+      getValue:    function()   { return hiddenSel.value; }
+    };
+  }
+
+  // Close any open combo dropdown when clicking outside
+  document.addEventListener('mousedown', function(e) {
+    ['state','city','district','school'].forEach(function(key) {
+      var drop = document.getElementById('pqf_' + key + '_drop');
+      var inp  = document.getElementById('pqf_' + key + '_input');
+      if (drop && inp && !drop.contains(e.target) && e.target !== inp) {
+        drop.style.display = 'none';
+      }
+    });
+  });
+
+  makeCombobox('state');
+  makeCombobox('city');
+  makeCombobox('district');
+  makeCombobox('school');
+  makeCombobox('country');
+  makeCombobox('manual_state');
+
+  /* ── World countries list (ISO 3166-1, alphabetical) ─────── */
+  var WORLD_COUNTRIES = [
+    'Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda',
+    'Argentina','Armenia','Australia','Austria','Azerbaijan','Bahamas','Bahrain',
+    'Bangladesh','Barbados','Belarus','Belgium','Belize','Benin','Bhutan','Bolivia',
+    'Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria','Burkina Faso',
+    'Burundi','Cabo Verde','Cambodia','Cameroon','Canada','Central African Republic',
+    'Chad','Chile','China','Colombia','Comoros','Congo','Costa Rica','Croatia','Cuba',
+    'Cyprus','Czechia','Denmark','Djibouti','Dominica','Dominican Republic','Ecuador',
+    'Egypt','El Salvador','Equatorial Guinea','Eritrea','Estonia','Eswatini','Ethiopia',
+    'Fiji','Finland','France','Gabon','Gambia','Georgia','Germany','Ghana','Greece',
+    'Grenada','Guatemala','Guinea','Guinea-Bissau','Guyana','Haiti','Honduras',
+    'Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy',
+    'Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kiribati','Kuwait','Kyrgyzstan',
+    'Laos','Latvia','Lebanon','Lesotho','Liberia','Libya','Liechtenstein','Lithuania',
+    'Luxembourg','Madagascar','Malawi','Malaysia','Maldives','Mali','Malta',
+    'Marshall Islands','Mauritania','Mauritius','Mexico','Micronesia','Moldova',
+    'Monaco','Mongolia','Montenegro','Morocco','Mozambique','Myanmar','Namibia',
+    'Nauru','Nepal','Netherlands','New Zealand','Nicaragua','Niger','Nigeria',
+    'North Korea','North Macedonia','Norway','Oman','Pakistan','Palau','Panama',
+    'Papua New Guinea','Paraguay','Peru','Philippines','Poland','Portugal','Qatar',
+    'Romania','Russia','Rwanda','Saint Kitts and Nevis','Saint Lucia',
+    'Saint Vincent and the Grenadines','Samoa','San Marino','Sao Tome and Principe',
+    'Saudi Arabia','Senegal','Serbia','Seychelles','Sierra Leone','Singapore',
+    'Slovakia','Slovenia','Solomon Islands','Somalia','South Africa','South Korea',
+    'South Sudan','Spain','Sri Lanka','Sudan','Suriname','Sweden','Switzerland',
+    'Syria','Tajikistan','Tanzania','Thailand','Timor-Leste','Togo','Tonga',
+    'Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Tuvalu','Uganda',
+    'Ukraine','United Arab Emirates','United Kingdom','United States','Uruguay',
+    'Uzbekistan','Vanuatu','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe'
+  ];
+
+  // Country combo is populated immediately — no network call needed
+  if (combos.country) combos.country.setOptions(WORLD_COUNTRIES, false, 'Select a country\u2026');
+
+  /* ── School type toggle ───────────────────────────────────── */
+  function updateSchoolTypeActive() {
+    var isPrivate = document.getElementById('pqf_school_type_private').checked;
+    document.getElementById('pqf_lbl_public').classList.toggle('pqf-school-type-active', !isPrivate);
+    document.getElementById('pqf_lbl_private').classList.toggle('pqf-school-type-active',  isPrivate);
+  }
+
+  ['pqf_school_type_public', 'pqf_school_type_private'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function () {
+      updateSchoolTypeActive();
+      togglePrivateMode(this.value === 'Private');
+    });
+  });
+
+  /* ── Manual mode helpers ──────────────────────────────────── */
+
+  function isManualUS() {
+    var el = document.getElementById('pqf_manual_country');
+    return el && el.value.trim().toLowerCase() === 'united states';
+  }
+
+  function toggleManualMode(on, autoTriggered, prefilledState) {
+    manualMode = on;
+    var dropGrid           = document.getElementById('pqf_dropdown_grid');
+    var cantFindWrap       = document.getElementById('pqf_cant_find_wrap');
+    var manualPanel        = document.getElementById('pqf_manual_panel');
+    var manualCountryField = document.getElementById('pqf_manual_country_field');
+    var manualStateField   = document.getElementById('pqf_manual_state_field');
+    var manualBackBtn      = document.getElementById('pqf_manual_back');
+
+    var cantFindDistrictWrap = document.getElementById('pqf_cant_find_district_wrap');
+    dropGrid.style.display     = on ? 'none' : '';
+    cantFindWrap.style.display = on ? 'none' : (sel.country.value === 'United States' ? '' : 'none');
+    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = on ? 'none' : (sel.country.value === 'United States' ? '' : 'none');
+    manualPanel.style.display  = on ? ''     : 'none';
+
+    // Country field: always show when panel is open; lock it if auto-triggered
+    if (manualCountryField) {
+      manualCountryField.style.display = on ? '' : 'none';
+    }
+    var countryInput = document.getElementById('pqf_manual_country');
+    if (countryInput) {
+      countryInput.readOnly    = !!(on && autoTriggered);
+      countryInput.style.color = (on && autoTriggered) ? '#888' : '';
+    }
+    // State field: show for US (editable) or CA/AU (locked with pre-filled value)
+    if (manualStateField) {
+      manualStateField.style.display = (on && (isManualUS() || prefilledState)) ? '' : 'none';
+    }
+    var manualStateInput = document.getElementById('pqf_manual_state_input');
+    if (manualStateInput) {
+      manualStateInput.readOnly    = !!(on && prefilledState);
+      manualStateInput.style.color = (on && prefilledState) ? '#888' : '';
+      if (on && prefilledState) manualStateInput.classList.add('pqf-locked');
+      else                      manualStateInput.classList.remove('pqf-locked');
+      var stateWrapTMM = document.getElementById('pqf_manual_state_wrap');
+      if (stateWrapTMM) {
+        if (on && prefilledState) stateWrapTMM.classList.add('pqf-locked-wrap');
+        else                      stateWrapTMM.classList.remove('pqf-locked-wrap');
+      }
+    }
+    // City: lock if a cascade city was already selected
+    var manualCityInput = document.getElementById('pqf_manual_city');
+    var cascadeCity = sel.city.value;
+    if (on && cascadeCity) {
+      if (manualCityInput) {
+        manualCityInput.value             = cascadeCity;
+        manualCityInput.readOnly          = true;
+        manualCityInput.style.color       = '#888';
+        manualCityInput.style.background  = '#F4F4F5';
+        manualCityInput.style.borderColor = '#E8E4FF';
+        manualCityInput.style.cursor      = 'default';
+      }
+    } else if (!on && manualCityInput) {
+      manualCityInput.readOnly          = false;
+      manualCityInput.style.color       = '';
+      manualCityInput.style.background  = '';
+      manualCityInput.style.borderColor = '';
+      manualCityInput.style.cursor      = '';
+    }
+    // Change back-button label
+    if (manualBackBtn) {
+      var lbl = (on && autoTriggered && prefilledState) ? '\u2190 Change state'
+              : (on && autoTriggered)                   ? '\u2190 Change country'
+              : '\u2190 Back to search';
+      manualBackBtn.textContent = lbl;
+    }
+
+    if (on) clearNces();
+
+    ['country', 'city', 'district', 'school'].forEach(function (k) {
+      sel[k].required = !on;
+    });
+    sel.state.required = on ? false : isUS();
+
+    ['pqf_manual_country', 'pqf_manual_city', 'pqf_manual_district', 'pqf_manual_school'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.required = on;
+    });
+    var manualState = document.getElementById('pqf_manual_state');
+    if (manualState) manualState.required = on && isManualUS();
+  }
+
+  /**
+   * School-only mode: district is pre-filled + locked from the cascade,
+   * user types only the school name. Separate from full manualMode.
+   */
+  function toggleSchoolOnlyMode(on) {
+    schoolManualMode = on;
+
+    var dropGrid      = document.getElementById('pqf_dropdown_grid');
+    var cantFindWrap  = document.getElementById('pqf_cant_find_wrap');
+    var manualPanel   = document.getElementById('pqf_manual_panel');
+    var manualTitle   = manualPanel ? manualPanel.querySelector('.pqf-manual-title') : null;
+    var backBtn       = document.getElementById('pqf_manual_back');
+
+    var countryField  = document.getElementById('pqf_manual_country_field');
+    var stateField    = document.getElementById('pqf_manual_state_field');
+    var cityField     = document.getElementById('pqf_manual_city_field');
+    var districtField = document.getElementById('pqf_manual_district_field');
+    var districtInput = document.getElementById('pqf_manual_district');
+    var schoolInput   = document.getElementById('pqf_manual_school');
+    var countryInput  = document.getElementById('pqf_manual_country');
+    var cityInput     = document.getElementById('pqf_manual_city');
+
+    var cantFindDistrictWrap2 = document.getElementById('pqf_cant_find_district_wrap');
+    if (on) {
+      // Switch display: hide cascade, show manual panel
+      if (dropGrid)              dropGrid.style.display              = 'none';
+      if (cantFindWrap)          cantFindWrap.style.display          = 'none';
+      if (cantFindDistrictWrap2) cantFindDistrictWrap2.style.display = 'none';
+      if (manualPanel)           manualPanel.style.display           = '';
+
+      // Country: show + lock with "United States"
+      if (countryField) countryField.style.display = '';
+      if (countryInput) {
+        countryInput.value      = 'United States';
+        countryInput.readOnly   = true;
+        countryInput.style.color = '#888';
+      }
+
+      // State: show + lock if pre-selected, otherwise hide
+      var stateInput = document.getElementById('pqf_manual_state_input');
+      var cascadeState = sel.state.value;
+      var stateWrap = document.getElementById('pqf_manual_state_wrap');
+      if (cascadeState && stateField) {
+        stateField.style.display = '';
+        if (stateInput) { stateInput.value = cascadeState; stateInput.readOnly = true; stateInput.classList.add('pqf-locked'); }
+        if (stateWrap)  stateWrap.classList.add('pqf-locked-wrap');
+      } else {
+        if (stateField) stateField.style.display = 'none';
+      }
+
+      // City: show + lock if pre-selected, otherwise hide
+      var cascadeCity = sel.city.value;
+      if (cascadeCity && cityField) {
+        cityField.style.display = '';
+        if (cityInput) {
+          cityInput.value             = cascadeCity;
+          cityInput.readOnly          = true;
+          cityInput.style.color       = '#888';
+          cityInput.style.background  = '#F4F4F5';
+          cityInput.style.borderColor = '#E8E4FF';
+          cityInput.style.cursor      = 'default';
+        }
+      } else {
+        if (cityField) cityField.style.display = 'none';
+      }
+
+      // Show district — pre-filled + locked
+      if (districtField) districtField.style.display = '';
+      if (districtInput) {
+        districtInput.value       = sel.district.value;
+        districtInput.readOnly    = true;
+        districtInput.style.background  = '#F4F4F5';
+        districtInput.style.color       = 'rgba(22,22,22,0.55)';
+        districtInput.style.borderColor = '#E8E4FF';
+        districtInput.style.cursor      = 'default';
+        districtInput.required          = false;
+      }
+
+      // Required: only school name
+      if (countryInput) countryInput.required = false;
+      if (cityInput)    cityInput.required    = false;
+      if (schoolInput)  schoolInput.required  = true;
+
+      // Update panel chrome
+      if (manualTitle) manualTitle.textContent  = 'Enter your school name';
+      if (backBtn)     backBtn.textContent       = '\u2190 Back to search';
+
+      clearNces();
+
+    } else {
+      // Restore cascade
+      if (dropGrid)              dropGrid.style.display              = '';
+      if (cantFindWrap)          cantFindWrap.style.display          = sel.country.value === 'United States' ? '' : 'none';
+      if (cantFindDistrictWrap2) cantFindDistrictWrap2.style.display = sel.country.value === 'United States' ? '' : 'none';
+      if (manualPanel)           manualPanel.style.display           = 'none';
+
+      // Restore field visibility
+      if (countryField) countryField.style.display = 'none';
+      if (countryInput) { countryInput.readOnly = false; countryInput.style.color = ''; countryInput.value = ''; }
+      if (stateField)   stateField.style.display  = 'none';
+      var stateInputOff = document.getElementById('pqf_manual_state_input');
+      if (stateInputOff) { stateInputOff.readOnly = false; stateInputOff.style.color = ''; stateInputOff.value = ''; stateInputOff.classList.remove('pqf-locked'); }
+      var stateWrapOff = document.getElementById('pqf_manual_state_wrap');
+      if (stateWrapOff) stateWrapOff.classList.remove('pqf-locked-wrap');
+      if (cityField)    cityField.style.display    = '';
+      if (cityInput)    { cityInput.readOnly = false; cityInput.style.color = ''; cityInput.style.background = ''; cityInput.style.borderColor = ''; cityInput.style.cursor = ''; cityInput.value = ''; }
+      if (districtField) districtField.style.display = '';
+
+      // Unlock district
+      if (districtInput) {
+        districtInput.readOnly          = false;
+        districtInput.style.background  = '';
+        districtInput.style.color       = '';
+        districtInput.style.borderColor = '';
+        districtInput.style.cursor      = '';
+        districtInput.value             = '';
+        districtInput.required          = false;
+      }
+
+      // Clear school / website
+      ['pqf_manual_school', 'pqf_manual_website'].forEach(function(id) {
+        var el   = document.getElementById(id);
+        var hint = document.getElementById(id + '_hint');
+        if (el)   el.value = '';
+        if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
+      });
+      if (schoolInput) schoolInput.required = false;
+
+      // Restore panel chrome
+      if (manualTitle) manualTitle.textContent = 'Enter your school details manually';
+    }
+  }
+
+  /**
+   * Private school mode:
+   * - Hides district + cascade school selectors (they don't apply to private schools).
+   * - For US: state and city cascade dropdowns remain active as normal.
+   * - For non-US: city becomes a free-text field (cascade has no data outside the US).
+   * Switching to Private also exits any active manual/school-only mode.
+   */
+  function togglePrivateMode(on) {
+    privateMode = on;
+
+    // Exit other modes when entering private mode
+    if (on && manualMode)       toggleManualMode(false);
+    if (on && schoolManualMode) toggleSchoolOnlyMode(false);
+
+    var districtField    = document.getElementById('pqf_district_field');
+    var enrollField      = document.getElementById('pqf_enrollment_field');
+    var schoolField      = document.getElementById('pqf_school_field');
+    var ncesField        = document.getElementById('pqf_nces_field');
+    var cantFindWrap     = document.getElementById('pqf_cant_find_wrap');
+    var cantFindDistrict = document.getElementById('pqf_cant_find_district_wrap');
+    var privateSchFld    = document.getElementById('pqf_private_school_field');
+    var privateCityFld   = document.getElementById('pqf_private_city_field');
+    var cityField        = document.getElementById('pqf_city_field');
+
+    var country   = sel.country.value;
+    var isUSNow   = (country === 'United States');
+
+    if (on) {
+      // Hide district, school, NCES, enrollment, can't-find buttons
+      if (districtField)    districtField.style.display    = 'none';
+      if (enrollField)      enrollField.style.display      = 'none';
+      if (schoolField)      schoolField.style.display      = 'none';
+      if (ncesField)        ncesField.style.display        = 'none';
+      if (cantFindWrap)     cantFindWrap.style.display     = 'none';
+      if (cantFindDistrict) cantFindDistrict.style.display = 'none';
+
+      // Show private school name input
+      if (privateSchFld) privateSchFld.style.display = '';
+
+      // US: keep cascade city; non-US: switch to text city
+      if (isUSNow) {
+        if (cityField)      cityField.style.display      = '';
+        if (privateCityFld) privateCityFld.style.display = 'none';
+      } else {
+        if (cityField)      cityField.style.display      = 'none';
+        if (privateCityFld) privateCityFld.style.display = country ? '' : 'none';
+      }
+
+      // Reset cascade from district onwards
+      resetSelect('district', 'Select a city first');
+      resetSelect('school', 'Select a district first');
+      clearNces();
+      clearEnrollment();
+
+      // Required flags
+      sel.district.required = false;
+      sel.school.required   = false;
+      var psn = document.getElementById('pqf_private_school_name');
+      if (psn) psn.required = true;
+
+    } else {
+      // Restore normal cascade display
+      if (districtField)    districtField.style.display    = '';
+      if (schoolField)      schoolField.style.display      = '';
+      if (cityField)        cityField.style.display        = '';
+
+      // Hide private fields and clear them
+      if (privateSchFld) {
+        privateSchFld.style.display = 'none';
+        var psn2 = document.getElementById('pqf_private_school_name');
+        if (psn2) { psn2.value = ''; psn2.required = false; }
+        var psh = document.getElementById('pqf_private_school_name_hint');
+        if (psh) { psh.textContent = ''; psh.className = 'pqf-hint'; }
+      }
+      if (privateCityFld) {
+        privateCityFld.style.display = 'none';
+        var pc = document.getElementById('pqf_private_city');
+        if (pc) { pc.value = ''; pc.required = false; }
+        var pch = document.getElementById('pqf_private_city_hint');
+        if (pch) { pch.textContent = ''; pch.className = 'pqf-hint'; }
+      }
+
+      // Restore required flags
+      sel.district.required = true;
+      sel.school.required   = true;
+
+      // Restore can't-find buttons visibility based on current country
+      var show = (sel.country.value === 'United States');
+      if (cantFindWrap)     cantFindWrap.style.display     = show ? '' : 'none';
+      if (cantFindDistrict) cantFindDistrict.style.display = show ? '' : 'none';
+    }
+  }
+
+  /* US states (for manual entry panel) */
+  var US_STATES = [
+    'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
+    'Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
+    'Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan',
+    'Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada',
+    'New Hampshire','New Jersey','New Mexico','New York','North Carolina',
+    'North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island',
+    'South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont',
+    'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
+    'District of Columbia','Puerto Rico','Guam','U.S. Virgin Islands',
+    'American Samoa','Northern Mariana Islands'
+  ];
+  if (combos.manual_state) combos.manual_state.setOptions(US_STATES, false, 'Select a state\u2026');
+
+  /* Canadian provinces/territories and Australian states/territories */
+  var CA_PROVINCES = [
+    'Alberta','British Columbia','Manitoba','New Brunswick',
+    'Newfoundland and Labrador','Northwest Territories','Nova Scotia',
+    'Nunavut','Ontario','Prince Edward Island','Quebec','Saskatchewan','Yukon'
+  ];
+  var AU_STATES = [
+    'Australian Capital Territory','New South Wales','Northern Territory',
+    'Queensland','South Australia','Tasmania','Victoria','Western Australia'
+  ];
+
+
+  /* Country-aware label and placeholder helpers */
+  function districtLabelFor(country) {
+    var c = (country || '').trim();
+    if (c === 'United Kingdom')           return 'Local Education Authority (LEA)';
+    if (c === 'Norway' || c === 'Sweden') return 'Kommune';
+    if (c === 'Australia')                return 'Department of Education';
+    if (c === 'Canada')                   return 'School Board';
+    if (c === 'United States' || c === '') return 'School District';
+    return 'Municipality';
+  }
+  function districtPlaceholderFor(country) {
+    var c = (country || '').trim();
+    if (c === 'United States')            return 'e.g. Los Angeles Unified';
+    if (c === 'Australia')                return "e.g. Victoria\u2019s Department of Education";
+    if (c === 'United Kingdom')           return 'e.g. London Borough of Camden';
+    if (c === 'Norway')  return 'e.g. Oslo Kommune';
+    if (c === 'Sweden')  return 'e.g. Stockholms stad';
+    if (c === 'Canada')                   return 'e.g. Toronto District School Board';
+    return '';
+  }
+  function cityPlaceholderFor(country) {
+    return (country || '').trim() === 'United States' ? 'e.g. Los Angeles' : '';
+  }
+  function stateLabelFor(country) {
+    if (country === 'Canada')    return 'Province / Territory';
+    if (country === 'Australia') return 'State / Territory';
+    return 'State';
+  }
+  function updateStateLabel(country) {
+    var lbl = document.getElementById('pqf_state_label');
+    if (!lbl) return;
+    var req = lbl.querySelector('.pqf-required');
+    lbl.textContent = stateLabelFor(country) + '\u00a0';
+    if (req) lbl.appendChild(req);
+  }
+  function updateManualStateLabel(country) {
+    var lbl = document.getElementById('pqf_manual_state_label');
+    if (!lbl) return;
+    var req = lbl.querySelector('.pqf-required');
+    lbl.textContent = stateLabelFor(country) + '\u00a0';
+    if (req) lbl.appendChild(req);
+  }
+  function updateDistrictLabel(country) {
+    var lbl = document.getElementById('pqf_manual_district_label');
+    if (!lbl) return;
+    var req = lbl.querySelector('.pqf-required');
+    lbl.textContent = districtLabelFor(country) + '\u00a0';
+    if (req) lbl.appendChild(req);
+    // Also update placeholders
+    var distInput = document.getElementById('pqf_manual_district');
+    if (distInput) distInput.placeholder = districtPlaceholderFor(country);
+    var cityInput = document.getElementById('pqf_manual_city');
+    if (cityInput) cityInput.placeholder = cityPlaceholderFor(country);
+  }
+
+  // Show/hide State inside manual panel based on typed country; update labels
+  document.getElementById('pqf_manual_country').addEventListener('input', function () {
+    var country = this.value.trim();
+    updateDistrictLabel(country);
+    updateManualStateLabel(country);
+    var stateField = document.getElementById('pqf_manual_state_field');
+    var stateInput = document.getElementById('pqf_manual_state');
+    var show = isManualUS();
+    stateField.style.display = show ? '' : 'none';
+    if (stateInput) stateInput.required = show && manualMode;
+    // clear hint when field is hidden
+    if (!show && stateInput) {
+      stateInput.value = '';
+      var hint = document.getElementById('pqf_manual_state_hint');
+      if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
+    }
+  });
+
+
+
+
+  // Hide "Can't find your school?" as soon as the country input no longer reads "United States"
+  document.getElementById('pqf_country_input').addEventListener('input', function () {
+    var isUS = this.value.trim() === 'United States';
+    var cantFindWrap = document.getElementById('pqf_cant_find_wrap');
+    var cantFindDistrictWrap = document.getElementById('pqf_cant_find_district_wrap');
+    if (!isUS) {
+      if (cantFindWrap) cantFindWrap.style.display = 'none';
+      if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = 'none';
+    }
+  });
+
+  // ── Live error clearing — hide hint as soon as field has a value ──
+  // Simple text / email inputs
+  ['pqf_firstname', 'pqf_lastname', 'pqf_email', 'pqf_role'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function () {
+      if (this.value.trim()) {
+        var hint = document.getElementById(id + '_hint');
+        if (hint && hint.classList.contains('pqf-error')) {
+          hint.textContent = '';
+          hint.className = 'pqf-hint';
+        }
+      }
+    });
+  });
+  // Manual panel text fields
+  ['pqf_manual_country','pqf_manual_city','pqf_manual_district','pqf_manual_school'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function () {
+      if (this.value.trim()) {
+        var hint = document.getElementById(id + '_hint');
+        if (hint && hint.classList.contains('pqf-error')) {
+          hint.textContent = '';
+          hint.className = 'pqf-hint';
+        }
+      }
+    });
+  });
+  // Manual state (combobox input)
+  var manualStateInput = document.getElementById('pqf_manual_state_input');
+  if (manualStateInput) {
+    manualStateInput.addEventListener('input', function () {
+      if (this.value.trim()) {
+        var hint = document.getElementById('pqf_manual_state_hint');
+        if (hint && hint.classList.contains('pqf-error')) { hint.textContent = ''; hint.className = 'pqf-hint'; }
+      }
+    });
+  }
+
+  // Wire up the toggle buttons
+  document.getElementById('pqf_cant_find').addEventListener('click', function () {
+    var mc = document.getElementById('pqf_manual_country');
+    mc.value = 'United States';
+    updateDistrictLabel('United States');
+    var cascadeState = sel.state.value;
+    if (cascadeState) {
+      var msi = document.getElementById('pqf_manual_state_input');
+      if (msi) msi.value = cascadeState;
+    }
+    toggleManualMode(true, true, cascadeState || null);
+    document.getElementById('pqf_manual_city').focus();
+  });
+  document.getElementById('pqf_cant_find_school').addEventListener('click', function () {
+    var hint = document.getElementById('pqf_cant_find_school_hint');
+    if (!sel.district.value) {
+      if (hint) { hint.textContent = 'Please select your district first.'; hint.className = 'pqf-hint pqf-error'; }
+      return;
+    }
+    if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
+    toggleSchoolOnlyMode(true);
+    document.getElementById('pqf_manual_school').focus();
+  });
+
+  document.getElementById('pqf_manual_back').addEventListener('click', function () {
+    if (schoolManualMode) { toggleSchoolOnlyMode(false); return; }
+    var country = sel.country.value;
+    var wasStateTriggered   = (country === 'Canada' || country === 'Australia');
+    var wasCountryTriggered = !wasStateTriggered && country && country !== 'United States';
+    toggleManualMode(false);
+    clearNces();
+    if (wasStateTriggered) {
+      // Go back to state selection — keep country, clear state and downstream
+      sel.state.value = '';
+      if (combos.state) combos.state.setOptions(
+        country === 'Canada' ? CA_PROVINCES : AU_STATES,
+        false, country === 'Canada' ? 'Select a province\u2026' : 'Select a state\u2026'
+      );
+      resetSelect('city',     'Select a state first');
+      resetSelect('district', 'Select a city first');
+      resetSelect('school',   'Select a district first');
+      clearEnrollment();
+    } else if (wasCountryTriggered) {
+      sel.country.value = '';
+      if (combos.country) { combos.country.setOptions(WORLD_COUNTRIES, false, 'Select a country\u2026'); }
+      resetSelect('state', 'Select a state\u2026');
+      resetSelect('city', 'Select a state first');
+      resetSelect('district', 'Select a city first');
+      resetSelect('school', 'Select a district first');
+      clearEnrollment();
+      var stField = document.getElementById('pqf_state_field');
+      if (stField) stField.style.display = 'none';
+    }
+    var mc = document.getElementById('pqf_manual_country');
+    mc.value = ''; mc.readOnly = false; mc.style.color = '';
+    if (combos.manual_state) combos.manual_state.setOptions(US_STATES, false, 'Select a state\u2026');
+    var msi = document.getElementById('pqf_manual_state_input');
+    if (msi) { msi.value = ''; msi.readOnly = false; msi.style.color = ''; }
+    var stateField = document.getElementById('pqf_manual_state_field');
+    if (stateField) stateField.style.display = 'none';
+    ['pqf_manual_country','pqf_manual_state','pqf_manual_city','pqf_manual_district','pqf_manual_school','pqf_manual_website'].forEach(function(id) {
+      var el   = document.getElementById(id);
+      var hint = document.getElementById(id + '_hint');
+      if (el)   el.value = '';
+      if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
+    });
+  });
+
+  /* ── Utilities ────────────────────────────────────────────── */
+
+  function setLoading(key, on) {
+    var wrap = document.getElementById('pqf_' + key + '_wrap');
+    if (!wrap) return;
+    if (on) wrap.classList.add('pqf-loading');
+    else     wrap.classList.remove('pqf-loading');
+    sel[key].disabled = on;
+    if (combos[key]) combos[key].setDisabled(on);
+  }
+
+  function setHint(key, msg, isError) {
+    var el = document.getElementById('pqf_' + key + '_hint');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'pqf-hint' + (isError ? ' pqf-error' : '');
+  }
+
+  function resetSelect(key, placeholder) {
+    var s = sel[key];
+    s.innerHTML = '';
+    var opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = placeholder;
+    s.appendChild(opt);
+    s.disabled = true;
+    setHint(key, '');
+    if (combos[key]) combos[key].reset(placeholder);
+  }
+
+  function populateSelect(key, items, placeholder) {
+    var s = sel[key];
+    s.innerHTML = '';
+    var first = document.createElement('option');
+    first.value = '';
+    first.textContent = items.length ? placeholder : 'No options found';
+    s.appendChild(first);
+    items.forEach(function (item) {
+      var opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      s.appendChild(opt);
+    });
+    s.disabled = items.length === 0;
+    setHint(key, items.length === 0 ? 'No results for the selected filters.' : '', items.length === 0);
+    if (combos[key]) combos[key].setOptions(items, false, items.length ? placeholder : 'No options found');
+  }
+
+  // School-specific: items are [{name, nces}] objects OR plain strings (backward-compatible)
+  function populateSchoolSelect(items, placeholder) {
+    var s = sel.school;
+    s.innerHTML = '';
+    var first = document.createElement('option');
+    first.value = '';
+    first.textContent = items.length ? placeholder : 'No options found';
+    s.appendChild(first);
+    items.forEach(function (item) {
+      var opt = document.createElement('option');
+      var name = (item !== null && typeof item === 'object') ? (item.name || '') : String(item);
+      var nces = (item !== null && typeof item === 'object') ? (item.nces || '') : '';
+      opt.value = name;
+      opt.textContent = name;
+      opt.setAttribute('data-nces', nces);
+      s.appendChild(opt);
+    });
+    s.disabled = items.length === 0;
+    setHint('school', items.length === 0 ? 'No results for the selected filters.' : '', items.length === 0);
+    clearNces();
+    // Normalise items for combobox (always objects)
+    var objItems = items.map(function(item) {
+      if (item !== null && typeof item === 'object') return item;
+      return { name: String(item), nces: '' };
+    });
+    if (combos.school) combos.school.setOptions(objItems, true, items.length ? placeholder : 'No options found');
+  }
+
+  function clearNces() {
+    var ncesInput = document.getElementById('pqf_nces');
+    if (ncesInput) ncesInput.value = '';
+  }
+
+  // Auto-fill NCES when a school is selected
+  sel.school.addEventListener('change', function () {
+    var ncesInput = document.getElementById('pqf_nces');
+    var selected  = sel.school.options[sel.school.selectedIndex];
+    var nces      = (selected && selected.getAttribute('data-nces')) || '';
+    if (ncesInput) ncesInput.value = nces;
+  });
+
+  /* ── Client-side cache (persists for the lifetime of the page) */
+  var _clientCache = {};
+
+  function clientCacheKey(params) {
+    return ['action','country','state','city','district']
+      .map(function(k) { return (params[k] || '').toLowerCase(); })
+      .join(':');
+  }
+
+  /* ── API call ─────────────────────────────────────────────── */
+
+  function fetchOptions(params, onSuccess, onError) {
+    // Check client-side cache first (instant — no network call)
+    var ck = clientCacheKey(params);
+    if (_clientCache[ck]) {
+      onSuccess(_clientCache[ck]);
+      return;
+    }
+
+    // No API backend in this prototype — rely entirely on GitHub prefetch
+    if (onError) onError('No API configured');
+  }
+
+  /* ── Cascade logic ────────────────────────────────────────── */
+
+  function isUS() {
+    return sel.country.value === 'United States';
+  }
+
+  // Show/hide State field depending on country
+  function toggleStateField(visible) {
+    var stateField = document.getElementById('pqf_state_field');
+    if (stateField) {
+      stateField.style.display = visible ? '' : 'none';
+      sel.state.required = visible;
+    }
+  }
+
+  /* Convert country/state to a filename slug: "New York" → "new-york" */
+  function schoolsFileSlug(country, state) {
+    var s = (state || country).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return s;
+  }
+
+  /* Silently prefetch all schools for the selected state/country from GitHub.
+     Called when state (or non-US country) is selected — one level ahead of schools.
+     By the time the user reaches the district dropdown, schools are already in memory. */
+  function prefetchStateSchools(country, state) {
+    if (!SCHOOLS_BASE_URL) return;
+
+    var slug = schoolsFileSlug(country, state);
+    if (_stateSchoolsKey === slug) return; // already loading or loaded
+
+    _stateSchools        = null;
+    _districtEnrollment  = {};
+    _stateSchoolsKey     = slug;
+    _stateSchoolsPromise = fetch(SCHOOLS_BASE_URL + slug + '.json', { cache: 'no-cache' })
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        if (_stateSchoolsKey === slug) {
+          _stateSchools       = data;
+          _districtEnrollment = (data && data._enrollment) || {};
+        }
+        return data;
+      })
+      .catch(function() {
+        // Silent failure — district dropdown will remain empty
+        if (_stateSchoolsKey === slug) _stateSchools = null;
+        return null;
+      });
+  }
+
+  /* Load full hierarchy index on init — one fetch, state/city/district data */
+  function loadIndex() {
+    var fetchUrl = INDEX_URL;
+    fetch(fetchUrl)
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(json) {
+        // GitHub file contains the raw index object
+        _index = json.data !== undefined ? json.data : json;
+      })
+      .catch(function() {
+        // Silent failure — US cascade will show no states if index unavailable
+        setHint('country', 'Some location data could not load. Please try refreshing.', true);
+      });
+  }
+
+  /* Country → State (US only) or City — instant, from index */
+  sel.country.addEventListener('change', function () {
+    var country = sel.country.value;
+
+    resetSelect('state', 'Select a state\u2026');
+    resetSelect('city', 'Select a state first');
+    resetSelect('district', 'Select a city first');
+    resetSelect('school', 'Select a district first');
+    clearNces();
+    clearEnrollment();
+
+    if (!country) { toggleStateField(false); return; }
+
+    // "Can't find your school?" only makes sense for the US cascade flow
+    var cantFindWrap = document.getElementById('pqf_cant_find_wrap');
+    var cantFindDistrictWrap = document.getElementById('pqf_cant_find_district_wrap');
+    if (cantFindWrap) cantFindWrap.style.display = country === 'United States' ? '' : 'none';
+    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = country === 'United States' ? '' : 'none';
+
+    if (country === 'United States') {
+      updateStateLabel(country);
+      toggleStateField(true);
+      var states = (_index && _index.states && _index.states[country.toLowerCase()]) || [];
+      populateSelect('state', states, states.length ? 'Select a state\u2026' : 'Loading\u2026');
+    } else if (country === 'Canada' || country === 'Australia') {
+      updateStateLabel(country);
+      toggleStateField(true);
+      var regionList = country === 'Canada' ? CA_PROVINCES : AU_STATES;
+      populateSelect('state', regionList, 'Select a ' + (country === 'Canada' ? 'province\u2026' : 'state\u2026'));
+    } else {
+      toggleStateField(false);
+      if (privateMode) {
+        // Private mode: show the free-text city field for this non-US country
+        var pCityFld = document.getElementById('pqf_private_city_field');
+        if (pCityFld) pCityFld.style.display = country ? '' : 'none';
+        var csCityFld = document.getElementById('pqf_city_field');
+        if (csCityFld) csCityFld.style.display = 'none';
+      } else {
+        // Public mode: switch directly to manual entry with country pre-filled
+        document.getElementById('pqf_manual_country').value = country;
+        updateDistrictLabel(country);
+        toggleManualMode(true, true);
+      }
+    }
+  });
+
+  /* State → City — instant, from index; also kicks off school prefetch */
+  sel.state.addEventListener('change', function () {
+    resetSelect('city', 'Select a city…');
+    resetSelect('district', 'Select a city first');
+    resetSelect('school', 'Select a district first');
+    clearNces();
+    clearEnrollment();
+
+    var state   = sel.state.value;
+    var country = sel.country.value;
+    if (!state) return;
+
+    // Canada / Australia: no city/district cascade
+    if (country === 'Canada' || country === 'Australia') {
+      if (privateMode) {
+        // Private mode: show the free-text city field; don't trigger manual mode
+        var pCityFldCA = document.getElementById('pqf_private_city_field');
+        if (pCityFldCA) pCityFldCA.style.display = '';
+        var csCityFldCA = document.getElementById('pqf_city_field');
+        if (csCityFldCA) csCityFldCA.style.display = 'none';
+      } else {
+        // Public mode: open manual panel with country+state pre-filled
+        document.getElementById('pqf_manual_country').value = country;
+        document.getElementById('pqf_manual_state').value   = state;
+        var msi = document.getElementById('pqf_manual_state_input');
+        if (msi) msi.value = state;
+        updateManualStateLabel(country);
+        updateDistrictLabel(country);
+        toggleManualMode(true, true, true); // autoTriggered=true, prefilledState=true
+        document.getElementById('pqf_manual_city').focus();
+      }
+      return;
+    }
+
+    // United States: cascade via index
+    if (!_index) return;
+    var sdKey  = country.toLowerCase() + '|' + state.toLowerCase();
+    var sd     = (_index.stateData[sdKey] || {});
+    var cities = (sd.cities || []);
+    populateSelect('city', cities, 'Select a city…');
+
+    // Start fetching all schools for this state silently in the background.
+    prefetchStateSchools(country, state);
+  });
+
+  /* City → District — instant, from index */
+  sel.city.addEventListener('change', function () {
+    resetSelect('district', 'Select a district…');
+    resetSelect('school', 'Select a district first');
+    clearNces();
+    clearEnrollment();
+
+    var city = sel.city.value;
+    if (!city || !_index) return;
+
+    var sdKey     = sel.country.value.toLowerCase() + '|' + sel.state.value.toLowerCase();
+    var sd        = (_index.stateData[sdKey] || {});
+    var districts = ((sd.districts || {})[city.toLowerCase()] || []);
+    populateSelect('district', districts, 'Select a district…');
+  });
+
+  function showEnrollment(districtValue) {
+    var input = document.getElementById('pqf_enrollment');
+    if (!input) return;
+    var enrollment = _districtEnrollment[(districtValue || '').toLowerCase()];
+    input.value = enrollment ? enrollment.toLocaleString() : '';
+  }
+
+  function clearEnrollment() {
+    var input = document.getElementById('pqf_enrollment');
+    if (input) input.value = '';
+  }
+
+  /* District → School — instant from prefetched state file */
+  sel.district.addEventListener('change', function () {
+    resetSelect('school', 'Select a school…');
+    clearNces();
+    showEnrollment(this.value);
+
+    var district = sel.district.value;
+    if (!district) { clearEnrollment(); return; }
+
+    var districtLc = district.toLowerCase();
+
+    function populateFromPrefetch() {
+      var schools = (_stateSchools && _stateSchools[districtLc]) || [];
+      populateSchoolSelect(schools, 'Select a school…');
+      setLoading('school', false);
+    }
+
+    function fetchFromAPI() {
+      fetchOptions(
+        { action: 'getSchools', country: sel.country.value,
+          state: sel.state.value, city: sel.city.value, district: district },
+        function(data) { populateSchoolSelect(data, 'Select a school…'); setLoading('school', false); },
+        function(err)  { setLoading('school', false); setHint('school', 'Error: ' + err, true); }
+      );
+    }
+
+    setLoading('school', true);
+
+    if (_stateSchools) {
+      // Prefetch already complete — instant
+      populateFromPrefetch();
+    } else if (_stateSchoolsPromise) {
+      // Prefetch still in flight — wait for it, then populate
+      _stateSchoolsPromise.then(function(data) {
+        if (data) populateFromPrefetch();
+        else      fetchFromAPI();
+      });
+    } else {
+      // No prefetch (schoolsBaseUrl not configured)
+      fetchFromAPI();
+    }
+  });
+
+  /* ── Validation helpers ───────────────────────────────────── */
+
+  var validators = {
+    country:        function (v) { return v ? '' : 'Please select a country.'; },
+    state:          function (v) { return (isUS() && !v) ? 'Please select a state.' : ''; },
+    city:           function (v) { return v ? '' : 'Please select a city.'; },
+    district:       function (v) { return v ? '' : 'Please select a school district.'; },
+    school:         function (v) { return v ? '' : 'Please select a school.'; },
+    pqf_firstname:  function (v) { return v.trim() ? '' : 'First name is required.'; },
+    pqf_lastname:   function (v) { return v.trim() ? '' : 'Last name is required.'; },
+    pqf_email:      function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : 'Enter a valid email address.'; },
+    pqf_role:       function (v) { return v ? '' : 'Please select a subject.'; },
+  };
+
+  function validate() {
+    var ok = true;
+
+    if (schoolManualMode) {
+      // ── Validate school-only mode (cascade district + manual school name) ──
+      var schoolEl   = document.getElementById('pqf_manual_school');
+      var schoolHint = document.getElementById('pqf_manual_school_hint');
+      var schoolErr  = (schoolEl && schoolEl.value.trim()) ? '' : 'Please enter the school name.';
+      if (schoolHint) { schoolHint.textContent = schoolErr; schoolHint.className = 'pqf-hint' + (schoolErr ? ' pqf-error' : ''); }
+      if (schoolErr) ok = false;
+
+      // Website is optional — validate format only if provided
+      var websiteEl2   = document.getElementById('pqf_manual_website');
+      var websiteHint2 = document.getElementById('pqf_manual_website_hint');
+      if (websiteEl2 && websiteEl2.value.trim()) {
+        var urlOk2  = /^https?:\/\/.+\..+/.test(websiteEl2.value.trim());
+        var urlErr2 = urlOk2 ? '' : 'Please enter a valid URL (e.g. https://school.edu).';
+        if (websiteHint2) { websiteHint2.textContent = urlErr2; websiteHint2.className = 'pqf-hint' + (urlErr2 ? ' pqf-error' : ''); }
+        if (urlErr2) ok = false;
+      }
+
+    } else if (manualMode) {
+      // ── Validate manual text fields ──────────────────────
+      var manualRequired = [
+        { id: 'pqf_manual_country',  msg: 'Please enter the country.'              },
+        { id: 'pqf_manual_city',     msg: 'Please enter the city.'                 },
+        { id: 'pqf_manual_district', msg: 'Please enter the school district name.' },
+        { id: 'pqf_manual_school',   msg: 'Please enter the school name.'          },
+      ];
+      if (isManualUS()) {
+        manualRequired.push({ id: 'pqf_manual_state', msg: 'Please enter the state.' });
+      }
+      manualRequired.forEach(function (f) {
+        var el   = document.getElementById(f.id);
+        var hint = document.getElementById(f.id + '_hint');
+        var err  = el && el.value.trim() ? '' : f.msg;
+        if (hint) { hint.textContent = err; hint.className = 'pqf-hint' + (err ? ' pqf-error' : ''); }
+        if (err) ok = false;
+      });
+
+      // Website is optional — validate format only if provided
+      var websiteEl   = document.getElementById('pqf_manual_website');
+      var websiteHint = document.getElementById('pqf_manual_website_hint');
+      if (websiteEl && websiteEl.value.trim()) {
+        var urlOk  = /^https?:\/\/.+\..+/.test(websiteEl.value.trim());
+        var urlErr = urlOk ? '' : 'Please enter a valid URL (e.g. https://school.edu).';
+        if (websiteHint) { websiteHint.textContent = urlErr; websiteHint.className = 'pqf-hint' + (urlErr ? ' pqf-error' : ''); }
+        if (urlErr) ok = false;
+      }
+
+    } else if (privateMode) {
+      // ── Validate private school fields ───────────────────
+      // Country
+      var cErr = validators.country(sel.country.value);
+      setHint('country', cErr, !!cErr);
+      if (cErr) ok = false;
+
+      // State (cascade, US only)
+      if (isUS()) {
+        var sErr = validators.state(sel.state.value);
+        setHint('state', sErr, !!sErr);
+        if (sErr) ok = false;
+      }
+
+      // City: cascade for US, free-text for non-US
+      if (isUS()) {
+        var cityErrP = sel.city.value ? '' : 'Please select a city.';
+        setHint('city', cityErrP, !!cityErrP);
+        if (cityErrP) ok = false;
+      } else {
+        var pcEl   = document.getElementById('pqf_private_city');
+        var pcHint = document.getElementById('pqf_private_city_hint');
+        var pcErr  = (pcEl && pcEl.value.trim()) ? '' : 'Please enter the city.';
+        if (pcHint) { pcHint.textContent = pcErr; pcHint.className = 'pqf-hint' + (pcErr ? ' pqf-error' : ''); }
+        if (pcErr) ok = false;
+      }
+
+      // Private school name
+      var psEl   = document.getElementById('pqf_private_school_name');
+      var psHint = document.getElementById('pqf_private_school_name_hint');
+      var psErr  = (psEl && psEl.value.trim()) ? '' : 'Please enter the school name.';
+      if (psHint) { psHint.textContent = psErr; psHint.className = 'pqf-hint' + (psErr ? ' pqf-error' : ''); }
+      if (psErr) ok = false;
+
+    } else {
+      // ── Validate cascading selects ───────────────────────
+      ['country', 'state', 'city', 'district', 'school'].forEach(function (key) {
+        var err = validators[key](sel[key].value);
+        setHint(key, err, !!err);
+        if (err) ok = false;
+      });
+    }
+
+    // ── Always validate contact + quote fields ─────────────
+    ['pqf_firstname', 'pqf_lastname', 'pqf_email', 'pqf_role'].forEach(function (id) {
+      var el   = document.getElementById(id);
+      var err  = validators[id](el.value);
+      var hint = document.getElementById(id + '_hint');
+      if (hint) { hint.textContent = err; hint.className = 'pqf-hint' + (err ? ' pqf-error' : ''); }
+      if (err) ok = false;
+    });
+
+    return ok;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    successBanner.classList.remove('pqf-visible');
+    errorBanner.classList.remove('pqf-visible');
+
+    if (!validate()) return;
+
+    saveQuoteProfile();
+    form.reset();
+    toggleStateField(true);
+    resetSelect('state', 'Select a country first');
+    resetSelect('city', 'Select a state first');
+    resetSelect('district', 'Select a city first');
+    resetSelect('school', 'Select a district first');
+    toggleManualMode(false);
+    if (schoolManualMode) toggleSchoolOnlyMode(false);
+    if (privateMode)      togglePrivateMode(false);
+    var pubRadio = document.getElementById('pqf_school_type_public');
+    if (pubRadio) { pubRadio.checked = true; updateSchoolTypeActive(); }
+    document.getElementById('pqf_manual_state_field').style.display = 'none';
+    clearNces();
+    successBanner.classList.add('pqf-visible');
+    submitBtn.textContent = 'Submit';
+    window.scrollTo({ top: form.getBoundingClientRect().bottom - 200, behavior: 'smooth' });
+  });
+
+  /* ── localStorage profile — save / restore ────────────────── */
+
+  // Programmatically commit a value into a combobox (replicates the combo's internal commit())
+  function comboCommit(key, value) {
+    var inputEl   = document.getElementById('pqf_' + key + '_input');
+    var hiddenSel = sel[key] || document.getElementById('pqf_' + key);
+    if (!inputEl || !hiddenSel || !value) return;
+    inputEl.value = value;
+    // Re-use an existing option if present, otherwise create one
+    var opt = Array.from(hiddenSel.options).find(function(o) { return o.value === value; });
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value;
+      hiddenSel.appendChild(opt);
+    }
+    hiddenSel.value = value;
+    hiddenSel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Poll a hidden select until the target option appears, then commit it
+  function waitAndCommit(key, value, cb) {
+    if (!value) { if (cb) cb(false); return; }
+    var hiddenSel = sel[key] || document.getElementById('pqf_' + key);
+    if (!hiddenSel) { if (cb) cb(false); return; }
+    var attempts = 0;
+    var poll = setInterval(function () {
+      var found = Array.from(hiddenSel.options).some(function (o) { return o.value === value; });
+      if (found || attempts++ > 30) {
+        clearInterval(poll);
+        if (found) comboCommit(key, value);
+        if (cb) cb(found);
+      }
+    }, 150);
+  }
+
+  function saveQuoteProfile() {
+    try {
+      // School display name: prefer school name, fall back to district
+      var schoolDisplay = '';
+      if (schoolManualMode) {
+        schoolDisplay = document.getElementById('pqf_manual_school').value.trim() || sel.district.value;
+      } else if (manualMode) {
+        schoolDisplay = document.getElementById('pqf_manual_school').value.trim() ||
+                        document.getElementById('pqf_manual_district').value.trim();
+      } else {
+        var si = document.getElementById('pqf_school_input');
+        var di = document.getElementById('pqf_district_input');
+        schoolDisplay = (si && si.value.trim()) || (di && di.value.trim()) ||
+                        sel.school.value || sel.district.value;
+      }
+      var profile = {
+        firstname:       document.getElementById('pqf_firstname').value.trim(),
+        lastname:        document.getElementById('pqf_lastname').value.trim(),
+        email:           document.getElementById('pqf_email').value.trim(),
+        role:            document.getElementById('pqf_role').value.trim(),
+        manual:          manualMode,
+        country:         sel.country.value,
+        state:           sel.state.value,
+        city:            sel.city.value,
+        district:        sel.district.value,
+        school:          sel.school.value,
+        manual_country:  document.getElementById('pqf_manual_country').value.trim(),
+        manual_state:    document.getElementById('pqf_manual_state_input') ? document.getElementById('pqf_manual_state_input').value.trim() : '',
+        manual_city:     document.getElementById('pqf_manual_city').value.trim(),
+        manual_district: document.getElementById('pqf_manual_district').value.trim(),
+        manual_school:   document.getElementById('pqf_manual_school').value.trim(),
+        manual_website:  document.getElementById('pqf_manual_website').value.trim(),
+        schoolDisplay:   schoolDisplay,
+      };
+      if (profile.firstname || profile.email) {
+        localStorage.setItem('pqf_profile', JSON.stringify(profile));
+      }
+    } catch (e) { /* localStorage may be unavailable */ }
+  }
+
+  function prefillFromProfile(p) {
+    // 1. Contact fields — immediate, no dependencies
+    var set = function(id, v) { var el = document.getElementById(id); if (el && v) el.value = v; };
+    set('pqf_firstname',  p.firstname);
+    set('pqf_lastname',   p.lastname);
+    set('pqf_email',      p.email);
+    set('pqf_role',       p.role);
+
+    // 2. School location
+    if (p.manual) {
+      // Manual entry panel: set country first (may auto-trigger panel for non-US),
+      // then open panel for US "can't find" case, then fill text fields.
+      var mc = document.getElementById('pqf_manual_country');
+      if (mc) { mc.value = p.manual_country || p.country || ''; }
+      updateDistrictLabel(p.manual_country || p.country || '');
+
+      if ((p.manual_country || p.country || '') !== 'United States') {
+        // Non-US: country change auto-triggers manual mode
+        comboCommit('country', p.manual_country || p.country || '');
+      } else {
+        // US "can't find" path: open manual panel directly, locked
+        toggleManualMode(true, true);
+      }
+      setTimeout(function () {
+        set('pqf_manual_country',  p.manual_country || p.country || '');
+        set('pqf_manual_state_input', p.manual_state);
+        set('pqf_manual_city',     p.manual_city);
+        set('pqf_manual_district', p.manual_district);
+        set('pqf_manual_school',   p.manual_school);
+        set('pqf_manual_website',  p.manual_website);
+      }, 100);
+    } else {
+      // Dropdown cascade: country → state → city → district → school
+      comboCommit('country', p.country);
+      waitAndCommit('state', p.state, function () {
+        waitAndCommit('city', p.city, function () {
+          waitAndCommit('district', p.district, function () {
+            if (p.school) waitAndCommit('school', p.school, null);
+          });
+        });
+      });
+    }
+  }
+
+  function initWelcomeBanner() {
+    try {
+      var raw = localStorage.getItem('pqf_profile');
+      if (!raw) return;
+      var p = JSON.parse(raw);
+      if (!p || (!p.firstname && !p.email)) return;
+
+      var school = p.schoolDisplay || p.manual_school || p.manual_district || p.school || p.district || '';
+      document.getElementById('pqf_welcome_name').textContent = p.firstname || p.email;
+      var schoolEl = document.getElementById('pqf_welcome_school');
+      schoolEl.textContent = school ? ' (' + school + ')' : '';
+      document.getElementById('pqf_welcome_back').style.display = '';
+
+      document.getElementById('pqf_welcome_use').addEventListener('click', function () {
+        document.getElementById('pqf_welcome_back').style.display = 'none';
+        prefillFromProfile(p);
+      });
+      document.getElementById('pqf_welcome_clear').addEventListener('click', function () {
+        localStorage.removeItem('pqf_profile');
+        document.getElementById('pqf_welcome_back').style.display = 'none';
+      });
+    } catch (e) { /* localStorage may be unavailable */ }
+  }
+
+  /* ── Init ─────────────────────────────────────────────────── */
+  loadIndex();
+  toggleStateField(true); // show state by default; hidden dynamically for non-US
+  initWelcomeBanner();
+
+})();
+</script>
