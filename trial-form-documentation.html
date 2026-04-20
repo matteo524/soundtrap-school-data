@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Trial Form — Developer Documentation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #161616;
+      background: #f5f5f7;
+      margin: 0;
+      padding: 40px 24px 80px;
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .doc-header {
+      background: #161616;
+      border-radius: 16px;
+      padding: 36px 40px;
+      margin-bottom: 40px;
+      background-image: radial-gradient(ellipse at 80% 50%, #271B7A 0%, transparent 60%);
+    }
+    .doc-header svg { height: 22px; margin-bottom: 20px; }
+    .doc-header h1 {
+      font-family: 'Bebas Neue', 'Arial Narrow', Arial, sans-serif;
+      font-size: 36px;
+      font-weight: 400;
+      color: #fff;
+      letter-spacing: 1px;
+      margin: 0 0 8px;
+    }
+    .doc-header p {
+      color: rgba(255,255,255,0.55);
+      font-size: 14px;
+      margin: 0;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 32px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    }
+    .toc h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #6551F2; margin: 0 0 12px; }
+    .toc ol { margin: 0; padding-left: 20px; }
+    .toc li { margin-bottom: 4px; }
+    .toc a { color: #6551F2; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ── Sections ── */
+    .section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 32px 36px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6551F2;
+      margin: 0 0 8px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #161616;
+      margin: 0 0 16px;
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #271B7A;
+      margin: 24px 0 8px;
+      border-left: 3px solid #6551F2;
+      padding-left: 10px;
+    }
+    h3:first-of-type { margin-top: 8px; }
+    p { margin: 0 0 12px; }
+    ul, ol { margin: 0 0 12px; padding-left: 22px; }
+    li { margin-bottom: 4px; }
+
+    /* ── Code ── */
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      background: #EBE9FF;
+      color: #271B7A;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    pre {
+      background: #1a1a2e;
+      color: #a8d8ea;
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 12px 0 16px;
+    }
+
+    /* ── Callouts ── */
+    .callout {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .callout.warn  { background: #FFF8E1; border-left: 4px solid #FFC107; color: #5D4037; }
+    .callout.info  { background: #E8F4FD; border-left: 4px solid #2196F3; color: #0D47A1; }
+    .callout.green { background: #E8F5E9; border-left: 4px solid #4CAF50; color: #1B5E20; }
+    .callout strong { font-weight: 700; }
+
+    /* ── Flow table ── */
+    .flow-table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 14px; }
+    .flow-table th {
+      background: #EBE9FF;
+      color: #271B7A;
+      font-weight: 700;
+      text-align: left;
+      padding: 8px 14px;
+      border-bottom: 2px solid #6551F2;
+    }
+    .flow-table td { padding: 9px 14px; border-bottom: 1px solid #F0EEF8; vertical-align: top; }
+    .flow-table tr:last-child td { border-bottom: none; }
+    .flow-table tr:hover td { background: #FAFAFE; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .badge.test    { background: #FFF3E0; color: #E65100; border: 1px solid #FF9800; }
+    .badge.todo    { background: #FCE4EC; color: #880E4F; border: 1px solid #E91E63; }
+    .badge.us-only { background: #E8F4FD; color: #0D47A1; border: 1px solid #2196F3; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <svg viewBox="0 0 8921 1683" xmlns="http://www.w3.org/2000/svg" aria-label="Soundtrap">
+      <path d="M2071.98 837.55H1102.55C1064.38 837.55 1033.44 806.6 1033.44 768.44C1033.44 730.28 1064.39 699.33 1102.55 699.33H2071.99C2110.15 699.33 2141.1 730.28 2141.1 768.44C2141.1 806.6 2110.15 837.55 2071.99 837.55H2071.98Z" fill="white"/>
+      <path d="M963.33 1253.87C945.61 1253.87 927.89 1247.11 914.37 1233.59C657.88 977.1 657.88 559.77 914.36 303.28C941.41 276.25 985.24 276.25 1012.29 303.28C1039.34 330.32 1039.34 374.17 1012.29 401.21C809.8 603.7 809.8 933.18 1012.29 1135.67C1039.34 1162.71 1039.34 1206.56 1012.29 1233.6C998.77 1247.12 981.05 1253.88 963.33 1253.88V1253.87Z" fill="white"/>
+      <path d="M2211.19 1253.88C2193.47 1253.88 2175.75 1247.12 2162.23 1233.6C2135.19 1206.56 2135.19 1162.71 2162.23 1135.67C2364.72 933.18 2364.72 603.7 2162.23 401.2C2135.19 374.16 2135.19 330.31 2162.23 303.27C2189.29 276.24 2233.12 276.24 2260.16 303.27C2516.65 559.76 2516.65 977.1 2260.16 1233.59C2246.64 1247.11 2228.92 1253.87 2211.2 1253.87L2211.19 1253.88Z" fill="white"/>
+      <path d="M2940.72 940.1L3066.39 901.34C3080.49 1007.05 3161.53 1076.34 3260.19 1076.34C3358.85 1076.34 3421.1 1030.54 3421.1 960.06C3421.1 765.09 2971.25 871.98 2971.25 576C2971.25 445.62 3092.23 355.18 3253.14 355.18C3414.05 355.18 3527.97 437.4 3551.46 560.73L3428.13 611.23C3411.68 527.84 3347.08 474.98 3253.13 474.98C3159.18 474.98 3109.83 512.56 3109.83 576C3109.83 741.6 3560.85 626.5 3560.85 957.72C3560.85 1101.01 3439.88 1196.14 3255.48 1196.14C3095.74 1196.14 2964.19 1090.44 2940.7 940.1H2940.72Z" fill="white"/>
+      <path d="M4088.24 890.77C4088.24 776.84 4016.59 696.97 3912.06 696.97C3807.53 696.97 3735.89 776.84 3735.89 890.77C3735.89 1004.7 3806.35 1084.56 3912.06 1084.56C4017.77 1084.56 4088.24 1004.69 4088.24 890.77ZM3606.69 890.77C3606.69 713.41 3733.54 585.39 3912.06 585.39C4090.58 585.39 4217.44 713.41 4217.44 890.77C4217.44 1068.13 4089.41 1196.14 3912.06 1196.14C3734.71 1196.14 3606.69 1068.13 3606.69 890.77Z" fill="white"/>
+      <path d="M4804.7 1186.74H4676.69V1088.08C4636.76 1151.5 4568.63 1196.13 4481.71 1196.13C4356.04 1196.13 4267.96 1112.74 4267.96 984.72V594.78H4395.98V955.36C4395.98 1029.35 4441.78 1081.03 4516.95 1081.03C4616.78 1081.03 4676.69 996.47 4676.69 854.35V594.78H4804.7V1186.74Z" fill="white"/>
+      <path d="M4866.97 594.78H4995V693.44C5034.93 630.01 5103.05 585.38 5189.97 585.38C5315.64 585.38 5403.73 668.77 5403.73 796.79V1186.73H5275.71V826.16C5275.71 752.16 5229.91 700.48 5154.74 700.48C5054.9 700.48 4995 785.05 4995 927.16V1186.73H4866.97V594.78Z" fill="white"/>
+      <path d="M5927.57 890.77C5927.57 773.32 5859.45 696.97 5756.09 696.97C5652.73 696.97 5584.61 773.32 5584.61 890.77C5584.61 1008.22 5652.73 1084.56 5756.09 1084.56C5859.45 1084.56 5927.57 1007.05 5927.57 890.77ZM5456.59 890.77C5456.59 712.23 5558.78 585.39 5737.3 585.39C5813.64 585.39 5882.94 619.45 5918.18 668.78V355.18H6046.2V1186.74H5918.18V1111.57C5890 1160.9 5818.34 1196.13 5739.66 1196.13C5558.78 1196.13 5456.6 1069.29 5456.6 890.76L5456.59 890.77Z" fill="white"/>
+      <path d="M6391.52 1196.13C6279.95 1196.13 6196.55 1135.06 6196.55 999.99V704.01H6093.19V594.78H6196.55V418.6H6324.57V594.78H6477.26V704.01H6324.57V992.94C6324.57 1051.67 6357.45 1082.2 6405.61 1082.2C6427.92 1082.2 6454.94 1078.68 6477.25 1068.11L6485.47 1182.03C6457.28 1191.43 6424.4 1196.12 6391.51 1196.12L6391.52 1196.13Z" fill="white"/>
+      <path d="M6835.46 705.19C6748.56 705.19 6672.23 782.7 6672.23 965.93V1186.74H6544.21V594.78H6672.23V707.53C6703.96 637.06 6781.44 585.38 6853.11 585.38C6875.41 585.38 6901.24 588.9 6918.89 595.95L6911.83 719.28C6890.71 709.89 6862.53 705.19 6835.45 705.19H6835.46Z" fill="white"/>
+      <path d="M7318.24 931.87V907.2L7205.51 920.12C7109.19 930.69 7059.82 965.93 7059.82 1017.6C7059.82 1064.58 7098.6 1097.47 7158.49 1097.47C7258.34 1097.47 7317.06 1028.17 7318.24 931.86V931.87ZM7443.92 817.94V1186.74H7318.24V1096.3C7284.17 1156.2 7211.33 1196.13 7132.66 1196.13C7015.22 1196.13 6934.13 1122.14 6934.13 1021.13C6934.13 904.85 7024.56 842.61 7206.61 823.82L7318.23 812.07V803.85C7318.23 731.02 7267.68 686.4 7190.2 686.4C7118.53 686.4 7068.05 728.68 7059.81 799.15L6944.72 778.01C6963.49 661.73 7064.51 585.39 7190.19 585.39C7340.52 585.39 7443.91 669.95 7443.91 817.94H7443.92Z" fill="white"/>
+      <path d="M7966.58 890.77C7966.58 773.32 7898.44 696.97 7795.06 696.97C7691.68 696.97 7623.61 773.32 7623.61 890.77C7623.61 1008.22 7691.75 1084.56 7795.06 1084.56C7898.37 1084.56 7966.58 1007.05 7966.58 890.77ZM7503.81 594.79H7631.84V669.96C7664.73 621.81 7734.05 585.4 7816.24 585.4C7991.22 585.4 8094.61 712.24 8094.61 890.78C8094.61 1069.32 7986.52 1196.15 7809.18 1196.15C7737.51 1196.15 7668.26 1165.62 7631.84 1118.64V1400.52H7503.81V594.78V594.79Z" fill="white"/>
+      <path d="M8122.32 424.05C8125.3 424.05 8128.14 423.95 8130.77 423.75C8133.4 423.56 8135.76 423.01 8137.83 422.1C8139.91 421.19 8141.57 419.8 8142.82 417.92C8144.07 416.05 8144.69 413.43 8144.69 410.06C8144.69 407.21 8144.14 404.94 8143.03 403.25C8141.92 401.57 8140.47 400.27 8138.74 399.37C8137.01 398.46 8135 397.84 8132.72 397.51C8130.43 397.19 8128.22 397.03 8126 397.03H8108.55V424.04H8122.33L8122.32 424.05ZM8128.14 386.36C8138.25 386.36 8145.73 388.37 8150.58 392.38C8155.43 396.4 8157.85 402.49 8157.85 410.65C8157.85 418.29 8155.7 423.9 8151.48 427.46C8147.19 431.02 8141.85 433.13 8135.55 433.78L8159.79 471.28H8145.66L8122.53 434.75H8108.54V471.28H8095.31V386.38H8128.13L8128.14 386.36Z" fill="white"/>
+      <path d="M8123.21 365.1C8088.1 365.1 8059.5 393.68 8059.5 428.81C8059.5 463.94 8088.1 492.52 8123.21 492.52C8158.32 492.52 8186.92 463.94 8186.92 428.81C8186.92 393.68 8158.32 365.1 8123.21 365.1ZM8123.21 503.59C8081.94 503.59 8048.43 470.04 8048.43 428.81C8048.43 387.58 8081.94 354.03 8123.21 354.03C8164.48 354.03 8198 387.58 8198 428.81C8198 470.04 8164.42 503.59 8123.21 503.59Z" fill="white"/>
+    </svg>
+    <h1>Trial Form — Developer Documentation</h1>
+    <p>Soundtrap for Education · Trial Request Prototype · v1.0</p>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#overview">Overview &amp; Architecture</a></li>
+      <li><a href="#data">GitHub-Hosted School Data</a></li>
+      <li><a href="#us-public">US Public School Flow</a></li>
+      <li><a href="#us-private">US Private School Flow</a></li>
+      <li><a href="#fallbacks">Fallback Flows ("Can't find" paths)</a></li>
+      <li><a href="#non-us">Non-US Flow</a></li>
+      <li><a href="#submission">Form Submission &amp; Backend Integration Points</a></li>
+      <li><a href="#identifiers">School Identifiers &amp; Key Design Decisions</a></li>
+      <li><a href="#testfields">Test-Only Fields</a></li>
+      <li><a href="#misc">Other Dev Notes</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. Overview -->
+  <div class="section" id="overview">
+    <div class="section-label">Section 1</div>
+    <h2>Overview &amp; Architecture</h2>
+    <p>This is a <strong>single-file static HTML prototype</strong> (<code>trial-form.html</code>) with no backend dependencies. It demonstrates how school and district data hosted on GitHub Pages can power a cascading school lookup in a trial request form.</p>
+
+    <div class="callout warn">
+      <strong>⚠️ Prototype only.</strong> Form submission currently shows a success banner but does not send data anywhere. All backend integration (STWeb, BigQuery, Salesforce notifications) must be built separately before going to production.
+    </div>
+
+    <h3>Tech stack</h3>
+    <ul>
+      <li>Vanilla JavaScript (ES5-compatible — no build tools, no frameworks)</li>
+      <li>Single HTML file with embedded CSS and JS</li>
+      <li>School data served as static JSON from GitHub Pages</li>
+      <li>No cookies, no tracking, no third-party dependencies except Google Fonts</li>
+      <li><code>localStorage</code> used only for the "Welcome Back" pre-fill banner</li>
+    </ul>
+
+    <h3>Files</h3>
+    <table class="flow-table">
+      <tr><th>File</th><th>Purpose</th></tr>
+      <tr><td><code>trial-form.html</code></td><td>The form — self-contained, upload directly to GitHub Pages</td></tr>
+      <tr><td><code>trial-flow-chart.html</code></td><td>End-to-end process flowchart for team reference</td></tr>
+      <tr><td><code>trial-form-documentation.html</code></td><td>This document</td></tr>
+    </table>
+  </div>
+
+  <!-- 2. Data -->
+  <div class="section" id="data">
+    <div class="section-label">Section 2</div>
+    <h2>GitHub-Hosted School Data</h2>
+    <p>All school data is served as static JSON files from GitHub Pages at:</p>
+    <pre>https://matteo524.github.io/soundtrap-school-data/</pre>
+
+    <h3>index.json</h3>
+    <p>Fetched once on page load. Contains the full US school hierarchy:</p>
+    <ul>
+      <li>List of US states</li>
+      <li>Per state: list of cities</li>
+      <li>Per city: list of district names</li>
+      <li>List of available per-state school files (slugs)</li>
+    </ul>
+    <p>This file powers the Country → State → City → District cascade instantly, without additional network requests.</p>
+
+    <h3>schools-{state-slug}.json</h3>
+    <p>One file per US state (e.g. <code>schools-california.json</code>). Fetched silently in the background as soon as the user selects a state. Contains:</p>
+    <ul>
+      <li>Every school in that state, keyed by district name (lowercase)</li>
+      <li>Each school entry: <code>{ name: "School Name", nces: "123456789" }</code></li>
+      <li>A special <code>_enrollment</code> key with district-level student population figures (from NCES 2022–23 data)</li>
+    </ul>
+
+    <div class="callout info">
+      <strong>Data coverage:</strong> US public schools only, sourced from NCES. Private schools and non-US schools are not in the database. The data is read-only — only GitHub collaborators with write access can modify the JSON files.
+    </div>
+
+    <h3>Performance strategy</h3>
+    <ul>
+      <li><code>index.json</code> is fetched on page init so the state/city/district cascade is instant</li>
+      <li>The per-state <code>schools-*.json</code> file starts downloading in the background the moment a state is selected — by the time the user picks a district, the data is usually already available</li>
+      <li>A client-side in-memory cache prevents duplicate fetches within the same page session</li>
+    </ul>
+  </div>
+
+  <!-- 3. US Public -->
+  <div class="section" id="us-public">
+    <div class="section-label">Section 3</div>
+    <h2>US Public School Flow <span class="badge us-only">US only</span></h2>
+
+    <table class="flow-table">
+      <tr><th>Step</th><th>User action</th><th>Data source</th><th>Result</th></tr>
+      <tr><td>1</td><td>Select <strong>United States</strong></td><td><code>index.json</code> (already loaded)</td><td>State list populates</td></tr>
+      <tr><td>2</td><td>Select a <strong>State</strong></td><td><code>index.json</code> + background fetch of <code>schools-{state}.json</code></td><td>City list populates; school data downloads silently</td></tr>
+      <tr><td>3</td><td>Select a <strong>City</strong></td><td><code>index.json</code> (in memory)</td><td>District list populates</td></tr>
+      <tr><td>4</td><td>Select a <strong>District</strong></td><td><code>schools-{state}.json</code> (already in memory)</td><td>School list populates; district enrollment auto-fills</td></tr>
+      <tr><td>5</td><td>Select a <strong>School</strong></td><td><code>schools-{state}.json</code></td><td>NCES ID auto-fills from <code>data-nces</code> attribute</td></tr>
+    </table>
+  </div>
+
+  <!-- 4. US Private -->
+  <div class="section" id="us-private">
+    <div class="section-label">Section 4</div>
+    <h2>US Private School Flow <span class="badge us-only">US only</span></h2>
+    <p>When the user selects <strong>Private School</strong>, the district step is skipped entirely. Switching school type always performs a <strong>full cascade reset</strong> — country, state, city, district, school, NCES ID, and enrollment all clear, and the user starts fresh.</p>
+
+    <table class="flow-table">
+      <tr><th>Step</th><th>User action</th><th>Data source</th><th>Result</th></tr>
+      <tr><td>1</td><td>Select <strong>United States</strong></td><td><code>index.json</code></td><td>State list populates</td></tr>
+      <tr><td>2</td><td>Select a <strong>State</strong></td><td><code>index.json</code> + background fetch of <code>schools-{state}.json</code></td><td>City list populates; school data downloads silently</td></tr>
+      <tr><td>3</td><td>Select a <strong>City</strong></td><td><code>schools-{state}.json</code></td><td>Schools from <em>all districts</em> in that city are merged, sorted A–Z, and loaded into the school combobox. No district selection required.</td></tr>
+      <tr><td>4</td><td>Select a <strong>School</strong></td><td><code>schools-{state}.json</code></td><td>NCES ID auto-fills</td></tr>
+    </table>
+
+    <div class="callout info">
+      <strong>Note:</strong> The school list in private mode may be large (all schools across all districts in a city). The combobox supports live text search to help users filter quickly.
+    </div>
+  </div>
+
+  <!-- 5. Fallbacks -->
+  <div class="section" id="fallbacks">
+    <div class="section-label">Section 5</div>
+    <h2>Fallback Flows — "Can't find" paths</h2>
+    <p>When a school or district is not in the database, the user can fall back to manual text entry. In all fallback cases, <strong>no NCES ID is captured</strong>.</p>
+
+    <h3>"I can't find my district" <span class="badge us-only">Public school only</span></h3>
+    <p>Available only in public school mode for US users. Opens a manual entry panel where the user types all details free-form:</p>
+    <ul>
+      <li>Country (pre-filled, locked to United States)</li>
+      <li>State, City, District name, School name (all free text)</li>
+      <li>School website (optional — helps Salesforce validate later)</li>
+    </ul>
+    <p>No JSON is queried. Submitting this path triggers the Salesforce validation workflow.</p>
+
+    <h3>"I can't find my school"  <span class="badge us-only">US · Public + Private</span></h3>
+    <p>Behaviour differs slightly by school type:</p>
+    <table class="flow-table">
+      <tr><th></th><th>Public school</th><th>Private school</th></tr>
+      <tr><td><strong>Requires district?</strong></td><td>Yes — must be selected from cascade first</td><td>No</td></tr>
+      <tr><td><strong>Pre-filled fields</strong></td><td>Country, State, City, District (all locked)</td><td>State, City (locked); no district field</td></tr>
+      <tr><td><strong>User types</strong></td><td>School name only</td><td>School name only</td></tr>
+    </table>
+    <p>In both cases, submitting triggers the Salesforce validation workflow.</p>
+  </div>
+
+  <!-- 6. Non-US -->
+  <div class="section" id="non-us">
+    <div class="section-label">Section 6</div>
+    <h2>Non-US Flow</h2>
+    <p>The GitHub JSON data covers <strong>US schools only</strong>. For all other countries, no JSON is queried and the form falls back to manual text entry automatically.</p>
+
+    <h3>Country behaviour by region</h3>
+    <table class="flow-table">
+      <tr><th>Country</th><th>School Type Toggle</th><th>Behaviour</th></tr>
+      <tr>
+        <td><strong>United States</strong></td>
+        <td>Public &amp; Private</td>
+        <td>Full cascade + GitHub JSON lookup (see Sections 3 &amp; 4)</td>
+      </tr>
+      <tr>
+        <td><strong>Canada / Australia</strong></td>
+        <td>Public</td>
+        <td>Province/State dropdown shows. After province selection, manual entry panel opens automatically (no city/district cascade — no JSON data for these countries)</td>
+      </tr>
+      <tr>
+        <td><strong>Canada / Australia</strong></td>
+        <td>Private</td>
+        <td>Province/State dropdown shows. A free-text city field appears. User types school name manually.</td>
+      </tr>
+      <tr>
+        <td><strong>All other countries</strong><br>(UK, ROW, etc.)</td>
+        <td>Public</td>
+        <td>Manual entry panel opens immediately after country selection. No state/city cascade.</td>
+      </tr>
+      <tr>
+        <td><strong>All other countries</strong><br>(UK, ROW, etc.)</td>
+        <td>Private</td>
+        <td>Free-text city field appears. User types school name manually. No cascade at all.</td>
+      </tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>No NCES ID for non-US schools.</strong> All non-US submissions will have no NCES ID and will always route through the Salesforce validation workflow. The Salesforce team will need to create a unique identifier for each non-US school.
+    </div>
+
+    <h3>What happens after a non-US submission</h3>
+    <ol>
+      <li>Trial is activated immediately</li>
+      <li>Salesforce team is notified (school not in database)</li>
+      <li>Team validates whether the school already exists in any internal system</li>
+      <li>If found: link existing identifier to the STWeb account</li>
+      <li>If not found: create a new unique identifier → add to STWeb → add school entry to the GitHub JSON (for future lookups if the school is in the US) or maintain in Salesforce/CRM for non-US</li>
+    </ol>
+  </div>
+
+  <!-- 7. Submission -->
+  <div class="section" id="submission">
+    <div class="section-label">Section 7</div>
+    <h2>Form Submission &amp; Backend Integration Points</h2>
+
+    <div class="callout warn">
+      <strong>⚠️ Not yet implemented.</strong> In the current prototype, clicking Submit validates the form, saves contact info to <code>localStorage</code>, shows a success banner, and resets the form. No data is sent anywhere.
+    </div>
+
+    <h3>Data available at submission time</h3>
+    <table class="flow-table">
+      <tr><th>Field</th><th>Internal name</th><th>Notes</th></tr>
+      <tr><td>First Name</td><td><code>firstname</code></td><td>Required</td></tr>
+      <tr><td>Last Name</td><td><code>lastname</code></td><td>Required</td></tr>
+      <tr><td>Email</td><td><code>email</code></td><td>Required, validated</td></tr>
+      <tr><td>What do you teach?</td><td><code>your_role</code></td><td>Required, dropdown</td></tr>
+      <tr><td>School Type</td><td><code>pqf_school_type</code></td><td><code>Public</code> or <code>Private</code></td></tr>
+      <tr><td>Country</td><td><code>country</code></td><td></td></tr>
+      <tr><td>State / Province</td><td><code>state</code></td><td>US / CA / AU only</td></tr>
+      <tr><td>City</td><td><code>city</code></td><td></td></tr>
+      <tr><td>School District</td><td><code>school_district</code></td><td>Public school cascade only</td></tr>
+      <tr><td>School Name</td><td><code>school_name</code></td><td></td></tr>
+      <tr><td>NCES ID</td><td><code>nces_number</code></td><td>Auto-filled; empty if manual entry</td></tr>
+      <tr><td>District Enrollment</td><td><code>district_enrollment</code></td><td>Auto-filled from NCES data; test field</td></tr>
+    </table>
+
+    <h3>Backend integration to build</h3>
+    <ol>
+      <li><strong>Determine path</strong> — check whether <code>nces_number</code> is present</li>
+      <li><strong>Activate trial</strong> — in all cases, immediately</li>
+      <li><strong>If NCES ID present:</strong>
+        <ul>
+          <li>Create STWeb account linked to NCES ID</li>
+          <li>Write trial record to BigQuery</li>
+        </ul>
+      </li>
+      <li><strong>If no NCES ID (manual entry or non-US):</strong>
+        <ul>
+          <li>Notify Salesforce team with submitted school details</li>
+          <li>Salesforce validates and either links an existing NCES ID or creates a new unique identifier</li>
+          <li>Update STWeb account with the identifier once confirmed</li>
+          <li>If a new US school: add entry to the GitHub JSON for future lookups</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+
+  <!-- 8. Identifiers -->
+  <div class="section" id="identifiers">
+    <div class="section-label">Section 8</div>
+    <h2>School Identifiers &amp; Key Design Decisions</h2>
+
+    <h3>NCES ID as primary key</h3>
+    <p>The <strong>NCES ID</strong> (National Center for Education Statistics) is the primary identifier for US public schools. It is a unique 12-digit number assigned by the US Department of Education. When present, it is the definitive link between:</p>
+    <ul>
+      <li>The GitHub JSON school database</li>
+      <li>The STWeb account</li>
+      <li>The BigQuery trial record</li>
+    </ul>
+
+    <h3>Non-US / manual entry schools</h3>
+    <p>For schools without an NCES ID, a <strong>unique internal identifier</strong> must be created by the Salesforce team. This should follow a consistent naming convention to be defined (e.g. <code>ST-{COUNTRY}-{ID}</code>). This identifier replaces the NCES ID in STWeb and should be added to the GitHub JSON if the school is later confirmed as a US institution.</p>
+
+    <h3>Switching school type resets all fields</h3>
+    <p>By design, switching between Public and Private school type performs a full reset of all cascade fields (country, state, city, district, school, NCES, enrollment). This prevents stale or locked state from carrying over between modes.</p>
+  </div>
+
+  <!-- 9. Test fields -->
+  <div class="section" id="testfields">
+    <div class="section-label">Section 9</div>
+    <h2>Test-Only Fields <span class="badge test">Prototype only</span></h2>
+    <p>Two fields are currently visible in the form for testing purposes only and <strong>must be hidden in the production version</strong>:</p>
+
+    <table class="flow-table">
+      <tr><th>Field</th><th>Internal name</th><th>Purpose in prototype</th><th>Production behaviour</th></tr>
+      <tr>
+        <td><strong>NCES ID</strong></td>
+        <td><code>nces_number</code></td>
+        <td>Confirms the correct school was matched to the right NCES record</td>
+        <td>Should be hidden from the user — captured and submitted in the background</td>
+      </tr>
+      <tr>
+        <td><strong>District Student Population</strong></td>
+        <td><code>district_enrollment</code></td>
+        <td>Confirms district enrollment data is loading correctly from <code>_enrollment</code> key in the state JSON</td>
+        <td>Should be hidden from the user — can be used internally for routing/segmentation logic</td>
+      </tr>
+    </table>
+
+    <div class="callout green">
+      To hide these fields in production: set <code>style="display:none;"</code> on <code>id="pqf_nces_field"</code> and <code>id="pqf_enrollment_field"</code> in the HTML. Their values are still captured and submitted — they just won't be visible to the user.
+    </div>
+  </div>
+
+  <!-- 10. Misc -->
+  <div class="section" id="misc">
+    <div class="section-label">Section 10</div>
+    <h2>Other Dev Notes</h2>
+
+    <h3>Welcome Back banner (localStorage)</h3>
+    <p>If a user has previously submitted the form, their contact info (name, email, subject, school) is saved to <code>localStorage</code>. On their next visit, a "Welcome Back" banner appears offering to pre-fill the form. No server-side session is involved — this is entirely client-side and clears if the user clears browser storage.</p>
+
+    <h3>CORS</h3>
+    <p>GitHub Pages serves files with permissive CORS headers (<code>Access-Control-Allow-Origin: *</code>), so the JSON files can be fetched from any domain — including a future HubSpot landing page or custom domain.</p>
+
+    <h3>Combobox implementation</h3>
+    <p>All dropdowns (country, state, city, district, school) use a custom combobox implementation with live text search filtering. This is important for the school field in particular, which can contain hundreds of entries. The underlying <code>&lt;select&gt;</code> elements are hidden and kept in sync — they are the authoritative source of truth for form values.</p>
+
+    <h3>Offline / slow connection behaviour</h3>
+    <p>If <code>index.json</code> fails to load, the state/city/district cascade will not function. If a per-state <code>schools-*.json</code> fails to load, the school dropdown will show "No schools found" and the user is expected to use the "I can't find my school" fallback. There are no retry mechanisms in the prototype.</p>
+
+    <h3>Browser compatibility</h3>
+    <p>Written in ES5-compatible JavaScript. Works in all modern browsers. Does not require any polyfills.</p>
+
+    <h3>Deployment</h3>
+    <p>Upload <code>trial-form.html</code> to the root of the <code>soundtrap-school-data</code> GitHub repo. GitHub Pages will serve it at:</p>
+    <pre>https://matteo524.github.io/soundtrap-school-data/trial-form.html</pre>
+    <p>No build step, no CI, no environment variables needed.</p>
+  </div>
+
+</div>
+</body>
+</html>
