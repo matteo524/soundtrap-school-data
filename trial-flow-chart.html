@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Trial Flow — Process Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: #f5f5f7;
+      margin: 0;
+      padding: 32px 24px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #161616;
+      margin: 0 0 6px;
+      letter-spacing: -0.3px;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #666;
+      margin: 0 0 32px;
+    }
+    .chart-wrap {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 40px;
+      max-width: 960px;
+      margin: 0 auto;
+      overflow-x: auto;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-wrap">
+    <h1>Soundtrap for Education — Trial Request Flow</h1>
+    <p class="subtitle">End-to-end process from form submission to account creation</p>
+
+    <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:32px;">
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#271B7A;">
+        <span style="display:inline-block; width:14px; height:14px; border-radius:3px; background:#EBE9FF; border:1.5px solid #6551F2;"></span>
+        <strong>Purple</strong> — User actions &amp; form steps
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#1B5E20;">
+        <span style="display:inline-block; width:14px; height:14px; border-radius:3px; background:#E8F5E9; border:1.5px solid #4CAF50;"></span>
+        <strong>Green</strong> — Automated backend (trial activation, STWeb, BigQuery)
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#E65100;">
+        <span style="display:inline-block; width:14px; height:14px; border-radius:3px; background:#FFF3E0; border:1.5px solid #FF9800;"></span>
+        <strong>Orange</strong> — Salesforce team actions (validation, identifier creation, JSON update)
+      </div>
+    </div>
+
+    <div class="mermaid">
+flowchart TD
+    A([👤 User opens Trial Form]) --> B
+
+    B["Fill in contact info\n(Name · Email · Subject)"]
+    B --> COUNTRY{Country?}
+
+    %% ── NON-US PATH ─────────────────────────────────────────────
+    COUNTRY -->|"🌍 Non-US\n(UK · Canada · ROW · etc.)"| INTL["Manual entry panel opens automatically\nNo GitHub JSON queried\nCountry · State/Province · City\nDistrict · School name\n(free text, no NCES)"]
+    INTL --> SUB
+
+    %% ── US PATH ─────────────────────────────────────────────────
+    COUNTRY -->|"🇺🇸 United States"| C{School Type?}
+
+    %% ── PUBLIC SCHOOL PATH ──────────────────────────────────────
+    C -->|Public School| D["Select State → City\n— GitHub index.json queried —\nDistricts populate"]
+    D --> E["Select District\n— GitHub schools-{state}.json queried —\nSchools populate"]
+    E --> F{School in list?}
+
+    F -->|✅ Found| G["Select school\nNCES ID auto-fills"]
+    F -->|❌ Not found| H1{"Which fallback?"}
+    H1 -->|I can't find\nmy district| M["Manual entry panel\nState · City · District\nSchool name\n(free text, no NCES)"]
+    H1 -->|I can't find\nmy school| N["School-only panel\nState / City / District\nlocked from cascade\nSchool name typed manually\n(no NCES)"]
+
+    %% ── PRIVATE SCHOOL PATH ─────────────────────────────────────
+    C -->|Private School| P["Select State → City\n— GitHub schools-{state}.json queried —\nAll schools in city load\n(no district step)"]
+    P --> Q{School in list?}
+
+    Q -->|✅ Found| G
+    Q -->|❌ Not found| N2["School-only panel\nState / City locked\nSchool name typed manually\n(no district, no NCES)"]
+
+    %% ── SUBMIT ──────────────────────────────────────────────────
+    G --> SUB([📩 User submits form])
+    M --> SUB
+    N --> SUB
+    N2 --> SUB
+
+    SUB --> FOUND{NCES ID\npresent?}
+
+    %% ── SCHOOL FOUND BACKEND ────────────────────────────────────
+    FOUND -->|Yes| T1[Activate trial]
+    T1 --> T2["Create STWeb account\nlinked to NCES ID"]
+    T2 --> T3["Add trial record\nto BigQuery"]
+    T3 --> DONE1([✅ Done])
+
+    %% ── SCHOOL NOT FOUND BACKEND ────────────────────────────────
+    FOUND -->|No| U1[Activate trial anyway]
+    U1 --> U2["Notify Salesforce team\n⚠️ School not in database"]
+    U2 --> U3{Salesforce validates:\nDoes school exist\nin the database?}
+
+    U3 -->|Yes — found| V1["Add NCES number\nto existing STWeb account"]
+    V1 --> DONE2([✅ Done])
+
+    U3 -->|No — new school| W1["Create unique identifier\nfor the school"]
+    W1 --> W2["Add identifier\nto STWeb account"]
+    W2 --> W3["Add school entry\nto GitHub JSON"]
+    W3 --> DONE3([✅ Done])
+
+    %% ── STYLES ──────────────────────────────────────────────────
+    classDef userAction    fill:#EBE9FF,stroke:#6551F2,color:#271B7A,font-weight:600
+    classDef backendAction fill:#E8F5E9,stroke:#4CAF50,color:#1B5E20
+    classDef sfAction      fill:#FFF3E0,stroke:#FF9800,color:#E65100
+    classDef terminal      fill:#161616,stroke:#161616,color:#fff,font-weight:700
+    classDef decision      fill:#fff,stroke:#6551F2,color:#161616
+    classDef intlAction    fill:#F3E5F5,stroke:#9C27B0,color:#4A148C,font-weight:600
+
+    class A,SUB terminal
+    class B,G userAction
+    class D,E,P userAction
+    class M,N,N2 userAction
+    class INTL intlAction
+    class T1,T2,T3 backendAction
+    class U1,U2,U3,V1,W1,W2,W3 sfAction
+    class DONE1,DONE2,DONE3 terminal
+    class COUNTRY,C,F,H1,Q,FOUND decision
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+      fontSize: '14px',
+      fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+    }});
+  </script>
+</body>
+</html>

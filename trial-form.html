@@ -616,6 +616,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         <path d="M8123.21 365.1C8088.1 365.1 8059.5 393.68 8059.5 428.81C8059.5 463.94 8088.1 492.52 8123.21 492.52C8158.32 492.52 8186.92 463.94 8186.92 428.81C8186.92 393.68 8158.32 365.1 8123.21 365.1ZM8123.21 503.59C8081.94 503.59 8048.43 470.04 8048.43 428.81C8048.43 387.58 8081.94 354.03 8123.21 354.03C8164.48 354.03 8198 387.58 8198 428.81C8198 470.04 8164.42 503.59 8123.21 503.59Z" fill="white"/>
       </svg>
       <h1>Tell us about you</h1>
+      <p>Trial flow prototype</p>
           </div>
 
     <form id="pqfForm" novalidate>
@@ -1286,7 +1287,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     var cantFindDistrictWrap = document.getElementById('pqf_cant_find_district_wrap');
     dropGrid.style.display     = on ? 'none' : '';
     cantFindWrap.style.display = on ? 'none' : (sel.country.value === 'United States' ? '' : 'none');
-    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = on ? 'none' : (sel.country.value === 'United States' ? '' : 'none');
+    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = on ? 'none' : (!privateMode && sel.country.value === 'United States' ? '' : 'none');
     manualPanel.style.display  = on ? ''     : 'none';
 
     // Country field: always show when panel is open; lock it if auto-triggered
@@ -1422,16 +1423,21 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         if (cityField) cityField.style.display = 'none';
       }
 
-      // Show district — pre-filled + locked
-      if (districtField) districtField.style.display = '';
-      if (districtInput) {
-        districtInput.value       = sel.district.value;
-        districtInput.readOnly    = true;
-        districtInput.style.background  = '#F4F4F5';
-        districtInput.style.color       = 'rgba(22,22,22,0.55)';
-        districtInput.style.borderColor = '#E8E4FF';
-        districtInput.style.cursor      = 'default';
-        districtInput.required          = false;
+      // District — pre-filled + locked in public mode; hidden in private mode (no district)
+      if (privateMode) {
+        if (districtField) districtField.style.display = 'none';
+        if (districtInput) { districtInput.value = ''; districtInput.required = false; }
+      } else {
+        if (districtField) districtField.style.display = '';
+        if (districtInput) {
+          districtInput.value       = sel.district.value;
+          districtInput.readOnly    = true;
+          districtInput.style.background  = '#F4F4F5';
+          districtInput.style.color       = 'rgba(22,22,22,0.55)';
+          districtInput.style.borderColor = '#E8E4FF';
+          districtInput.style.cursor      = 'default';
+          districtInput.required          = false;
+        }
       }
 
       // Required: only school name
@@ -1449,7 +1455,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       // Restore cascade
       if (dropGrid)              dropGrid.style.display              = '';
       if (cantFindWrap)          cantFindWrap.style.display          = sel.country.value === 'United States' ? '' : 'none';
-      if (cantFindDistrictWrap2) cantFindDistrictWrap2.style.display = sel.country.value === 'United States' ? '' : 'none';
+      if (cantFindDistrictWrap2) cantFindDistrictWrap2.style.display = (!privateMode && sel.country.value === 'United States') ? '' : 'none';
       if (manualPanel)           manualPanel.style.display           = 'none';
 
       // Restore field visibility
@@ -1491,7 +1497,8 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
   /**
    * Private school mode:
-   * - Hides district + cascade school selectors (they don't apply to private schools).
+   * - Hides the district selector (not applicable to private schools).
+   * - Keeps the school combobox visible — populated with all schools in the selected city.
    * - For US: state and city cascade dropdowns remain active as normal.
    * - For non-US: city becomes a free-text field (cascade has no data outside the US).
    * Switching to Private also exits any active manual/school-only mode.
@@ -1503,59 +1510,53 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     if (on && manualMode)       toggleManualMode(false);
     if (on && schoolManualMode) toggleSchoolOnlyMode(false);
 
+    // Always do a full cascade reset when switching school type —
+    // avoids locked/stale fields from a previous selection
+    resetSelect('state',    'Select a country first');
+    resetSelect('city',     'Select a state first');
+    resetSelect('district', 'Select a city first');
+    resetSelect('school',   'Select a city first');
+    toggleStateField(false);
+    clearNces();
+    clearEnrollment();
+
+    // Also clear the country combobox
+    var countryInput = document.getElementById('pqf_country_input');
+    if (countryInput) countryInput.value = '';
+    sel.country.value = '';
+
     var districtField    = document.getElementById('pqf_district_field');
-    var enrollField      = document.getElementById('pqf_enrollment_field');
     var schoolField      = document.getElementById('pqf_school_field');
-    var ncesField        = document.getElementById('pqf_nces_field');
     var cantFindWrap     = document.getElementById('pqf_cant_find_wrap');
     var cantFindDistrict = document.getElementById('pqf_cant_find_district_wrap');
     var privateSchFld    = document.getElementById('pqf_private_school_field');
     var privateCityFld   = document.getElementById('pqf_private_city_field');
     var cityField        = document.getElementById('pqf_city_field');
 
-    var country   = sel.country.value;
-    var isUSNow   = (country === 'United States');
-
     if (on) {
-      // Hide district, school, NCES, enrollment, can't-find buttons
+      // Hide district and can't-find buttons
       if (districtField)    districtField.style.display    = 'none';
-      if (enrollField)      enrollField.style.display      = 'none';
-      if (schoolField)      schoolField.style.display      = 'none';
-      if (ncesField)        ncesField.style.display        = 'none';
       if (cantFindWrap)     cantFindWrap.style.display     = 'none';
       if (cantFindDistrict) cantFindDistrict.style.display = 'none';
 
-      // Show private school name input
-      if (privateSchFld) privateSchFld.style.display = '';
+      // Keep school combobox visible — user searches school directly (no district needed)
+      if (schoolField)  schoolField.style.display  = '';
+      // Hide city cascade and private city until country is selected
+      if (cityField)      cityField.style.display      = 'none';
+      if (privateCityFld) privateCityFld.style.display = 'none';
+      if (privateSchFld)  privateSchFld.style.display  = 'none';
 
-      // US: keep cascade city; non-US: switch to text city
-      if (isUSNow) {
-        if (cityField)      cityField.style.display      = '';
-        if (privateCityFld) privateCityFld.style.display = 'none';
-      } else {
-        if (cityField)      cityField.style.display      = 'none';
-        if (privateCityFld) privateCityFld.style.display = country ? '' : 'none';
-      }
-
-      // Reset cascade from district onwards
-      resetSelect('district', 'Select a city first');
-      resetSelect('school', 'Select a district first');
-      clearNces();
-      clearEnrollment();
-
-      // Required flags
+      // Required flags — district skipped, school still required
       sel.district.required = false;
-      sel.school.required   = false;
-      var psn = document.getElementById('pqf_private_school_name');
-      if (psn) psn.required = true;
+      sel.school.required   = true;
 
     } else {
-      // Restore normal cascade display
-      if (districtField)    districtField.style.display    = '';
-      if (schoolField)      schoolField.style.display      = '';
-      if (cityField)        cityField.style.display        = '';
+      // Restore public cascade display
+      if (districtField) districtField.style.display = '';
+      if (schoolField)   schoolField.style.display   = '';
+      if (cityField)     cityField.style.display      = 'none'; // hidden until state is selected
 
-      // Hide private fields and clear them
+      // Hide and clear private-specific fields
       if (privateSchFld) {
         privateSchFld.style.display = 'none';
         var psn2 = document.getElementById('pqf_private_school_name');
@@ -1574,11 +1575,8 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       // Restore required flags
       sel.district.required = true;
       sel.school.required   = true;
-
-      // Restore can't-find buttons visibility based on current country
-      var show = (sel.country.value === 'United States');
-      if (cantFindWrap)     cantFindWrap.style.display     = show ? '' : 'none';
-      if (cantFindDistrict) cantFindDistrict.style.display = show ? '' : 'none';
+      cantFindWrap     && (cantFindWrap.style.display     = 'none'); // hidden until US selected
+      cantFindDistrict && (cantFindDistrict.style.display = 'none');
     }
   }
 
@@ -1751,7 +1749,8 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   });
   document.getElementById('pqf_cant_find_school').addEventListener('click', function () {
     var hint = document.getElementById('pqf_cant_find_school_hint');
-    if (!sel.district.value) {
+    // In private mode there is no district — skip that requirement
+    if (!privateMode && !sel.district.value) {
       if (hint) { hint.textContent = 'Please select your district first.'; hint.className = 'pqf-hint pqf-error'; }
       return;
     }
@@ -2003,11 +2002,16 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     var cantFindWrap = document.getElementById('pqf_cant_find_wrap');
     var cantFindDistrictWrap = document.getElementById('pqf_cant_find_district_wrap');
     if (cantFindWrap) cantFindWrap.style.display = country === 'United States' ? '' : 'none';
-    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = country === 'United States' ? '' : 'none';
+    // "Can't find your district?" not relevant in private mode
+    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = (country === 'United States' && !privateMode) ? '' : 'none';
 
     if (country === 'United States') {
       updateStateLabel(country);
       toggleStateField(true);
+      // Ensure cascade city field is visible (may have been hidden if private mode was activated before country was selected)
+      var csFld = document.getElementById('pqf_city_field');
+      if (csFld) csFld.style.display = '';
+      if (privateMode) { var pcFld = document.getElementById('pqf_private_city_field'); if (pcFld) pcFld.style.display = 'none'; }
       var states = (_index && _index.states && _index.states[country.toLowerCase()]) || [];
       populateSelect('state', states, states.length ? 'Select a state\u2026' : 'Loading\u2026');
     } else if (country === 'Canada' || country === 'Australia') {
@@ -2036,7 +2040,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   sel.state.addEventListener('change', function () {
     resetSelect('city', 'Select a city…');
     resetSelect('district', 'Select a city first');
-    resetSelect('school', 'Select a district first');
+    resetSelect('school', privateMode ? 'Select a city first' : 'Select a district first');
     clearNces();
     clearEnrollment();
 
@@ -2068,6 +2072,9 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
     // United States: cascade via index
     if (!_index) return;
+    // Ensure city field is visible (may have been hidden if private mode was activated before country was set)
+    var csFldSt = document.getElementById('pqf_city_field');
+    if (csFldSt) csFldSt.style.display = '';
     var sdKey  = country.toLowerCase() + '|' + state.toLowerCase();
     var sd     = (_index.stateData[sdKey] || {});
     var cities = (sd.cities || []);
@@ -2080,7 +2087,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   /* City → District — instant, from index */
   sel.city.addEventListener('change', function () {
     resetSelect('district', 'Select a district…');
-    resetSelect('school', 'Select a district first');
+    resetSelect('school', privateMode ? 'Loading schools…' : 'Select a district first');
     clearNces();
     clearEnrollment();
 
@@ -2090,7 +2097,13 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     var sdKey     = sel.country.value.toLowerCase() + '|' + sel.state.value.toLowerCase();
     var sd        = (_index.stateData[sdKey] || {});
     var districts = ((sd.districts || {})[city.toLowerCase()] || []);
-    populateSelect('district', districts, 'Select a district…');
+
+    if (privateMode) {
+      // Private mode: skip district dropdown, load all schools in this city directly
+      populatePrivateModeSchools(districts);
+    } else {
+      populateSelect('district', districts, 'Select a district…');
+    }
   });
 
   function showEnrollment(districtValue) {
@@ -2103,6 +2116,36 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   function clearEnrollment() {
     var input = document.getElementById('pqf_enrollment');
     if (input) input.value = '';
+  }
+
+  /* Private mode: load all schools across every district in the selected city */
+  function populatePrivateModeSchools(districts) {
+    setLoading('school', true);
+    function populate() {
+      var allSchools = [];
+      (districts || []).forEach(function (district) {
+        var schools = (_stateSchools && _stateSchools[district.toLowerCase()]) || [];
+        allSchools = allSchools.concat(schools);
+      });
+      allSchools.sort(function (a, b) {
+        var nameA = (a !== null && typeof a === 'object') ? (a.name || '') : String(a);
+        var nameB = (b !== null && typeof b === 'object') ? (b.name || '') : String(b);
+        return nameA.localeCompare(nameB);
+      });
+      populateSchoolSelect(allSchools, 'Search for your school…');
+      setLoading('school', false);
+    }
+    if (_stateSchools) {
+      populate();
+    } else if (_stateSchoolsPromise) {
+      _stateSchoolsPromise.then(function (data) {
+        if (data) populate();
+        else { resetSelect('school', 'No schools found'); setLoading('school', false); }
+      });
+    } else {
+      resetSelect('school', 'No schools found');
+      setLoading('school', false);
+    }
   }
 
   /* District → School — instant from prefetched state file */
@@ -2239,12 +2282,10 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         if (pcErr) ok = false;
       }
 
-      // Private school name
-      var psEl   = document.getElementById('pqf_private_school_name');
-      var psHint = document.getElementById('pqf_private_school_name_hint');
-      var psErr  = (psEl && psEl.value.trim()) ? '' : 'Please enter the school name.';
-      if (psHint) { psHint.textContent = psErr; psHint.className = 'pqf-hint' + (psErr ? ' pqf-error' : ''); }
-      if (psErr) ok = false;
+      // School (cascade combobox — populated from all districts in the selected city)
+      var schErr = sel.school.value ? '' : 'Please select a school.';
+      setHint('school', schErr, !!schErr);
+      if (schErr) ok = false;
 
     } else {
       // ── Validate cascading selects ───────────────────────
