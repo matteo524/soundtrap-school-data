@@ -553,68 +553,6 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 }
 .pqf-banner.pqf-visible { display: block; }
 
-/* ── Thank-you screen ──────────────────────────────────────── */
-.pqf-thankyou-screen .pqf-header {
-  border-radius: 16px 16px 0 0;
-}
-.pqf-thankyou-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 56px 40px 64px;
-}
-.pqf-thankyou-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #6551F2;
-  color: #FDFDF5;
-  font-size: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24px;
-}
-.pqf-thankyou-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 40px;
-  letter-spacing: 1px;
-  color: #161616;
-  margin-bottom: 12px;
-}
-.pqf-thankyou-msg {
-  font-size: 16px;
-  color: rgba(22,22,22,0.7);
-  max-width: 420px;
-  line-height: 1.6;
-  margin-bottom: 40px;
-}
-.pqf-thankyou-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  max-width: 320px;
-}
-.pqf-thankyou-link {
-  font-size: 14px;
-  color: #6551F2;
-  text-decoration: none;
-  font-weight: 600;
-}
-.pqf-thankyou-link:hover { text-decoration: underline; }
-.pqf-submit-another {
-  width: 100%;
-  background: transparent;
-  color: #6551F2;
-  border: 1.5px solid #6551F2;
-}
-.pqf-submit-another:hover {
-  background: #EBE9FF;
-}
-
 /* ── Use-case textarea ─────────────────────────────────────── */
 .pqf-textarea {
   width: 100%;
@@ -1501,23 +1439,6 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     </form>
   </div>
 
-  <!-- ── Thank-you screen (shown after successful submit) ──── -->
-  <div id="pqf_thankyou" class="pqf-card pqf-thankyou-screen" style="display:none;">
-    <div class="pqf-header">
-      <div class="pqf-header-logo">
-        <span class="pqf-logo-text">Soundtrap</span><span class="pqf-logo-edu"> for Education</span>
-      </div>
-    </div>
-    <div class="pqf-thankyou-body">
-      <div class="pqf-thankyou-icon">&#10003;</div>
-      <h2 class="pqf-thankyou-title">Thank you!</h2>
-      <p class="pqf-thankyou-msg">In a few minutes you will receive the quote you requested in your inbox.</p>
-      <div class="pqf-thankyou-actions">
-        <a href="https://www.soundtrap.com/edu" target="_blank" class="pqf-thankyou-link">Visit Soundtrap for Education</a>
-        <button type="button" id="pqf_submit_another" class="pqf-submit pqf-submit-another">Submit another quote</button>
-      </div>
-    </div>
-  </div>
 
 </div>
 
@@ -3814,9 +3735,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     clearNces();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit Quote Request';
-    document.getElementById('pqf_card').style.display = 'none';
-    document.getElementById('pqf_thankyou').style.display = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.location.href = 'thank-you.html';
   });
 
   /* ── localStorage profile — save / restore ────────────────── */
@@ -3971,13 +3890,6 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   applyQuoteTypeUI(document.getElementById('pqf_quote_type').value || '');
   updatePdSection();
   initWelcomeBanner();
-
-  // ── Thank-you screen — "Submit another quote" ──────────────
-  document.getElementById('pqf_submit_another').addEventListener('click', function () {
-    document.getElementById('pqf_thankyou').style.display = 'none';
-    document.getElementById('pqf_card').style.display = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
 
 })();
 </script>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quote Request Received — Soundtrap for Education</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: #F2F2F5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .ty-card {
+      background: #FDFDF5;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 560px;
+      overflow: hidden;
+    }
+
+    /* Header — matches quote form */
+    .ty-header {
+      background: #161616;
+      padding: 32px 40px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .ty-header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: #6551F2;
+    }
+    .ty-header::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(101,81,242,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ty-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 1px;
+      color: #FDFDF5;
+      position: relative;
+      z-index: 1;
+    }
+    .ty-logo span {
+      color: #8F8FFF;
+      font-size: 14px;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Body */
+    .ty-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 56px 40px 64px;
+    }
+
+    .ty-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #6551F2;
+      color: #FDFDF5;
+      font-size: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      flex-shrink: 0;
+    }
+
+    .ty-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      letter-spacing: 1px;
+      color: #161616;
+      margin-bottom: 16px;
+    }
+
+    .ty-msg {
+      font-size: 16px;
+      color: rgba(22,22,22,0.65);
+      max-width: 400px;
+      line-height: 1.65;
+      margin-bottom: 48px;
+    }
+
+    .ty-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .ty-btn-primary {
+      display: block;
+      width: 100%;
+      background: #6551F2;
+      color: #FDFDF5;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      padding: 14px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ty-btn-primary:hover { background: #5441D8; }
+
+    .ty-btn-secondary {
+      display: block;
+      width: 100%;
+      background: transparent;
+      color: #6551F2;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      padding: 13px 24px;
+      border-radius: 8px;
+      border: 1.5px solid #6551F2;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ty-btn-secondary:hover { background: #EBE9FF; }
+
+    @media (max-width: 480px) {
+      .ty-header { padding: 24px; }
+      .ty-body { padding: 40px 24px 48px; }
+      .ty-title { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ty-card">
+
+    <div class="ty-header">
+      <div class="ty-logo">
+        Soundtrap
+        <span>for Education</span>
+      </div>
+    </div>
+
+    <div class="ty-body">
+      <div class="ty-icon">&#10003;</div>
+      <h1 class="ty-title">Thank you!</h1>
+      <p class="ty-msg">In a few minutes you will receive the quote you requested in your inbox.</p>
+      <div class="ty-actions">
+        <a href="https://www.soundtrap.com/edu" class="ty-btn-primary">Visit Soundtrap for Education</a>
+        <a href="quote-form.html" class="ty-btn-secondary">Submit another quote</a>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
