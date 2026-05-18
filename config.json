@@ -1,0 +1,244 @@
+{
+  "version": "2026-05-04",
+  "_comment": "Single source of truth for pricing, territory, and shared lookup data across all Soundtrap quote/legal forms. Edit here and push to GitHub Pages — all forms fetch this at runtime.",
+
+  "quoteValidDays": 30,
+
+  "pricing": {
+    "_comment": "Per-seat prices by currency and plan. The t array maps to seat bands: 1-50, 51-500, 501-1k, 1k-5k, 5k-10k, 10k-20k, 20k-50k, 50k-150k, 150k+. m = maintenance fee per school per year (District only).",
+    "USD": {
+      "School":    { "t": [9.98, 9.60, 9.10, 8.60, 8.60, 8.60, 8.60, 8.60, 8.60], "m": 0 },
+      "Classroom": { "t": [7.98, 7.60, 7.30, 6.90, 6.90, 6.90, 6.90, 6.90, 6.90], "m": 0 },
+      "District":  { "t": [14.98, 14.98, 14.98, 14.98, 14.98, 14.98, 14.98, 14.98, 14.98], "m": 249 },
+      "Legacy":    { "t": [7.98, 7.70, 7.30, 6.90, 6.30, 5.90, 5.60, 5.10, 4.60], "m": 0 }
+    },
+    "GBP": {
+      "School":    { "t": [8.18, 7.80, 7.50, 7.10, 7.10, 7.10, 7.10, 7.10, 7.10], "m": 0 },
+      "Classroom": { "t": [6.58, 6.20, 6.00, 5.70, 5.70, 5.70, 5.70, 5.70, 5.70], "m": 0 },
+      "District":  { "t": [12.18, 12.18, 12.18, 12.18, 12.18, 12.18, 12.18, 12.18, 12.18], "m": 189 },
+      "Legacy":    { "t": [6.58, 6.20, 6.00, 5.70, 5.30, 5.00, 4.70, 4.20, 3.80], "m": 0 }
+    },
+    "EUR": {
+      "School":    { "t": [9.38, 9.10, 8.60, 8.20, 8.20, 8.20, 8.20, 8.20, 8.20], "m": 0 },
+      "Classroom": { "t": [7.58, 7.30, 6.90, 6.60, 6.60, 6.60, 6.60, 6.60, 6.60], "m": 0 },
+      "District":  { "t": [14.18, 14.18, 14.18, 14.18, 14.18, 14.18, 14.18, 14.18, 14.18], "m": 229 },
+      "Legacy":    { "t": [7.58, 7.30, 6.90, 6.60, 6.10, 5.60, 5.40, 4.90, 4.50], "m": 0 }
+    },
+    "SEK": {
+      "School":    { "t": [105, 100, 96, 91, 91, 91, 91, 91, 91], "m": 0 },
+      "Classroom": { "t": [85, 80, 76, 73, 73, 73, 73, 73, 73], "m": 0 },
+      "District":  { "t": [157.98, 157.98, 157.98, 157.98, 157.98, 157.98, 157.98, 157.98, 157.98], "m": 2499 },
+      "Legacy":    { "t": [85, 81, 77, 73, 68, 63, 60, 55, 49], "m": 0 }
+    },
+    "NOK": {
+      "School":    { "t": [105, 100, 96, 91, 91, 91, 91, 91, 91], "m": 0 },
+      "Classroom": { "t": [85, 82, 78, 73, 73, 73, 73, 73, 73], "m": 0 },
+      "District":  { "t": [157.98, 157.98, 157.98, 157.98, 157.98, 157.98, 157.98, 157.98, 157.98], "m": 2699 },
+      "Legacy":    { "t": [85, 82, 78, 73, 68, 64, 59, 55, 50], "m": 0 }
+    },
+    "CAD": {
+      "School":    { "t": [11.18, 10.80, 10.30, 9.70, 9.70, 9.70, 9.70, 9.70, 9.70], "m": 0 },
+      "Classroom": { "t": [8.98, 8.70, 8.20, 7.70, 7.70, 7.70, 7.70, 7.70, 7.70], "m": 0 },
+      "District":  { "t": [16.78, 16.78, 16.78, 16.78, 16.78, 16.78, 16.78, 16.78, 16.78], "m": 349 },
+      "Legacy":    { "t": [8.98, 8.70, 8.20, 7.70, 7.10, 6.70, 6.40, 5.80, 5.30], "m": 0 }
+    },
+    "AUD": {
+      "School":    { "t": [15.38, 14.80, 14.10, 13.30, 13.30, 13.30, 13.30, 13.30, 13.30], "m": 0 },
+      "Classroom": { "t": [12.38, 11.80, 11.30, 10.60, 10.60, 10.60, 10.60, 10.60, 10.60], "m": 0 },
+      "District":  { "t": [23.18, 23.18, 23.18, 23.18, 23.18, 23.18, 23.18, 23.18, 23.18], "m": 389 },
+      "Legacy":    { "t": [12.90, 12.40, 11.80, 11.10, 10.10, 9.60, 9.00, 8.30, 7.90], "m": 0 }
+    }
+  },
+
+  "pdPrices": {
+    "_comment": "Professional Development session prices (USD, US-only). Keys must match the Salesforce PD_Session__c picklist exactly.",
+    "1 hour Virtual PD for up to 50 teachers":     499,
+    "1 hour Virtual PD for more than 50 teachers": 599,
+    "In Person PD for 3 hours":                    3499,
+    "In Person PD for 6 hours":                    4499
+  },
+
+  "currencyByCountry": {
+    "_comment": "Direct country-to-currency mapping. Any country in eurozone (below) but not listed here gets EUR. Everything else defaults to USD.",
+    "United States":  "USD",
+    "United Kingdom": "GBP",
+    "Sweden":         "SEK",
+    "Norway":         "NOK",
+    "Canada":         "CAD",
+    "Australia":      "AUD"
+  },
+
+  "currencyFormat": {
+    "USD": { "sym": "$",     "suf": "" },
+    "GBP": { "sym": "£",     "suf": "" },
+    "EUR": { "sym": "€",     "suf": "" },
+    "SEK": { "sym": "kr ", "suf": " SEK" },
+    "NOK": { "sym": "kr ", "suf": " NOK" },
+    "CAD": { "sym": "CA$ ", "suf": "" },
+    "AUD": { "sym": "A$ ",  "suf": "" }
+  },
+
+  "eurozone": [
+    "Austria", "Belgium", "Croatia", "Cyprus", "Estonia", "Finland", "France",
+    "Germany", "Greece", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg",
+    "Malta", "Netherlands", "Portugal", "Slovakia", "Slovenia", "Spain"
+  ],
+
+  "regionByCountry": {
+    "_comment": "Region for quote template / tax notes. Any country not listed defaults to 'ROW'.",
+    "United States": "US",
+    "Canada":        "Canada",
+    "Australia":     "ANZ",
+    "New Zealand":   "ANZ"
+  },
+
+  "taxNotes": {
+    "US":     "Taxes — e.g., state sales tax — are not included in this quote.",
+    "Canada": "Applicable Canadian taxes (GST/HST/PST) are not included in this quote.",
+    "ANZ":    "Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this quote.",
+    "ROW":    "Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this quote."
+  },
+
+  "upgradeMap": {
+    "_comment": "Which plans a customer on a given plan can upgrade to.",
+    "Legacy":    ["Classroom", "School", "District"],
+    "Classroom": ["School", "District"],
+    "School":    ["District"]
+  },
+
+  "territory": {
+    "_comment": "Sales territory + rep routing logic. statePod maps US states to regional PODs (used for accounts with 3,000+ students). podRep maps each POD/territory to its rep. usNamed lists US districts that route to a dedicated named-accounts rep regardless of POD. rowNamedDomains lists email domains for non-US named accounts.",
+
+    "statePod": {
+      "alaska": "Northwest", "california": "Northwest", "idaho": "Northwest", "montana": "Northwest",
+      "nevada": "Northwest", "oregon": "Northwest", "washington": "Northwest", "wyoming": "Northwest",
+      "arizona": "Southwest", "arkansas": "Southwest", "colorado": "Southwest", "hawaii": "Southwest",
+      "kansas": "Southwest", "missouri": "Southwest", "nebraska": "Southwest", "new mexico": "Southwest",
+      "oklahoma": "Southwest", "texas": "Southwest", "utah": "Southwest",
+      "illinois": "Central", "indiana": "Central", "iowa": "Central", "michigan": "Central",
+      "minnesota": "Central", "north dakota": "Central", "ohio": "Central", "south dakota": "Central",
+      "wisconsin": "Central",
+      "connecticut": "Northeast", "maine": "Northeast", "massachusetts": "Northeast",
+      "new hampshire": "Northeast", "new jersey": "Northeast", "new york": "Northeast",
+      "rhode island": "Northeast", "vermont": "Northeast",
+      "alabama": "Southeast", "delaware": "Southeast", "district of columbia": "Southeast",
+      "florida": "Southeast", "georgia": "Southeast", "kentucky": "Southeast", "louisiana": "Southeast",
+      "maryland": "Southeast", "mississippi": "Southeast", "north carolina": "Southeast",
+      "pennsylvania": "Southeast", "south carolina": "Southeast", "tennessee": "Southeast",
+      "virginia": "Southeast", "west virginia": "Southeast"
+    },
+
+    "podRep": {
+      "Scaled Accounts":    { "name": "The Soundtrap Team",  "email": "orders@soundtrap.com" },
+      "Northwest":          { "name": "Brittany Follet",     "email": "brittany@soundtrap.com" },
+      "Southwest":          { "name": "Maria Opirhory",      "email": "maria@soundtrap.com" },
+      "Central":            { "name": "Chloe Taylor",        "email": "chloe@soundtrap.com" },
+      "Northeast":          { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
+      "Southeast":          { "name": "Tina Shah",           "email": "tina@soundtrap.com" },
+      "Canada":             { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
+      "UK":                 { "name": "Michael Beardsley",   "email": "michael@soundtrap.com" },
+      "ROW":                { "name": "Jennifer Meehleis",   "email": "jennifer@soundtrap.com" },
+      "US Named Accounts":  { "name": "Leandro Otero",       "email": "leandro@soundtrap.com" },
+      "ROW Named Accounts": { "name": "Angelica Johansson",  "email": "angelicaj@soundtrap.com" }
+    },
+
+    "usNamed": [
+      "los angeles unified", "san francisco unified",
+      "jefferson county school district no. r-1", "district of columbia public schools",
+      "polk", "broward", "duval", "miami-dade", "orange", "hillsborough",
+      "palm beach", "hawaii department of education",
+      "chicago public schools dist 299", "montgomery county public schools",
+      "baltimore county public schools", "prince george's county public schools",
+      "lincoln public schools", "clark county",
+      "wake county schools", "charlotte-mecklenburg schools", "philadelphia city sd",
+      "puerto rico department of education", "memphis-shelby county schools",
+      "dallas isd", "houston isd", "fairfax county public schools"
+    ],
+    "_usNamedNote": "NYC is matched via prefix ('new york city geographic district') in code, not by exact name.",
+
+    "rowNamedDomains": [
+      "solvesborg.se", "simrishamn.se", "educacio.ad", "govern.ad", "goteborg.se",
+      "engelska.se", "ale.se", "kunskapsskolan.se", "bollebygd.se",
+      "trondheim.kommune.no", "kalmar.se", "dodea.edu", "marks.se", "ecolint.ch",
+      "stavanger.kommune.no", "stpeters.vic.edu.au", "stenungsund.se",
+      "sola.kommune.no", "varberg.se", "larvik.kommune.no", "askoy.kommune.no",
+      "vastervik.se", "fredrikstad.kommune.no", "kungalv.se",
+      "pacifichills.nsw.edu.au", "alingsas.se", "stmonicas.vic.edu.au",
+      "makemusicmatter.org", "sandnes.kommune.no", "hudiksvall.se", "mlc.vic.edu.au",
+      "angelholm.se", "boras.se", "ullensaker.kommune.no", "orebro.se",
+      "watmaeducation.com", "edu.laroverken.se", "edu.nordicinternational.se",
+      "edu.kronobergskola.se", "krono.se", "bs.ch"
+    ]
+  },
+
+  "lists": {
+    "_comment": "Pre-built dropdown lists used by the forms. usStates includes DC and US territories. worldCountries is built in code (see config.worldCountries below).",
+    "usStates": [
+      "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+      "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+      "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+      "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+      "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina",
+      "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island",
+      "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
+      "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+      "District of Columbia", "Puerto Rico", "Guam", "U.S. Virgin Islands",
+      "American Samoa", "Northern Mariana Islands"
+    ],
+    "caProvinces": [
+      "Alberta", "British Columbia", "Manitoba", "New Brunswick",
+      "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia",
+      "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon"
+    ],
+    "auStates": [
+      "Australian Capital Territory", "New South Wales", "Northern Territory",
+      "Queensland", "South Australia", "Tasmania", "Victoria", "Western Australia"
+    ],
+    "worldCountries": [
+      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda",
+      "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain",
+      "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+      "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso",
+      "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic",
+      "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba",
+      "Cyprus", "Czechia", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador",
+      "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
+      "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece",
+      "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
+      "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
+      "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
+      "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania",
+      "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta",
+      "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova",
+      "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia",
+      "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria",
+      "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Panama",
+      "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar",
+      "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia",
+      "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe",
+      "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore",
+      "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea",
+      "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
+      "Syria", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga",
+      "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda",
+      "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay",
+      "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    ]
+  },
+
+  "legal": {
+    "_comment": "Legal Form-specific lists. exhibitEStates = US states that require an Exhibit E addendum. dpaCountries = countries that require a Data Processing Addendum.",
+    "exhibitEStates": [
+      "Florida", "Arizona", "Texas", "Wisconsin", "New York", "Missouri", "Oregon",
+      "Ohio", "Maine", "Massachusetts", "New Hampshire", "New Jersey", "Rhode Island",
+      "Tennessee", "Vermont", "Virginia", "Illinois", "California", "Washington", "Arkansas"
+    ],
+    "dpaCountries": [
+      "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark",
+      "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland",
+      "Ireland", "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg",
+      "Malta", "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia",
+      "Slovenia", "Spain", "Sweden", "Switzerland", "United Kingdom"
+    ]
+  }
+}
