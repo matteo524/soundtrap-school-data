@@ -1,0 +1,228 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://matteo524.github.io/soundtrap-school-data/config.schema.json",
+  "title": "Soundtrap Forms Shared Config",
+  "description": "Validates config.json — the single source of truth for pricing, territory, and shared lookup data across the Soundtrap quote/legal forms.",
+  "type": "object",
+  "required": [
+    "version", "quoteValidDays", "pricing", "pdPrices",
+    "currencyByCountry", "currencyFormat", "eurozone",
+    "regionByCountry", "taxNotes", "upgradeMap",
+    "territory", "lists", "legal"
+  ],
+  "additionalProperties": true,
+
+  "definitions": {
+    "planTier": {
+      "type": "object",
+      "description": "Pricing for a single plan within one currency. t is the per-seat price across 9 seat bands (1-50, 51-500, 501-1k, 1k-5k, 5k-10k, 10k-20k, 20k-50k, 50k-150k, 150k+). m is the per-school maintenance fee per year (District only; 0 for others).",
+      "required": ["t", "m"],
+      "additionalProperties": false,
+      "properties": {
+        "t": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": { "type": "number", "minimum": 0 }
+        },
+        "m": { "type": "number", "minimum": 0 }
+      }
+    },
+    "currencyBlock": {
+      "type": "object",
+      "required": ["School", "Classroom", "District", "Legacy"],
+      "additionalProperties": false,
+      "properties": {
+        "School":    { "$ref": "#/definitions/planTier" },
+        "Classroom": { "$ref": "#/definitions/planTier" },
+        "District":  { "$ref": "#/definitions/planTier" },
+        "Legacy":    { "$ref": "#/definitions/planTier" }
+      }
+    },
+    "rep": {
+      "type": "object",
+      "required": ["name", "email"],
+      "additionalProperties": false,
+      "properties": {
+        "name":  { "type": "string", "minLength": 1 },
+        "email": { "type": "string", "format": "email" }
+      }
+    }
+  },
+
+  "properties": {
+    "version":        { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "quoteValidDays": { "type": "integer", "minimum": 1, "maximum": 365 },
+
+    "pricing": {
+      "type": "object",
+      "description": "Per-currency pricing matrix. Keys are ISO 4217 currency codes.",
+      "required": ["USD", "GBP", "EUR", "SEK", "NOK", "CAD", "AUD"],
+      "patternProperties": {
+        "^(USD|GBP|EUR|SEK|NOK|CAD|AUD)$": { "$ref": "#/definitions/currencyBlock" },
+        "^_": {}
+      },
+      "additionalProperties": false
+    },
+
+    "pdPrices": {
+      "type": "object",
+      "description": "Professional Development session prices (USD, US-only). Keys must match the Salesforce PD_Session__c picklist exactly.",
+      "patternProperties": {
+        "^_": {},
+        "^[^_].*": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+
+    "currencyByCountry": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {},
+        "^[^_].*": { "type": "string", "enum": ["USD", "GBP", "EUR", "SEK", "NOK", "CAD", "AUD"] }
+      },
+      "additionalProperties": false
+    },
+
+    "currencyFormat": {
+      "type": "object",
+      "required": ["USD", "GBP", "EUR", "SEK", "NOK", "CAD", "AUD"],
+      "patternProperties": {
+        "^(USD|GBP|EUR|SEK|NOK|CAD|AUD)$": {
+          "type": "object",
+          "required": ["sym", "suf"],
+          "additionalProperties": false,
+          "properties": {
+            "sym": { "type": "string" },
+            "suf": { "type": "string" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "eurozone": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+
+    "regionByCountry": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {},
+        "^[^_].*": { "type": "string", "enum": ["US", "Canada", "ANZ", "ROW"] }
+      },
+      "additionalProperties": false
+    },
+
+    "taxNotes": {
+      "type": "object",
+      "required": ["US", "Canada", "ANZ", "ROW"],
+      "patternProperties": {
+        "^(US|Canada|ANZ|ROW)$": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+
+    "upgradeMap": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {},
+        "^(Legacy|Classroom|School)$": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Classroom", "School", "District"] },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "territory": {
+      "type": "object",
+      "required": ["statePod", "podRep", "usNamed", "rowNamedDomains"],
+      "additionalProperties": true,
+      "properties": {
+        "statePod": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {},
+            "^[a-z][a-z\\s]*$": {
+              "type": "string",
+              "enum": ["Northwest", "Southwest", "Central", "Northeast", "Southeast"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "podRep": {
+          "type": "object",
+          "required": ["Scaled Accounts", "Northwest", "Southwest", "Central", "Northeast", "Southeast", "Canada", "UK", "ROW", "US Named Accounts", "ROW Named Accounts"],
+          "patternProperties": {
+            "^.+$": { "$ref": "#/definitions/rep" }
+          },
+          "additionalProperties": false
+        },
+        "usNamed": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "rowNamedDomains": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$" },
+          "uniqueItems": true
+        }
+      }
+    },
+
+    "lists": {
+      "type": "object",
+      "required": ["worldCountries", "usStates", "caProvinces", "auStates"],
+      "additionalProperties": true,
+      "properties": {
+        "worldCountries": {
+          "type": "array",
+          "minItems": 150,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "usStates": {
+          "type": "array",
+          "minItems": 50,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "caProvinces": {
+          "type": "array",
+          "minItems": 13,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "auStates": {
+          "type": "array",
+          "minItems": 8,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+
+    "legal": {
+      "type": "object",
+      "required": ["exhibitEStates", "dpaCountries"],
+      "additionalProperties": true,
+      "properties": {
+        "exhibitEStates": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "dpaCountries": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
