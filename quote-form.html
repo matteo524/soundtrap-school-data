@@ -3725,6 +3725,9 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       }).catch(function () { /* non-blocking */ });
     }
 
+    // Capture plan value before form.reset() wipes it — needed for the redirect below
+    var planVal = document.getElementById('pqf_plan') ? document.getElementById('pqf_plan').value : '';
+
     // Show success immediately after firing both calls
     saveQuoteProfile();
     form.reset();
@@ -3743,7 +3746,6 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     clearNces();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit Quote Request';
-    var planVal = document.getElementById('pqf_plan') ? document.getElementById('pqf_plan').value : '';
     window.location.href = planVal.toLowerCase() === 'district' ? 'thank-you-district.html' : 'thank-you.html';
   });
 
