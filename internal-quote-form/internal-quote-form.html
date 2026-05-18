@@ -1,18 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <!--
   ╔══════════════════════════════════════════════════════════════════╗
-  ║  PRICE QUOTE FORM — HubSpot Custom HTML Module                  ║
+  ║  INTERNAL QUOTE FORM — Google Apps Script HtmlService           ║
   ║                                                                  ║
-  ║  SETUP (before publishing):                                      ║
-  ║  1. Replace APPS_SCRIPT_URL with your Google Apps Script URL.    ║
-  ║  2. Replace HUBSPOT_PORTAL_ID with your HubSpot portal ID.       ║
-  ║  3. Replace HUBSPOT_FORM_GUID with your HubSpot form GUID.       ║
-  ║     (Create the form in HubSpot first; match field internal      ║
-  ║      names exactly — see comments next to each field below.)     ║
-  ║                                                                  ║
-  ║  HubSpot placement:                                              ║
-  ║  Drag a "Custom HTML" module onto your landing page and paste    ║
-  ║  this entire file's contents into it.                            ║
+  ║  SETUP (one-time):                                               ║
+  ║  1. Add this file to the Apps Script project alongside Code.gs.  ║
+  ║  2. Update appsScriptUrl in PQF_CONFIG to the deployment URL.    ║
+  ║  3. Deploy as Web App:                                           ║
+  ║       Execute as: Me                                             ║
+  ║       Who has access: Anyone with Google Account                 ║
+  ║     Access is restricted to @soundtrap.com in doGet().          ║
   ╚══════════════════════════════════════════════════════════════════╝
 -->
 
@@ -21,14 +21,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 
-<!-- ── CONFIGURATION (edit these three values) ──────────────── -->
+<!-- ── CONFIGURATION ────────────────────────────────────────── -->
 <script>
   var PQF_CONFIG = {
-    appsScriptUrl:    'https://script.google.com/macros/s/AKfycbw_0gpCmMbU4hpi1V1qRm8vaeiO3aKLHMyDkLy7UPNg9hEA1qKJ8GBGbE-VG-AeZOES/exec',
-    indexUrl:         'https://matteo524.github.io/soundtrap-school-data/index.json',
-    schoolsBaseUrl:   'https://matteo524.github.io/soundtrap-school-data/schools-',
-    hubspotPortalId:  'YOUR_PORTAL_ID',         // e.g. '1234567'
-    hubspotFormGuid:  'YOUR_FORM_GUID',         // e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    // Update appsScriptUrl to this project's deployment URL after deploying.
+    appsScriptUrl:  'https://script.google.com/a/macros/soundtrap.com/s/AKfycbxptbB_caLVfRwhJ0hvIJHi6MeT7WxSyfozFmlPfWQrDUxG7wGje1Om5WjNXCAC4S8yjQ/exec',
+    indexUrl:       'https://matteo524.github.io/soundtrap-school-data/schools/index.json',
+    schoolsBaseUrl: 'https://matteo524.github.io/soundtrap-school-data/schools/schools-',
   };
 </script>
 <!-- ──────────────────────────────────────────────────────────── -->
@@ -454,11 +453,6 @@ input[type="range"].pqf-slider::-moz-range-thumb {
 }
 
 /* ── Professional Development section ─────────────────────── */
-#pqf_pd_section {
-  margin-top: 8px;
-  padding-top: 20px;
-  border-top: 1.5px solid #E8E5F5;
-}
 .pqf-pd-title {
   font-size: 13px;
   font-weight: 700;
@@ -781,7 +775,155 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   border-color: #D5CCFF;
   box-shadow: none;
 }
+
+/* ── Pricing & Discounts table ─────────────────────────────── */
+#pqf_discount_wrap {
+  padding: 0 40px 32px;
+}
+@media (max-width: 520px) {
+  #pqf_discount_wrap { padding: 0 24px 24px; }
+}
+
+.pqf-disc-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #6551FF;
+  margin-bottom: 12px;
+}
+
+.pqf-price-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pqf-price-table thead th {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(22,22,22,0.4);
+  padding: 0 0 6px;
+  text-align: left;
+  border-bottom: 1px solid #E8E4FF;
+}
+.pqf-price-table thead th:not(:first-child) { text-align: right; }
+
+.pqf-price-table tbody td {
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F0F0;
+  vertical-align: middle;
+  font-size: 13px;
+  color: #16161B;
+}
+.pqf-price-table tbody td.pqf-pt-std,
+.pqf-price-table tbody td.pqf-pt-net,
+.pqf-price-table tfoot td.pqf-pt-std,
+.pqf-price-table tfoot td.pqf-pt-net { text-align: right; }
+
+.pqf-pt-std {
+  color: rgba(22,22,22,0.45);
+  font-size: 12px;
+}
+.pqf-pt-std.has-discount { text-decoration: line-through; }
+
+.pqf-pt-disc { text-align: right; }
+
+.pqf-pt-net {
+  font-weight: 700;
+}
+.pqf-pt-sub {
+  font-size: 11px;
+  color: rgba(22,22,22,0.42);
+  margin-top: 3px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.pqf-price-table tfoot td {
+  padding: 12px 0 0;
+  border-top: 2px solid #E5E5EA;
+  font-size: 12px;
+  color: rgba(22,22,22,0.55);
+}
+.pqf-pt-total-disc {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3a8a3a;
+}
+.pqf-price-table tfoot td.pqf-pt-net {
+  font-size: 16px;
+  font-weight: 800;
+  color: #16161B;
+  text-align: right;
+}
+
+/* Discount input group */
+.pqf-disc-group {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+}
+
+.pqf-disc-type-toggle {
+  display: flex;
+  border: 1.5px solid #D5CCFF;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.pqf-disc-type-toggle button {
+  width: 26px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(22,22,22,0.4);
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+  padding: 0;
+  font-family: inherit;
+}
+.pqf-disc-type-toggle button.active {
+  background: #6551FF;
+  color: #FDFDFE;
+}
+
+.pqf-disc-input {
+  width: 68px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1.5px solid #D5CCFF;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #16161B;
+  text-align: right;
+  background: #FDFDFE;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  outline: none;
+  -moz-appearance: textfield;
+}
+.pqf-disc-input::-webkit-inner-spin-button,
+.pqf-disc-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.pqf-disc-input:focus {
+  border-color: #6551FF;
+  box-shadow: 0 0 0 3px rgba(101,81,242,0.14);
+}
+
+.pqf-pt-breakdown {
+  font-size: 11px;
+  color: rgba(22,22,22,0.45);
+  line-height: 1.5;
+  padding-top: 8px;
+}
 </style>
+</head>
+<body>
 
 <div class="pqf-wrap">
   <div class="pqf-card" id="pqf_card">
@@ -804,8 +946,8 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         <path d="M8122.32 424.05C8125.3 424.05 8128.14 423.95 8130.77 423.75C8133.4 423.56 8135.76 423.01 8137.83 422.1C8139.91 421.19 8141.57 419.8 8142.82 417.92C8144.07 416.05 8144.69 413.43 8144.69 410.06C8144.69 407.21 8144.14 404.94 8143.03 403.25C8141.92 401.57 8140.47 400.27 8138.74 399.37C8137.01 398.46 8135 397.84 8132.72 397.51C8130.43 397.19 8128.22 397.03 8126 397.03H8108.55V424.04H8122.33L8122.32 424.05ZM8128.14 386.36C8138.25 386.36 8145.73 388.37 8150.58 392.38C8155.43 396.4 8157.85 402.49 8157.85 410.65C8157.85 418.29 8155.7 423.9 8151.48 427.46C8147.19 431.02 8141.85 433.13 8135.55 433.78L8159.79 471.28H8145.66L8122.53 434.75H8108.54V471.28H8095.31V386.38H8128.13L8128.14 386.36Z" fill="white"/>
         <path d="M8123.21 365.1C8088.1 365.1 8059.5 393.68 8059.5 428.81C8059.5 463.94 8088.1 492.52 8123.21 492.52C8158.32 492.52 8186.92 463.94 8186.92 428.81C8186.92 393.68 8158.32 365.1 8123.21 365.1ZM8123.21 503.59C8081.94 503.59 8048.43 470.04 8048.43 428.81C8048.43 387.58 8081.94 354.03 8123.21 354.03C8164.48 354.03 8198 387.58 8198 428.81C8198 470.04 8164.42 503.59 8123.21 503.59Z" fill="white"/>
       </svg>
-      <h1>Request a Price Quote</h1>
-      <p>Get a price quote for your Soundtrap for Education subscription — new, renewal, seat add-on, or plan upgrade.</p>
+      <h1>Internal Quote Form</h1>
+      <p>Sales team only. Create a price quote on behalf of a customer — new, renewal, seat add-on, or plan upgrade. Discounts can be applied per line item below.</p>
     </div>
 
     <form id="pqfForm" novalidate>
@@ -1107,6 +1249,26 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
       </div>
 
+      <!-- ── PROFESSIONAL DEVELOPMENT — US only ───────────────── -->
+      <div id="pqf_pd_section" style="display:none;" class="pqf-section">
+        <div class="pqf-section-title">Professional Development</div>
+        <div class="pqf-pd-hint" style="padding: 0 40px 16px; font-size:13px; color:rgba(22,22,22,0.55); line-height:1.5;">Optional PD session for your team — available for US customers. The cost will be added to your quote total.</div>
+        <div class="pqf-grid pqf-grid-1" style="padding-bottom:8px;">
+          <div class="pqf-field">
+            <label class="pqf-label" for="pqf_pd_session">PD Session</label>
+            <div class="pqf-select-wrap">
+              <select id="pqf_pd_session" name="pqf_pd_session" class="pqf-select">
+                <option value="">No PD session</option>
+                <option value="1 hour Virtual PD for up to 50 teachers">Virtual PD – up to 50 teachers (1 hr) — $499</option>
+                <option value="1 hour Virtual PD for more than 50 teachers">Virtual PD – 50+ teachers (1 hr) — $599</option>
+                <option value="In Person PD for 3 hours">In-Person PD – 3 hrs — $3,499</option>
+                <option value="In Person PD for 6 hours">In-Person PD – 6 hrs — $4,499</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── CONTACT INFORMATION ────────────────────────────── -->
       <div class="pqf-section" style="padding-top:40px;">
         <div class="pqf-section-title">Contact Information</div>
@@ -1375,22 +1537,6 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
             </div><!-- /.pqf-slider-track -->
           </div><!-- /.pqf-field -->
 
-          <!-- Professional Development — US only -->
-          <div id="pqf_pd_section" style="display:none; grid-column: 1 / -1;">
-            <div class="pqf-pd-title">Professional Development</div>
-            <div class="pqf-pd-hint">Optional PD session for your team — available for US customers. The cost will be added to your quote total.</div>
-            <div class="pqf-field" style="margin-top:8px; margin-bottom:0;">
-              <label class="pqf-label" for="pqf_pd_session">PD Session</label>
-              <select id="pqf_pd_session" name="pqf_pd_session" class="pqf-select">
-                <option value="">No PD session</option>
-                <option value="1 hour Virtual PD for up to 50 teachers">Virtual PD – up to 50 teachers (1 hr) — $499</option>
-                <option value="1 hour Virtual PD for more than 50 teachers">Virtual PD – 50+ teachers (1 hr) — $599</option>
-                <option value="In Person PD for 3 hours">In-Person PD – 3 hrs — $3,499</option>
-                <option value="In Person PD for 6 hours">In-Person PD – 6 hrs — $4,499</option>
-              </select>
-            </div>
-          </div>
-
           <!-- Purchase Date — NEW only, optional -->
           <div class="pqf-field" id="pqf_purchase_date_field" style="display:none; grid-column: 1 / -1;">
             <label class="pqf-label" for="pqf_purchase_date">Purchase Date</label>
@@ -1405,15 +1551,77 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
         </div>
 
-        <!-- Estimated price — shown once plan + seats are entered -->
-        <div id="pqf_price_wrap" style="display:none;">
-          <div class="pqf-price-box">
-            <div class="pqf-price-label">Estimated Annual Price</div>
-            <div class="pqf-price-amount" id="pqf_price_amount"></div>
-            <div class="pqf-price-breakdown" id="pqf_price_breakdown"></div>
-            <div class="pqf-price-note">Indicative price. Final pricing will be confirmed in your quote.</div>
-          </div>
-        </div>
+      <!-- Pricing & Discounts — shown once plan + seats are entered -->
+      <div id="pqf_discount_wrap" style="display:none;">
+        <div class="pqf-disc-section-title">Pricing &amp; Discounts</div>
+        <table class="pqf-price-table" cellspacing="0" cellpadding="0">
+          <thead>
+            <tr>
+              <th style="width:36%;">Line Item</th>
+              <th style="width:20%;">List Price</th>
+              <th style="width:28%;">Discount</th>
+              <th style="width:16%;">Net Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Subscription fee — always shown when pricing is available -->
+            <tr id="pqf_pt_sub_row">
+              <td>Subscription Fee<div class="pqf-pt-sub" id="pqf_pt_sub_detail"></div></td>
+              <td class="pqf-pt-std" id="pqf_pt_sub_std"></td>
+              <td class="pqf-pt-disc">
+                <div class="pqf-disc-group">
+                  <div class="pqf-disc-type-toggle" id="pqf_disc_sub_toggle">
+                    <button type="button" class="active" data-type="%">%</button>
+                    <button type="button" data-type="$">$</button>
+                  </div>
+                  <input type="number" id="pqf_disc_sub_val" class="pqf-disc-input" min="0" step="any" placeholder="0" />
+                </div>
+              </td>
+              <td class="pqf-pt-net" id="pqf_pt_sub_net"></td>
+            </tr>
+            <!-- Maintenance fee — District only -->
+            <tr id="pqf_pt_maint_row" style="display:none;">
+              <td>Maintenance Fee<div class="pqf-pt-sub" id="pqf_pt_maint_detail"></div></td>
+              <td class="pqf-pt-std" id="pqf_pt_maint_std"></td>
+              <td class="pqf-pt-disc">
+                <div class="pqf-disc-group">
+                  <div class="pqf-disc-type-toggle" id="pqf_disc_maint_toggle">
+                    <button type="button" class="active" data-type="%">%</button>
+                    <button type="button" data-type="$">$</button>
+                  </div>
+                  <input type="number" id="pqf_disc_maint_val" class="pqf-disc-input" min="0" step="any" placeholder="0" />
+                </div>
+              </td>
+              <td class="pqf-pt-net" id="pqf_pt_maint_net"></td>
+            </tr>
+            <!-- PD session — US only, shown when a PD session is selected -->
+            <tr id="pqf_pt_pd_row" style="display:none;">
+              <td>Professional Development<div class="pqf-pt-sub" id="pqf_pt_pd_detail"></div></td>
+              <td class="pqf-pt-std" id="pqf_pt_pd_std"></td>
+              <td class="pqf-pt-disc">
+                <div class="pqf-disc-group">
+                  <div class="pqf-disc-type-toggle" id="pqf_disc_pd_toggle">
+                    <button type="button" class="active" data-type="%">%</button>
+                    <button type="button" data-type="$">$</button>
+                  </div>
+                  <input type="number" id="pqf_disc_pd_val" class="pqf-disc-input" min="0" step="any" placeholder="0" />
+                </div>
+              </td>
+              <td class="pqf-pt-net" id="pqf_pt_pd_net"></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td style="font-weight:700;color:#16161B;font-size:13px;">Total</td>
+              <td class="pqf-pt-std" id="pqf_pt_total_std"></td>
+              <td class="pqf-pt-total-disc" id="pqf_pt_total_disc"></td>
+              <td class="pqf-pt-net" id="pqf_pt_total_net"></td>
+            </tr>
+          </tfoot>
+        </table>
+        <!-- hidden field carries the discounted total into the payload -->
+        <input type="hidden" id="pqf_total_discounted_cost" value="" />
+      </div>
 
       </div>
 
@@ -1431,14 +1639,23 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         </button>
 
         <p class="pqf-privacy">
-          By submitting this form you agree to the Soundtrap&nbsp;Privacy Policy.
-          We will never share your information with third parties.
+          For Soundtrap sales team use only. The customer will receive the quote by email.
         </p>
       </div>
 
     </form>
   </div>
 
+  <!-- ── Thank-you panel (shown after successful submission) ── -->
+  <div id="pqf_thankyou" style="display:none;" class="pqf-card">
+    <div class="pqf-header"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 40px 64px;">
+      <div style="width:72px;height:72px;border-radius:50%;background:#6551FF;color:#FDFDFE;font-size:36px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;flex-shrink:0;">&#10003;</div>
+      <h1 style="font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:1px;color:#16161B;margin-bottom:16px;">Thank you!</h1>
+      <p style="font-size:16px;color:rgba(22,22,22,0.65);max-width:400px;line-height:1.65;margin-bottom:48px;">Quote submitted. The customer will receive the quote in their inbox shortly, and a record has been created in Salesforce.</p>
+      <button id="pqf_submit_another" style="background:#6551FF;color:#FDFDFE;font-family:inherit;font-size:15px;font-weight:600;padding:14px 32px;border-radius:8px;border:none;cursor:pointer;">Submit another quote</button>
+    </div>
+  </div>
 
 </div>
 
@@ -1448,11 +1665,9 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
   /* ── Config ───────────────────────────────────────────────── */
   var CFG = window.PQF_CONFIG || {};
-  var API_URL          = CFG.appsScriptUrl   || '';
-  var INDEX_URL        = CFG.indexUrl        || '';
-  var SCHOOLS_BASE_URL = CFG.schoolsBaseUrl  || '';
-  var HS_PORTAL_ID     = CFG.hubspotPortalId || '';
-  var HS_FORM_GUID     = CFG.hubspotFormGuid || '';
+  var API_URL          = CFG.appsScriptUrl  || '';
+  var INDEX_URL        = CFG.indexUrl       || '';
+  var SCHOOLS_BASE_URL = CFG.schoolsBaseUrl || '';
 
   /* ── Manual-entry mode state ──────────────────────────────── */
   var manualMode       = false;
@@ -1497,10 +1712,10 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       'Northwest':          { name: 'Brittany Follet',      email: 'brittany@soundtrap.com' },
       'Southwest':          { name: 'Maria Opirhory',       email: 'maria@soundtrap.com'    },
       'Central':            { name: 'Chloe Taylor',         email: 'chloe@soundtrap.com'    },
-      'Northeast':          { name: 'Lindsee Fryatt',       email: 'lindsee@soundtrap.com'  },
+      'Northeast':          { name: 'Chad Reisfelt',       email: 'chad@soundtrap.com'  },
       'Southeast':          { name: 'Tina Shah',            email: 'tina@soundtrap.com'     },
       'Canada':             { name: 'Chad Reisfelt',        email: 'chad@soundtrap.com'     },
-      'UK':                 { name: 'Jennifer Meehleis',    email: 'jennifer@soundtrap.com' },
+      'UK':                 { name: 'Michael Beardsley',    email: 'michael@soundtrap.com' },
       'ROW':                { name: 'Jennifer Meehleis',    email: 'jennifer@soundtrap.com' },
       'US Named Accounts':  { name: 'Leandro Otero',        email: 'leandro@soundtrap.com'  },
       'ROW Named Accounts': { name: 'Angelica Johansson',   email: 'angelicaj@soundtrap.com'},
@@ -1601,6 +1816,46 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     }
   }
 
+
+  /* ── Discount state ──────────────────────────────────────── */
+  var discState = {
+    sub:   { type: '%' },
+    maint: { type: '%' },
+    pd:    { type: '%' },
+  };
+
+  function setDiscType(line, type) {
+    discState[line].type = type;
+    var toggle = document.getElementById('pqf_disc_' + line + '_toggle');
+    if (toggle) {
+      Array.prototype.forEach.call(toggle.querySelectorAll('button'), function (btn) {
+        btn.classList.toggle('active', btn.dataset.type === type);
+      });
+    }
+    updatePriceDisplay();
+  }
+
+  // Wire toggle buttons (delegation on each toggle group)
+  ['sub', 'maint', 'pd'].forEach(function (line) {
+    var toggle = document.getElementById('pqf_disc_' + line + '_toggle');
+    if (!toggle) return;
+    Array.prototype.forEach.call(toggle.querySelectorAll('button'), function (btn) {
+      btn.addEventListener('click', function () { setDiscType(line, btn.dataset.type); });
+    });
+  });
+
+  function applyDiscount(base, type, value) {
+    var v = parseFloat(value) || 0;
+    if (!v || !base) return base;
+    if (type === '%') return Math.max(0, Math.round(base * (1 - v / 100)));
+    return Math.max(0, Math.round(base - v));
+  }
+
+  function fmtDiscLabel(type, value) {
+    var v = parseFloat(value) || 0;
+    if (!v) return '—';
+    return type === '%' ? '−' + v + '%' : '−' + fmtCurrency(v, 'USD');
+  }
 
   /* ── DOM refs ─────────────────────────────────────────────── */
   var form          = document.getElementById('pqfForm');
@@ -2338,140 +2593,174 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   }
 
   function updatePriceDisplay() {
-    var priceWrap   = document.getElementById('pqf_price_wrap');
-    var amountEl    = document.getElementById('pqf_price_amount');
-    var breakdownEl = document.getElementById('pqf_price_breakdown');
-    var labelEl     = document.querySelector('.pqf-price-label');
-    if (!priceWrap || !amountEl) return;
+    var wrap = document.getElementById('pqf_discount_wrap');
+    if (!wrap) return;
+
+    var hide = function () { wrap.style.display = 'none'; };
 
     var quoteType  = document.getElementById('pqf_quote_type').value;
     var plan       = document.getElementById('pqf_plan').value;
-    var schoolsVal = parseInt((document.getElementById('pqf_schools') || {}).value, 10);
+    var schoolsVal = parseInt((document.getElementById('pqf_schools') || {}).value, 10) || 0;
     var country    = (manualMode
       ? document.getElementById('pqf_manual_country').value
       : document.getElementById('pqf_country').value) || '';
     var currency   = currencyForCountry(country);
 
-    if (!plan) { priceWrap.style.display = 'none'; return; }
-    if (plan === 'District' && (!schoolsVal || schoolsVal < 1)) { priceWrap.style.display = 'none'; return; }
+    if (!plan) { hide(); return; }
+    if (plan === 'District' && schoolsVal < 1) { hide(); return; }
 
-    /* ── ADD-ON path ─────────────────────────────────────────── */
+    var subFeeStd   = 0;
+    var maintFeeStd = 0;
+    var breakdown   = '';
+
+    /* ── ADD-ON ────────────────────────────── */
     if (quoteType === 'ADD-ON') {
       var currentSeats = parseInt(document.getElementById('pqf_current_seats').value, 10);
       var addonSeats   = parseInt(document.getElementById('pqf_addon_seats').value, 10);
       var endDate      = document.getElementById('pqf_end_date').value;
-
-      if (!currentSeats || currentSeats < 1 || !addonSeats || addonSeats < 1 || !endDate) {
-        priceWrap.style.display = 'none'; return;
-      }
-
+      if (!currentSeats || !addonSeats || !endDate) { hide(); return; }
       var addon = calcAddonPrice(currentSeats, addonSeats, plan, endDate, currency);
-      if (!addon || addon.proRata <= 0) { priceWrap.style.display = 'none'; return; }
+      if (!addon || addon.proRata <= 0) { hide(); return; }
+      subFeeStd = addon.proRata;
+      breakdown = '(' + fmtCurrency(addon.costTotal, currency) + ' − ' +
+                  fmtCurrency(addon.costCurrent, currency) + ') × ' +
+                  addon.days + ' days / 365';
 
-      labelEl.textContent     = 'Estimated Add-On Cost';
-      var pdCostAddon = getPdCost();
-      amountEl.textContent    = pdCostAddon > 0
-        ? fmtCurrency(addon.proRata + pdCostAddon, 'USD')
-        : fmtCurrency(addon.proRata, currency);
-      breakdownEl.textContent =
-        '(' + fmtCurrency(addon.costTotal, currency) + ' \u2212 ' +
-        fmtCurrency(addon.costCurrent, currency) + ') \u00d7 ' +
-        addon.days + ' days / 365' +
-        (pdCostAddon > 0 ? ' + PD ' + fmtCurrency(pdCostAddon, 'USD') : '');
-      priceWrap.style.display = '';
-      return;
-    }
-
-    /* ── UPGRADE PLAN path ───────────────────────────────────── */
-    if (quoteType === 'UPGRADE PLAN') {
+    /* ── UPGRADE PLAN ─────────────────────── */
+    } else if (quoteType === 'UPGRADE PLAN') {
       var currentPlan  = document.getElementById('pqf_current_plan').value;
       var currentSeats = parseInt(document.getElementById('pqf_current_seats').value, 10);
       var desiredSeats = parseInt(document.getElementById('pqf_seats').value, 10);
       var endDate      = document.getElementById('pqf_end_date').value;
-
-      if (!currentPlan || !currentSeats || currentSeats < 1 ||
-          !desiredSeats || desiredSeats < 1 || !endDate || !plan) {
-        priceWrap.style.display = 'none'; return;
-      }
-      if (desiredSeats < currentSeats) { priceWrap.style.display = 'none'; return; }
-
+      if (!currentPlan || !currentSeats || !desiredSeats || !endDate) { hide(); return; }
+      if (desiredSeats < currentSeats) { hide(); return; }
       var days = daysUntil(endDate);
-      if (!days || days <= 0) { priceWrap.style.display = 'none'; return; }
-
-      // New plan cost includes schools/maintenance if upgrading to District
-      var newCost     = calcPrice(desiredSeats, plan, schoolsVal || 0, currency);
-      // Current plan cost: seats only (no maintenance — upgrading away from current plan)
+      if (!days || days <= 0) { hide(); return; }
+      var newCost     = calcPrice(desiredSeats, plan, schoolsVal, currency);
       var currentCost = calcPrice(currentSeats, currentPlan, 0, currency);
-      if (!newCost || !currentCost) { priceWrap.style.display = 'none'; return; }
-
+      if (!newCost || !currentCost) { hide(); return; }
       var upgradeCost = Math.round((newCost.total - currentCost.total) * days / 365);
-      if (upgradeCost <= 0) { priceWrap.style.display = 'none'; return; }
+      if (upgradeCost <= 0) { hide(); return; }
+      subFeeStd = upgradeCost;
+      breakdown = '(' + fmtCurrency(newCost.total, currency) + ' − ' +
+                  fmtCurrency(currentCost.total, currency) + ') × ' + days + ' days / 365';
 
-      labelEl.textContent  = 'Estimated Upgrade Cost';
-      var pdCostUpgrade = getPdCost();
-      amountEl.textContent = pdCostUpgrade > 0
-        ? fmtCurrency(upgradeCost + pdCostUpgrade, 'USD')
-        : fmtCurrency(upgradeCost, currency);
-
-      var bParts = ['(' + fmtCurrency(newCost.total, currency) +
-                    ' \u2212 ' + fmtCurrency(currentCost.total, currency) +
-                    ') \u00d7 ' + days + ' days / 365'];
-      if (plan === 'District' && newCost.maintenance > 0) {
-        bParts.push(fmtCurrency(newCost.seats, currency) + ' seats + ' +
-                    fmtCurrency(newCost.maintenance, currency) + ' maint. (' +
-                    (schoolsVal || 0) + ' school' + ((schoolsVal || 0) !== 1 ? 's' : '') + ')');
+    /* ── NEW / RENEWAL ────────────────────── */
+    } else {
+      var seatsVal = parseInt(document.getElementById('pqf_seats').value, 10);
+      var months   = parseInt(document.getElementById('pqf_months').value, 10) || 12;
+      if (!seatsVal || seatsVal < 1) { hide(); return; }
+      var annual = calcPrice(seatsVal, plan, schoolsVal, currency);
+      if (!annual) { hide(); return; }
+      subFeeStd   = Math.round(calcMultiYearPrice(annual.seats, months));
+      maintFeeStd = Math.round(annual.maintenance * (months / 12));
+      var parts = [];
+      if (plan === 'District' && annual.maintenance > 0) {
+        parts.push(fmtCurrency(annual.seats, currency) + ' seats + ' +
+                   fmtCurrency(annual.maintenance, currency) + ' maint. (' +
+                   schoolsVal + ' school' + (schoolsVal !== 1 ? 's' : '') + ') / year');
       }
-      if (pdCostUpgrade > 0) bParts.push('PD ' + fmtCurrency(pdCostUpgrade, 'USD'));
-      breakdownEl.textContent = bParts.join(' \u2014 ');
-      priceWrap.style.display = '';
-      return;
+      if (months === 24) {
+        parts.push('Y1: ' + fmtCurrency(annual.total, currency) +
+                   ' + Y2: ' + fmtCurrency(Math.round(annual.total * 0.95), currency) + ' (−5%)');
+      } else if (months === 36) {
+        parts.push('Y1: ' + fmtCurrency(annual.total, currency) +
+                   ' + Y2: ' + fmtCurrency(Math.round(annual.total * 0.95), currency) + ' (−5%)' +
+                   ' + Y3: ' + fmtCurrency(Math.round(annual.total * 0.90), currency) + ' (−10%)');
+      } else if (months !== 12) {
+        parts.push('Pro-rata: ' + fmtCurrency(annual.total, currency) + ' / 12 × ' + months + ' mo');
+      }
+      breakdown = parts.join(' — ');
     }
 
-    /* ── NEW / RENEWAL path ──────────────────────────────────── */
-    var seatsVal = parseInt(document.getElementById('pqf_seats').value, 10);
-    var months   = parseInt(document.getElementById('pqf_months').value, 10) || 12;
+    /* ── PD fee ─────────────────────────────── */
+    var pdFeeStd = getPdCost();
 
-    if (!seatsVal || seatsVal < 1) { priceWrap.style.display = 'none'; return; }
+    /* ── Read discount inputs ───────────────────── */
+    var subVal   = parseFloat(document.getElementById('pqf_disc_sub_val').value)   || 0;
+    var maintVal = parseFloat(document.getElementById('pqf_disc_maint_val').value) || 0;
+    var pdVal    = parseFloat(document.getElementById('pqf_disc_pd_val').value)    || 0;
+    var subType  = discState.sub.type;
+    var maintType = discState.maint.type;
+    var pdType   = discState.pd.type;
 
-    var annual = calcPrice(seatsVal, plan, schoolsVal, currency);
-    if (!annual) { priceWrap.style.display = 'none'; return; }
+    var subFeeNet   = applyDiscount(subFeeStd,   subType,   subVal);
+    var maintFeeNet = applyDiscount(maintFeeStd, maintType, maintVal);
+    var pdFeeNet    = applyDiscount(pdFeeStd,    pdType,    pdVal);
+    var totalStd    = subFeeStd + maintFeeStd + pdFeeStd;
+    var totalNet    = subFeeNet + maintFeeNet + pdFeeNet;
 
-    var totalCost   = Math.round(calcMultiYearPrice(annual.total, months));
-    var periodLabel = months === 12 ? 'Annual Price'
-                    : months === 24 ? '2-Year Total'
-                    : months === 36 ? '3-Year Total'
-                    : months + '-Month Total';
-    labelEl.textContent      = 'Estimated ' + periodLabel;
-    amountEl.textContent     = fmtCurrency(totalCost, currency);
-
-    var parts = [];
-    if (plan === 'District' && annual.maintenance > 0) {
-      parts.push(
-        fmtCurrency(annual.seats, currency) + ' seats + ' +
-        fmtCurrency(annual.maintenance, currency) + ' maint. (' +
-        schoolsVal + ' school' + (schoolsVal !== 1 ? 's' : '') +
-        ' \u00d7 ' + fmtCurrency(PRICING[currency].District.m, currency) + ') / year'
-      );
+    /* ── Populate table cells ───────────────────── */
+    function setCell(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text;
     }
-    if (months === 24) {
-      parts.push('Y1: ' + fmtCurrency(annual.total, currency) +
-                 ' + Y2: ' + fmtCurrency(Math.round(annual.total * 0.95), currency) + ' (\u22125%)');
-    } else if (months === 36) {
-      parts.push('Y1: ' + fmtCurrency(annual.total, currency) +
-                 ' + Y2: ' + fmtCurrency(Math.round(annual.total * 0.95), currency) + ' (\u22125%)' +
-                 ' + Y3: ' + fmtCurrency(Math.round(annual.total * 0.90), currency) + ' (\u221210%)');
-    } else if (months !== 12) {
-      parts.push('Pro-rata: ' + fmtCurrency(annual.total, currency) +
-                 ' / 12 \u00d7 ' + months + ' mo');
+    function setCellHasDiscount(id, hasDisc) {
+      var el = document.getElementById(id);
+      if (el) el.classList.toggle('has-discount', hasDisc);
     }
-    var pdCostNew = getPdCost();
-    if (pdCostNew > 0) {
-      totalCost += pdCostNew;
-      amountEl.textContent = fmtCurrency(totalCost, 'USD');
-      parts.push('PD ' + fmtCurrency(pdCostNew, 'USD'));
+
+    setCell('pqf_pt_sub_std', subFeeStd > 0 ? fmtCurrency(subFeeStd, currency) : '—');
+    setCellHasDiscount('pqf_pt_sub_std', subVal > 0);
+    setCell('pqf_pt_sub_net', subFeeStd > 0 ? fmtCurrency(subFeeNet, currency) : '—');
+    (function() {
+      var parts = [];
+      if (plan) parts.push(plan);
+      if (quoteType === 'ADD-ON') {
+        var addSeats = parseInt(document.getElementById('pqf_addon_seats').value, 10);
+        if (addSeats > 0) parts.push('+' + addSeats + ' seat' + (addSeats !== 1 ? 's' : ''));
+      } else if (seatsVal > 0) {
+        parts.push(seatsVal + ' seat' + (seatsVal !== 1 ? 's' : ''));
+      }
+      if (quoteType !== 'ADD-ON' && quoteType !== 'UPGRADE PLAN' && months) parts.push(months + ' mo');
+      setCell('pqf_pt_sub_detail', parts.join(' · '));
+    })();
+
+    var maintRow = document.getElementById('pqf_pt_maint_row');
+    if (maintRow) maintRow.style.display = (maintFeeStd > 0) ? '' : 'none';
+    if (maintFeeStd > 0) {
+      setCell('pqf_pt_maint_std', fmtCurrency(maintFeeStd, currency));
+      setCellHasDiscount('pqf_pt_maint_std', maintVal > 0);
+      setCell('pqf_pt_maint_net', fmtCurrency(maintFeeNet, currency));
+      setCell('pqf_pt_maint_detail', schoolsVal + ' school' + (schoolsVal !== 1 ? 's' : ''));
     }
-    breakdownEl.textContent  = parts.join(' \u2014 ');
-    priceWrap.style.display  = '';
+
+    var pdRow = document.getElementById('pqf_pt_pd_row');
+    if (pdRow) pdRow.style.display = (pdFeeStd > 0) ? '' : 'none';
+    if (pdFeeStd > 0) {
+      setCell('pqf_pt_pd_std', fmtCurrency(pdFeeStd, 'USD'));
+      setCellHasDiscount('pqf_pt_pd_std', pdVal > 0);
+      setCell('pqf_pt_pd_net', fmtCurrency(pdFeeNet, 'USD'));
+      var pdSelEl = document.getElementById('pqf_pd_session');
+      var pdLabel = (pdSelEl && pdSelEl.selectedIndex > 0)
+        ? pdSelEl.options[pdSelEl.selectedIndex].text.replace(/ — \$[\d,]+$/, '')
+        : '';
+      setCell('pqf_pt_pd_detail', pdLabel);
+    }
+
+    var hasAnyDiscount = subVal > 0 || maintVal > 0 || pdVal > 0;
+    var totalStdEl = document.getElementById('pqf_pt_total_std');
+    if (totalStdEl) {
+      totalStdEl.textContent = hasAnyDiscount ? fmtCurrency(totalStd, currency) : '';
+      totalStdEl.classList.toggle('has-discount', hasAnyDiscount);
+    }
+    setCell('pqf_pt_total_net', fmtCurrency(totalNet || totalStd, currency));
+
+    var totalDiscEl = document.getElementById('pqf_pt_total_disc');
+    if (totalDiscEl) {
+      var saved = totalStd - totalNet;
+      if (hasAnyDiscount && saved > 0) {
+        var pct = Math.round(saved / totalStd * 100);
+        totalDiscEl.textContent = '−' + fmtCurrency(saved, currency) + ' (−' + pct + '%)';
+      } else {
+        totalDiscEl.textContent = '';
+      }
+    }
+
+    var hidden = document.getElementById('pqf_total_discounted_cost');
+    if (hidden) hidden.value = String(totalNet || totalStd);
+
+    wrap.style.display = '';
   }
 
   /* Country-aware label and placeholder helpers */
@@ -2604,13 +2893,13 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     'pqf_plan_field', 'pqf_seats_field', 'pqf_schools_field',
     'pqf_slider_field', 'pqf_current_plan_field', 'pqf_end_date_field',
     'pqf_current_seats_field', 'pqf_addon_seats_field',
-    'pqf_pd_section', 'pqf_purchase_date_field'
+    'pqf_purchase_date_field'
   ];
   var _upgradeFieldOrderUpgrade = [
     'pqf_current_plan_field', 'pqf_current_seats_field',
     'pqf_plan_field', 'pqf_seats_field', 'pqf_schools_field',
     'pqf_end_date_field', 'pqf_addon_seats_field',
-    'pqf_pd_section', 'pqf_purchase_date_field'
+    'pqf_purchase_date_field'
   ];
 
   function reorderFieldsForUpgrade(enable) {
@@ -2787,6 +3076,13 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   if (schoolsEl) schoolsEl.addEventListener('input', updatePriceDisplay);
   var pdSessionEl = document.getElementById('pqf_pd_session');
   if (pdSessionEl) pdSessionEl.addEventListener('change', updatePriceDisplay);
+
+  // Discount number inputs → live update
+  ['pqf_disc_sub_val', 'pqf_disc_maint_val', 'pqf_disc_pd_val'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updatePriceDisplay);
+  });
+
   // Set min="today" on future-only date inputs
   (function () {
     var today = new Date();
@@ -3656,6 +3952,14 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       { name: 'use_case',              value: document.getElementById('pqf_use_case').value.trim()    },
       { name: 'pd_session',            value: (document.getElementById('pqf_pd_session') || {value:''}).value },
       { name: 'purchase_date',         value: document.getElementById('pqf_purchase_date').value             },
+      // Discounts
+      { name: 'sub_discount_type',    value: discState.sub.type                                               },
+      { name: 'sub_discount_value',   value: (document.getElementById('pqf_disc_sub_val').value   || '0')    },
+      { name: 'maint_discount_type',  value: discState.maint.type                                             },
+      { name: 'maint_discount_value', value: (document.getElementById('pqf_disc_maint_val').value || '0')    },
+      { name: 'pd_discount_type',     value: discState.pd.type                                                },
+      { name: 'pd_discount_value',    value: (document.getElementById('pqf_disc_pd_val').value    || '0')    },
+      { name: 'total_discounted_cost', value: (document.getElementById('pqf_total_discounted_cost').value || '0') },
     ]);
 
     var territory = computeTerritory();
@@ -3694,59 +3998,47 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting…';
 
-    var hsConfigured = HS_PORTAL_ID && HS_FORM_GUID &&
-                       HS_PORTAL_ID !== 'YOUR_PORTAL_ID' &&
-                       HS_FORM_GUID  !== 'YOUR_FORM_GUID';
-
-    // ── Fire both backends simultaneously ────────────────────────
-    // Apps Script is the source of truth (sheet row + email).
-    // HubSpot is secondary CRM logging — its response never blocks success.
-
-    var scriptPayload = buildScriptPayload();
-
-    // Always call Apps Script (fire-and-forget)
-    if (API_URL) {
-      fetch(API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify(scriptPayload),
-      }).catch(function () { /* non-blocking */ });
+    function finishSubmit() {
+      saveQuoteProfile();
+      form.reset();
+      toggleStateField(true);
+      resetSelect('state', 'Select a country first');
+      resetSelect('city', 'Select a state first');
+      resetSelect('district', 'Select a city first');
+      resetSelect('school', 'Select a district first');
+      toggleManualMode(false);
+      if (schoolManualMode) toggleSchoolOnlyMode(false);
+      if (privateMode)      togglePrivateMode(false);
+      // Reset school type radio to Public
+      var pubRadio = document.getElementById('pqf_school_type_public');
+      if (pubRadio) { pubRadio.checked = true; updateSchoolTypeActive(); }
+      document.getElementById('pqf_manual_state_field').style.display = 'none';
+      clearNces();
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Quote Request';
+      // Show thank-you panel, hide form card
+      document.getElementById('pqf_card').style.display = 'none';
+      document.getElementById('pqf_thankyou').style.display = 'block';
+      window.scrollTo(0, 0);
     }
 
-    // Call HubSpot if configured (fire-and-forget — doesn't gate success)
-    if (hsConfigured) {
-      var endpoint =
-        'https://api.hsforms.com/submissions/v3/integration/submit/' +
-        HS_PORTAL_ID + '/' + HS_FORM_GUID;
-      fetch(endpoint, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(buildHSPayload()),
-      }).catch(function () { /* non-blocking */ });
+    // Submit via google.script.run (HtmlService native channel — bypasses CSP/CORS).
+    // Falls back to console log when running locally without Apps Script context.
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(finishSubmit)
+        .withFailureHandler(function (err) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Quote Request';
+          errorBanner.textContent = 'Submission failed — please try again. (' + (err.message || err) + ')';
+          errorBanner.classList.add('pqf-visible');
+        })
+        .submitQuote(buildScriptPayload());
+    } else {
+      // Local dev only — log payload and skip to redirect
+      console.log('[local] submitQuote payload:', buildScriptPayload());
+      finishSubmit();
     }
-
-    // Capture plan value before form.reset() wipes it — needed for the redirect below
-    var planVal = document.getElementById('pqf_plan') ? document.getElementById('pqf_plan').value : '';
-
-    // Show success immediately after firing both calls
-    saveQuoteProfile();
-    form.reset();
-    toggleStateField(true);
-    resetSelect('state', 'Select a country first');
-    resetSelect('city', 'Select a state first');
-    resetSelect('district', 'Select a city first');
-    resetSelect('school', 'Select a district first');
-    toggleManualMode(false);
-    if (schoolManualMode) toggleSchoolOnlyMode(false);
-    if (privateMode)      togglePrivateMode(false);
-    // Reset school type radio to Public
-    var pubRadio = document.getElementById('pqf_school_type_public');
-    if (pubRadio) { pubRadio.checked = true; updateSchoolTypeActive(); }
-    document.getElementById('pqf_manual_state_field').style.display = 'none';
-    clearNces();
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Quote Request';
-    window.location.href = planVal.toLowerCase() === 'district' ? 'thank-you-district.html' : 'thank-you.html';
   });
 
   /* ── localStorage profile — save / restore ────────────────── */
@@ -3895,12 +4187,113 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     } catch (e) { /* localStorage may be unavailable */ }
   }
 
+  /* ── Prefill (from URL params injected by doGet) ────────────── */
+  function applyPrefill() {
+    var p = (typeof PREFILL_DATA !== 'undefined') ? PREFILL_DATA : {};
+    if (!p || !Object.keys(p).length) return;
+
+    // Standard <select> or <input type="text"> — just set value and fire change/input
+    function setSelect(id, val) {
+      if (!val) return;
+      var el = document.getElementById(id);
+      if (el) { el.value = val; el.dispatchEvent(new Event('change')); }
+    }
+    function setInput(id, val) {
+      if (!val) return;
+      var el = document.getElementById(id);
+      if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
+    }
+
+    // Combo boxes — use the existing comboCommit() helper (handles hidden select injection)
+    function setCombo(key, val) { comboCommit(key, val); }
+
+    // Quote type first — drives which fields are visible
+    setSelect('pqf_quote_type', p.quote_type);
+
+    // Plan
+    setSelect('pqf_plan', p.plan);
+
+    // School type radio
+    if (p.school_type) {
+      var radioId = p.school_type === 'Private' ? 'pqf_school_type_private' : 'pqf_school_type_public';
+      var radio = document.getElementById(radioId);
+      if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+    }
+
+    // Country — use comboCommit (hidden select has no pre-populated options)
+    if (p.country) {
+      setCombo('country', p.country);
+
+      // For US: enter manual mode and fill the free-text location fields
+      if (p.country === 'United States' && (p.state || p.city || p.district || p.school)) {
+        toggleManualMode(true);
+        setCombo('manual_state', p.state); // also a combo box
+        setInput('pqf_manual_city',     p.city);
+        setInput('pqf_manual_district', p.district);
+        setInput('pqf_manual_school',   p.school);
+        setInput('pqf_manual_website',  p.website);
+      }
+    }
+
+    // Contact info
+    setInput('pqf_firstname',  p.firstname);
+    setInput('pqf_lastname',   p.lastname);
+    setInput('pqf_email',      p.email);
+    setInput('pqf_role',       p.role);
+    setInput('pqf_account_id', p.account_id);
+
+    // Quote details
+    setInput('pqf_seats',   p.seats);
+    setInput('pqf_schools', p.schools);
+    if (p.months) {
+      var slider = document.getElementById('pqf_months');
+      if (slider) { slider.value = p.months; slider.dispatchEvent(new Event('input')); }
+    }
+    setSelect('pqf_current_plan', p.current_plan);
+    setInput('pqf_current_seats', p.current_seats);
+    setInput('pqf_end_date',      p.end_date);
+    setInput('pqf_purchase_date', p.purchase_date);
+
+    // Use case
+    setInput('pqf_use_case', p.use_case);
+
+    // PD session — only visible when country = United States. The country change
+    // handler shows the section asynchronously, so we set the value on a short
+    // delay to make sure the <select> is rendered and visible first.
+    if (p.pd_session) {
+      setTimeout(function () { setSelect('pqf_pd_session', p.pd_session); }, 50);
+    }
+  }
+
   /* ── Init ─────────────────────────────────────────────────── */
   loadIndex();
   toggleStateField(true); // show state by default; hidden dynamically for non-US
   applyQuoteTypeUI(document.getElementById('pqf_quote_type').value || '');
   updatePdSection();
-  initWelcomeBanner();
+  // Auto-restore saved profile if returning from the thank-you page with pre-fill intent.
+  // The banner is no longer shown on the form itself — the prompt lives on thank-you.html.
+  try {
+    if (sessionStorage.getItem('pqf_restore') === '1') {
+      sessionStorage.removeItem('pqf_restore');
+      var _raw = localStorage.getItem('pqf_profile');
+      if (_raw) {
+        var _profile = JSON.parse(_raw);
+        if (_profile) setTimeout(function () { prefillFromProfile(_profile); }, 0);
+      }
+    }
+  } catch (_e) { /* localStorage/sessionStorage may be unavailable */ }
+
+  setTimeout(applyPrefill, 0); // run after all sync init is complete
+
+  // "Submit another quote" — hide thank-you panel, show form
+  document.getElementById('pqf_submit_another').addEventListener('click', function () {
+    document.getElementById('pqf_thankyou').style.display = 'none';
+    document.getElementById('pqf_card').style.display = 'block';
+    window.scrollTo(0, 0);
+  });
 
 })();
 </script>
+
+</body>
+</html>

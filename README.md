@@ -1,115 +1,58 @@
-# Soundtrap Forms — Shared Config
+# Soundtrap Forms — Source-of-Truth Repo
 
-Single source of truth for pricing, territory routing, and shared lookup data across all Soundtrap quote/legal forms.
+Monorepo for the Soundtrap for Education forms ecosystem. Hosts data + assets via GitHub Pages, and stores source code for all forms (regardless of where they're deployed).
 
-## Files
+## Structure
 
-| File | Purpose |
-|------|---------|
-| `config.json` | The actual data. Fetched at runtime by every form (frontend + backend). |
-| `config.schema.json` | JSON Schema (draft-07) used to validate `config.json` on every change. |
-| `README.md` | This file. |
-
-## Hosted URLs
-
-Both files live in the `soundtrap-school-data` GitHub Pages repo:
-
-- Config: <https://matteo524.github.io/soundtrap-school-data/config.json>
-- Schema: <https://matteo524.github.io/soundtrap-school-data/config.schema.json>
-
-GitHub Pages serves from its CDN — propagation after a push usually takes 1–5 minutes.
-
-## What's in `config.json`
-
-| Section | What it controls |
-|---------|------------------|
-| `version` | ISO date string. Bump this on every meaningful change so you can see in dev tools which version is loaded. |
-| `quoteValidDays` | How many days a generated quote remains valid (default 30). |
-| `pricing` | Per-seat prices by currency, plan, and seat band, plus per-school maintenance fee for District. |
-| `pdPrices` | Professional Development session prices (USD, US-only). Keys must match the Salesforce `PD_Session__c` picklist exactly. |
-| `currencyByCountry` | Direct country → currency code mapping. |
-| `currencyFormat` | Display symbol/suffix per currency (e.g. `$`, `kr SEK`). |
-| `eurozone` | Countries that default to EUR if not explicitly in `currencyByCountry`. |
-| `regionByCountry` | Maps country → region (US / Canada / ANZ / ROW) for tax notes and quote template content. |
-| `taxNotes` | Per-region tax disclosure string used in customer-facing quotes. |
-| `upgradeMap` | Which plans a customer on a given plan can upgrade to. |
-| `territory.statePod` | US state → POD name (Northwest / Southwest / Central / Northeast / Southeast). |
-| `territory.podRep` | POD/territory → rep `{name, email}`. |
-| `territory.usNamed` | US district names that always route to the US Named Accounts rep, regardless of state POD. |
-| `territory.rowNamedDomains` | Email domains for non-US named accounts. |
-| `lists.worldCountries` | Full ISO 3166-1 country list (191 entries). |
-| `lists.usStates` | All 50 US states + DC + 5 territories. |
-| `lists.caProvinces` | All 13 Canadian provinces/territories. |
-| `lists.auStates` | All 8 Australian states/territories. |
-| `legal.exhibitEStates` | US states requiring an Exhibit E addendum (Legal Form). |
-| `legal.dpaCountries` | Countries requiring a Data Processing Addendum (Legal Form). |
-
-## How to update
-
-### Routine change (rep change, pricing tweak, new named account)
-
-1. Edit `config.json` directly on GitHub (pencil icon) or via a local clone.
-2. **Bump `version`** to today's date (`YYYY-MM-DD`) so it's clear which version is deployed.
-3. Validate before committing (see "Local validation" below) or rely on the GitHub Action (if configured).
-4. Commit + push. Changes propagate via GitHub Pages CDN in 1–5 minutes.
-5. **No redeploy needed for any form** — all forms (and Apps Script backends) fetch the latest config at runtime.
-
-### Structural change (new field, new region, etc.)
-
-1. Update `config.schema.json` to reflect the new field.
-2. Update `config.json` with the new data.
-3. Update the consumer code in the relevant form(s) — frontend HTML and/or backend `Code.gs`.
-4. Test in a staging deployment before pushing.
-
-### Cache-busting (urgent rep swap)
-
-If you need a change live immediately and can't wait for CDN propagation, the forms can be configured with a short URL query string (e.g. `?v=20260504`) so they bypass the CDN cache. See the consumer code for the cache-busting pattern.
-
-## Local validation
-
-Before committing changes, validate locally:
-
-```bash
-# Install once
-pip3 install jsonschema
-
-# From this folder
-python3 -c "
-import json, jsonschema
-with open('config.json') as f: cfg = json.load(f)
-with open('config.schema.json') as f: schema = json.load(f)
-jsonschema.validate(cfg, schema)
-print('✓ Valid')
-"
+```
+.
+├── config/                  Shared config (pricing, territory, reps) — served via GitHub Pages
+├── schools/                 NCES school data JSONs — served via GitHub Pages
+├── assets/                  Shared images (logo) — served via GitHub Pages
+├── public-quote-form/       Customer-facing quote form — currently served via GitHub Pages; planned migration to HubSpot
+├── internal-quote-form/     Sales-rep quote form — deployed via Apps Script HtmlService
+├── legal-form/              DPA / legal request form — deployed via Apps Script HtmlService
+└── trial-form/              Trial signup form
 ```
 
-## Consumed by
+## Hosted URLs (via GitHub Pages)
 
-| Form | Frontend | Backend |
-|------|----------|---------|
-| Public Quote Form | `quote-form.html` | `Code.gs` |
-| Internal Quote Form | `internal-quote-form.html` | `Code.gs` |
-| Legal Form | `legal-form.html` | `LegalCode.gs` |
+| Resource | URL |
+|----------|-----|
+| Shared config | <https://matteo524.github.io/soundtrap-school-data/config/config.json> |
+| Config schema | <https://matteo524.github.io/soundtrap-school-data/config/config.schema.json> |
+| Schools index | <https://matteo524.github.io/soundtrap-school-data/schools/index.json> |
+| Schools per-state | `https://matteo524.github.io/soundtrap-school-data/schools/schools-{state}.json` |
+| White logo | <https://matteo524.github.io/soundtrap-school-data/assets/SoundtrapForEducation_BarryWhite.png> |
+| Public quote form | <https://matteo524.github.io/soundtrap-school-data/public-quote-form/quote-form.html> |
 
-All consumers:
-- Frontend fetches via `fetch()` on form load. Cached in `localStorage` with a short TTL; falls back to last-known-good copy if the fetch fails.
-- Backend (`Code.gs`) fetches via `UrlFetchApp`. Cached via Apps Script `CacheService` with a 10-minute TTL.
+## Workflow
 
-## What's intentionally NOT in this config
+This repo is the **single source of truth** for every form's source code. Each form has its own folder with both HTML and (where applicable) Apps Script backend (`Code.gs`).
 
-These stay local to each form because they're project-specific:
+**To make changes:**
 
-- Apps Script deployment URLs (`DEPLOYMENT_URL`, `INTERNAL_FORM_URL`)
-- Salesforce config (`SF_INSTANCE_URL`, `SF_API_VERSION`, `SF_ALERT_EMAIL`, `REP_NOTIFICATION_OVERRIDE`)
-- HubSpot portal/form IDs
-- Google Sheet IDs and column schemas (`COLUMNS`, `FIELD_MAP`)
-- Drive folder IDs (Legal Form)
-- Form UI options that aren't shared (quote-type list, role select options, etc.)
+1. Edit files in this repo (locally or via the GitHub web UI)
+2. Commit + push
+3. For each form that uses changed files, paste the updated files into its deployment target:
+   - **Public Quote Form** — GitHub Pages serves the HTML automatically; `Code.gs` + `quote-template.html` go into the Apps Script project
+   - **Internal Quote Form** — all files paste into the internal Apps Script project
+   - **Legal Form** — both files paste into the legal Apps Script project
+4. Redeploy each Apps Script project (Deploy → Manage deployments → New version)
 
-## Change log
+## Local development
 
-Track major changes here:
+```bash
+git clone https://github.com/matteo524/soundtrap-school-data.git
+cd soundtrap-school-data
+# edit files, then:
+git add -A
+git commit -m "description"
+git push
+```
 
-| Date | Version | Change |
-|------|---------|--------|
-| 2026-05-04 | `2026-05-04` | Initial extraction from form files. Northeast pod → Chad Reisfelt; UK → Michael Beardsley; ROW → Jennifer Meehleis. |
+## Further reading
+
+- `CLAUDE.md` — instructions for AI coding tools (project memory)
+- `config/README.md` — how to update pricing, territory routing, rep assignments
+- Each form folder has its own `CLAUDE.md` with project-specific details
