@@ -56,11 +56,7 @@ Then open: `http://localhost:8743/internal-quote-form.html`
 
 The auth gate is bypassed locally (HtmlService APIs don't exist in a browser). For full end-to-end testing, deploy to Apps Script.
 
-**The `appsScriptUrl` in `internal-quote-form.html` (`PQF_CONFIG`) and `DEPLOYMENT_URL` in `Code.gs` must always point to the same Apps Script deployment URL.**
-
-⚠️ **First-deploy checklist — both values are currently wrong:**
-- `DEPLOYMENT_URL` in `Code.gs` (line ~138) is pre-populated with the *customer form's* deployment URL (`AKfycbw_...`). Replace it with the internal form's URL after deploying.
-- `appsScriptUrl` in `PQF_CONFIG` at the top of `internal-quote-form.html` is set to the placeholder string `'INTERNAL_DEPLOYMENT_URL'`. Replace it with the same URL.
+**The `appsScriptUrl` in `internal-quote-form.html` (`PQF_CONFIG`) and `DEPLOYMENT_URL` in `Code.gs` must always point to the same Apps Script deployment URL.** Both are set to the live internal deployment URL.
 
 ---
 
@@ -209,6 +205,7 @@ All other Salesforce field mappings, auth setup, and error handling are the same
 **Script Properties required:**
 - `SF_CLIENT_ID` — Consumer Key
 - `SF_CLIENT_SECRET` — Consumer Secret
+- `SLACK_WEBHOOK_URL` — Incoming Webhook URL for the Slack notification (currently `#matteo-zapier-test`)
 
 **Hardcoded config values to review before production:**
 - `SF_ALERT_EMAIL = 'matteo@soundtrap.com'` — email notified on SF sync failure
@@ -216,10 +213,16 @@ All other Salesforce field mappings, auth setup, and error handling are the same
 
 ---
 
+## Slack notifications
+
+Every submit posts to a Slack channel via `sendSlackNotification_()` in `Code.gs` (called from both `doPost` and `submitQuote`). Reads `SLACK_WEBHOOK_URL` from Script Properties; silently no-ops if unset. Currently posts to `#matteo-zapier-test`.
+
+---
+
 ## How to Make Common Updates
 
 ### Update pricing
-Same as customer form — edit `PRICING` in both `Code.gs` and `internal-quote-form.html`, then redeploy.
+Edit `pricing` in `/config/config.json`, commit + push. Frontend cache TTL is 5 min, backend `CacheService` TTL is 10 min — no Apps Script redeploy needed.
 
 ### Add or change discounts
 - Client-side: `discState`, `applyDiscount()`, `updatePriceDisplay()` in `internal-quote-form.html`

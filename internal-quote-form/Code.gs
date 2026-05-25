@@ -39,7 +39,6 @@ var COLUMNS = [
   'School Name',
   'NCES Number',
   'Manual Entry',
-  'School Type',
   'District Enrollment',
   // Contact
   'First Name',
@@ -88,7 +87,6 @@ var FIELD_MAP = {
   school_name:            'School Name',
   nces_number:            'NCES Number',
   manual_entry:           'Manual Entry',
-  school_type:            'School Type',
   district_enrollment:    'District Enrollment',
   firstname:              'First Name',
   lastname:               'Last Name',
@@ -119,100 +117,60 @@ var FIELD_MAP = {
   total_discounted_cost:  'Total Discounted Cost',
 };
 
-// ── Professional Development pricing (USD, US-only) ─────────
-var PD_PRICES = {
-  '1 hour Virtual PD for up to 50 teachers':    499,
-  '1 hour Virtual PD for more than 50 teachers': 599,
-  'In Person PD for 3 hours':                  3499,
-  'In Person PD for 6 hours':                  4499,
-};
-
-// ── Territory maps — mirrors internal-quote-form.html (used for district rep routing) ──
-// US state → POD name (3,000+ student accounts)
-var STATE_POD = {
-  'alaska':'Northwest','california':'Northwest','idaho':'Northwest','montana':'Northwest',
-  'nevada':'Northwest','oregon':'Northwest','washington':'Northwest','wyoming':'Northwest',
-  'arizona':'Southwest','arkansas':'Southwest','colorado':'Southwest','hawaii':'Southwest',
-  'kansas':'Southwest','missouri':'Southwest','nebraska':'Southwest','new mexico':'Southwest',
-  'oklahoma':'Southwest','texas':'Southwest','utah':'Southwest',
-  'illinois':'Central','indiana':'Central','iowa':'Central','michigan':'Central',
-  'minnesota':'Central','north dakota':'Central','ohio':'Central','south dakota':'Central',
-  'wisconsin':'Central',
-  'connecticut':'Northeast','maine':'Northeast','massachusetts':'Northeast',
-  'new hampshire':'Northeast','new jersey':'Northeast','new york':'Northeast',
-  'rhode island':'Northeast','vermont':'Northeast',
-  'alabama':'Southeast','delaware':'Southeast','district of columbia':'Southeast',
-  'florida':'Southeast','georgia':'Southeast','kentucky':'Southeast','louisiana':'Southeast',
-  'maryland':'Southeast','mississippi':'Southeast','north carolina':'Southeast',
-  'pennsylvania':'Southeast','south carolina':'Southeast','tennessee':'Southeast',
-  'virginia':'Southeast','west virginia':'Southeast',
-};
-// POD → rep { name, email } — keep in sync with internal-quote-form.html podRep
-var POD_REP = {
-  'Northwest': { name: 'Brittany Follet',   email: 'brittany@soundtrap.com'  },
-  'Southwest': { name: 'Maria Opirhory',    email: 'maria@soundtrap.com'     },
-  'Central':   { name: 'Chloe Taylor',      email: 'chloe@soundtrap.com'     },
-  'Northeast': { name: 'Chad Reisfelt',    email: 'chad@soundtrap.com'   },
-  'Southeast': { name: 'Tina Shah',         email: 'tina@soundtrap.com'      },
-};
-
 // ── Quote generation config ──────────────────────────────────
 
 // Deployment URL — same URL as appsScriptUrl in quote-form.html.
 // Used to build the PRINT link in customer emails. Leave empty to disable.
 var DEPLOYMENT_URL = 'https://script.google.com/a/macros/soundtrap.com/s/AKfycbxptbB_caLVfRwhJ0hvIJHi6MeT7WxSyfozFmlPfWQrDUxG7wGje1Om5WjNXCAC4S8yjQ/exec';
 
-// How many days the quote remains valid.
-var QUOTE_VALID_DAYS = 30;
+// ── Shared config (single source of truth) ───────────────────
+// JSON on GitHub Pages — see /config/README.md in the repo.
+var CONFIG_URL              = 'https://matteo524.github.io/soundtrap-school-data/config/config.json';
+var CONFIG_CACHE_KEY        = 'SHARED_CONFIG_v1';
+var CONFIG_CACHE_TTL_SECONDS = 600;  // 10 minutes
 
-// ── Pricing matrix (mirrors quote-form.html PRICING) ─────────
-// Tiers cover seat bands: 1–50 | 51–500 | 501–1k | 1k–5k |
-//   5k–10k | 10k–20k | 20k–50k | 50k–150k | 150k+
-// m = maintenance cost per school per year (District only).
-var PRICING = {
-  USD: {
-    School:    { t:[9.98,9.60,9.10,8.60,8.60,8.60,8.60,8.60,8.60], m:0 },
-    Classroom: { t:[7.98,7.60,7.30,6.90,6.90,6.90,6.90,6.90,6.90], m:0 },
-    District:  { t:[14.98,14.98,14.98,14.98,14.98,14.98,14.98,14.98,14.98], m:249 },
-    Legacy:    { t:[7.98,7.70,7.30,6.90,6.30,5.90,5.60,5.10,4.60], m:0 }
-  },
-  GBP: {
-    School:    { t:[8.18,7.80,7.50,7.10,7.10,7.10,7.10,7.10,7.10], m:0 },
-    Classroom: { t:[6.58,6.20,6.00,5.70,5.70,5.70,5.70,5.70,5.70], m:0 },
-    District:  { t:[12.18,12.18,12.18,12.18,12.18,12.18,12.18,12.18,12.18], m:189 },
-    Legacy:    { t:[6.58,6.20,6.00,5.70,5.30,5.00,4.70,4.20,3.80], m:0 }
-  },
-  EUR: {
-    School:    { t:[9.38,9.10,8.60,8.20,8.20,8.20,8.20,8.20,8.20], m:0 },
-    Classroom: { t:[7.58,7.30,6.90,6.60,6.60,6.60,6.60,6.60,6.60], m:0 },
-    District:  { t:[14.18,14.18,14.18,14.18,14.18,14.18,14.18,14.18,14.18], m:229 },
-    Legacy:    { t:[7.58,7.30,6.90,6.60,6.10,5.60,5.40,4.90,4.50], m:0 }
-  },
-  SEK: {
-    School:    { t:[105,100,96,91,91,91,91,91,91], m:0 },
-    Classroom: { t:[85,80,76,73,73,73,73,73,73], m:0 },
-    District:  { t:[157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98], m:2499 },
-    Legacy:    { t:[85,81,77,73,68,63,60,55,49], m:0 }
-  },
-  NOK: {
-    School:    { t:[105,100,96,91,91,91,91,91,91], m:0 },
-    Classroom: { t:[85,82,78,73,73,73,73,73,73], m:0 },
-    District:  { t:[157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98], m:2699 },
-    Legacy:    { t:[85,82,78,73,68,64,59,55,50], m:0 }
-  },
-  CAD: {
-    School:    { t:[11.18,10.80,10.30,9.70,9.70,9.70,9.70,9.70,9.70], m:0 },
-    Classroom: { t:[8.98,8.70,8.20,7.70,7.70,7.70,7.70,7.70,7.70], m:0 },
-    District:  { t:[16.78,16.78,16.78,16.78,16.78,16.78,16.78,16.78,16.78], m:349 },
-    Legacy:    { t:[8.98,8.70,8.20,7.70,7.10,6.70,6.40,5.80,5.30], m:0 }
-  },
-  AUD: {
-    School:    { t:[15.38,14.80,14.10,13.30,13.30,13.30,13.30,13.30,13.30], m:0 },
-    Classroom: { t:[12.38,11.80,11.30,10.60,10.60,10.60,10.60,10.60,10.60], m:0 },
-    District:  { t:[23.18,23.18,23.18,23.18,23.18,23.18,23.18,23.18,23.18], m:389 },
-    Legacy:    { t:[12.90,12.40,11.80,11.10,10.10,9.60,9.00,8.30,7.90], m:0 }
+// In-memory cache for the current invocation (avoid re-parsing within one request).
+var _configMemo = null;
+
+/**
+ * Loads the shared config from GitHub Pages. Cached in:
+ *   1. _configMemo — for the current invocation (fastest)
+ *   2. CacheService.getScriptCache() — for ~10 min across invocations
+ *   3. Network fetch from CONFIG_URL — only on cold cache
+ * Throws if the config can't be loaded — callers should treat this as fatal
+ * (pricing/territory/etc. can't be computed without it).
+ */
+function loadConfig_() {
+  if (_configMemo) return _configMemo;
+
+  // Try the script-wide cache (persists across invocations within TTL)
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get(CONFIG_CACHE_KEY);
+    if (cached) {
+      _configMemo = JSON.parse(cached);
+      return _configMemo;
+    }
+  } catch (_e) { /* CacheService may fail in some contexts — fall through */ }
+
+  // Cold cache — fetch fresh
+  var resp = UrlFetchApp.fetch(CONFIG_URL, {
+    muteHttpExceptions: true,
+    headers: { 'Cache-Control': 'no-cache' },
+  });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error('Failed to load shared config from ' + CONFIG_URL + ' — HTTP ' + resp.getResponseCode());
   }
-};
+  var text = resp.getContentText();
+  _configMemo = JSON.parse(text);
+
+  // Store in ScriptCache for the next invocation
+  try {
+    CacheService.getScriptCache().put(CONFIG_CACHE_KEY, text, CONFIG_CACHE_TTL_SECONDS);
+  } catch (_e) { /* best-effort */ }
+
+  return _configMemo;
+}
 
 // ── Salesforce integration config ───────────────────────────
 // Store credentials via Apps Script editor:
@@ -223,14 +181,6 @@ var SF_INSTANCE_URL  = 'https://soundtrap.my.salesforce.com';
 var SF_API_VERSION   = 'v59.0';
 // Email to notify on Salesforce sync failure.
 var SF_ALERT_EMAIL   = 'matteo@soundtrap.com';
-
-// Tax notes — one per region.
-var TAX_NOTES = {
-  'US':     'Taxes — e.g., state sales tax — are not included in this quote.',
-  'Canada': 'Applicable Canadian taxes (GST/HST/PST) are not included in this quote.',
-  'ROW':    'Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this quote.',
-  'ANZ':    'Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this quote.',
-};
 
 
 // ════════════════════════════════════════════════════════════
@@ -300,6 +250,11 @@ function doPost(e) {
       } catch (_) { /* alert failure is silent */ }
     }
 
+    // Slack notification — non-fatal. Includes SF record URL when available.
+    try {
+      sendSlackNotification_(data, quoteNumber, timestamp, result.sfRecordId);
+    } catch (_slackErr) { /* best-effort */ }
+
   } catch (err) {
     result.error = err.message;
   }
@@ -359,6 +314,11 @@ function submitQuote(data) {
       } catch (_) {}
     }
 
+    // Slack notification — non-fatal. Includes SF record URL when available.
+    try {
+      sendSlackNotification_(data, quoteNumber, timestamp, result.sfRecordId);
+    } catch (_slackErr) { /* best-effort */ }
+
   } catch (err) {
     result.error = err.message;
   }
@@ -417,7 +377,7 @@ function doGet(e) {
   // Default: serve the form, injecting any prefill data passed as URL params
   var prefill = {};
   var prefillKeys = ['firstname','lastname','email','role','country','state','city',
-    'district','school','school_type','quote_type','plan','seats','schools','months',
+    'district','school','quote_type','plan','seats','schools','months',
     'current_plan','current_seats','end_date','use_case','website','purchase_date',
     'account_id','pd_session'];
   if (e && e.parameter) {
@@ -489,6 +449,15 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
   // Show correct quote-type section and update badge
   html = applyQuoteType_(html, quoteType);
 
+  // Show PD row(s) only when a PD session is on the quote
+  var hasPd = !!((data.pd_session || '').trim());
+  html = setDisplayOnDataAttr_(html, 'data-pd-row', 'active', hasPd);
+
+  // Show Maintenance row(s) only for District plan
+  var hasMaint = ((data.plan || '').trim().toLowerCase() === 'district') &&
+                 (parseInt(data.number_of_schools || 0) > 0);
+  html = setDisplayOnDataAttr_(html, 'data-maint-row', 'active', hasMaint);
+
   // Strip client-side preview JS — page is fully server-rendered
   html = stripPreviewScript_(html);
 
@@ -531,10 +500,14 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
  * Orchestrator: build the filled-in quote email and send it.
  */
 function generateAndSendQuote_(data, quoteNumber, timestamp) {
+  // Uses buildFullQuoteEmail_() (programmatic, inline-styled, Gmail-safe) rather than
+  // the template — the template's <style>-block CSS doesn't survive Gmail's renderer.
+  // The template is still used for the web/print view via doGet (?q=...).
   var region    = regionForCountry_(data.country || '');
   var currency  = currencyForCountry_(data.country || '');
   var quoteType = normaliseQuoteType_(data.quote_type);
-  var emailHtml = buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quoteType, true);
+  var printUrl  = DEPLOYMENT_URL ? DEPLOYMENT_URL + '?q=' + encodeURIComponent(quoteNumber) : '';
+  var emailHtml = buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, quoteType, printUrl);
   sendCustomerEmail_(data, quoteNumber, emailHtml);
 }
 
@@ -544,10 +517,76 @@ function generateAndSendQuote_(data, quoteNumber, timestamp) {
 function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
   var totalSeatsAfterAddon = (parseInt(data.current_seats || 0) + parseInt(data.additional_seats || 0)) || '';
 
+  // Standard-price line items for the template
+  var subCostObj  = calcSubscriptionCost_(data, currency);
+  var pdSession   = (data.pd_session || '').trim();
+  var pdCost      = calcPdCost_(pdSession);
+  // Display name with "PD " stripped (e.g. "In Person PD for 3 hours" -> "In Person for 3 hours")
+  var pdSessionDisplay = pdSession.replace(/\bPD\s+/g, '');
+
+  // Maintenance fee — District plan only
+  var schoolsNum  = parseInt(data.number_of_schools || 0) || 0;
+  var monthsNum   = parseInt(data.subscription_length || 12) || 12;
+  var planName    = (data.plan || '').trim();
+  var maintCost   = 0;
+  if (planName.toLowerCase() === 'district' && schoolsNum > 0) {
+    try {
+      var pricing = loadConfig_().pricing;
+      var perSchool = pricing[currency] && pricing[currency].District && pricing[currency].District.m;
+      if (perSchool) {
+        maintCost = Math.round(perSchool * schoolsNum * (monthsNum / 12));
+      }
+    } catch (_e) { /* fall through */ }
+  }
+
+  // Discount-adjusted (net) prices — same logic as buildFullQuoteEmail_
+  var subDiscType   = data.sub_discount_type   || '%';
+  var subDiscVal    = parseFloat(data.sub_discount_value)   || 0;
+  var maintDiscType = data.maint_discount_type || '%';
+  var maintDiscVal  = parseFloat(data.maint_discount_value) || 0;
+  var pdDiscType    = data.pd_discount_type    || '%';
+  var pdDiscVal     = parseFloat(data.pd_discount_value)    || 0;
+  var subNet   = applyDiscount_(subCostObj.value || 0, subDiscType, subDiscVal);
+  var maintNet = applyDiscount_(maintCost, maintDiscType, maintDiscVal);
+  var pdNet    = applyDiscount_(pdCost,    pdDiscType,    pdDiscVal);
+  var totalStd = (subCostObj.value || 0) + maintCost + pdCost;
+  var totalNet = subNet + maintNet + pdNet;
+  var hasDiscount = (subDiscVal > 0) || (maintDiscVal > 0) || (pdDiscVal > 0);
+
+  // GrandTotal in the template's Total row: use net total (matches what the customer pays)
+  var grandTotalValue = totalNet;
+  var grandTotal      = (pdCost > 0 || maintCost > 0 || hasDiscount)
+                      ? fmtCurrency_(grandTotalValue, currency)
+                      : subCostObj.formatted;
+
+  // Build the discount block HTML (empty string when no discounts applied)
+  var discountBlockHtml = '';
+  if (hasDiscount) {
+    discountBlockHtml = buildDiscountBlockForTemplate_({
+      currency:        currency,
+      subStd:          subCostObj.value || 0,
+      subNet:          subNet,
+      subDiscType:     subDiscType,
+      subDiscVal:      subDiscVal,
+      maintStd:        maintCost,
+      maintNet:        maintNet,
+      maintDiscType:   maintDiscType,
+      maintDiscVal:    maintDiscVal,
+      pdStd:           pdCost,
+      pdNet:           pdNet,
+      pdDiscType:      pdDiscType,
+      pdDiscVal:       pdDiscVal,
+      pdSessionDisplay:pdSessionDisplay,
+      schoolsNum:      schoolsNum,
+      totalStd:        totalStd,
+      totalNet:        totalNet,
+    });
+  }
+
   return {
     '{{QuoteNumber}}':           quoteNumber,
     '{{SubmissionDate}}':        formatDate_(timestamp),
-    '{{ValidUntil}}':            formatDate_(addDays_(timestamp, QUOTE_VALID_DAYS)),
+    '{{ValidUntil}}':            formatDate_(addDays_(timestamp, loadConfig_().quoteValidDays)),
     '{{Currency}}':              currency,
     '{{SalesRepName}}':          data.account_manager        || '',
     '{{SalesRepEmail}}':         data.account_manager_email  || '',
@@ -561,16 +600,95 @@ function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
     '{{SoundtrapAccountID}}':    data.soundtrap_account_id   || 'N/A',
     '{{SoundtrapPlan}}':         data.plan                   || '',
     '{{NumberOfSeats}}':         data.number_of_seats        || '',
+    '{{NumberOfSchools}}':       data.number_of_schools      || '',
     '{{SubscriptionLength}}':    formatMonths_(parseInt(data.subscription_length || 12)),
-    '{{SubscriptionCost}}':      calcSubscriptionCost_(data, currency).formatted,
-    '{{TaxNote}}':               TAX_NOTES[region] || TAX_NOTES['ROW'],
+    '{{SubscriptionCost}}':      subCostObj.formatted,
+    '{{TaxNote}}':               loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'],
     '{{SubscriptionEndDate}}':   data.subscription_end_date  || '',
     '{{RenewalEndDate}}':        calcRenewalEndDate_(data),
     '{{CurrentPlan}}':           data.current_plan           || '',
     '{{CurrentSeats}}':          data.current_seats          || '',
     '{{AdditionalSeats}}':       data.additional_seats       || '',
     '{{TotalSeatsAfterAddon}}':  totalSeatsAfterAddon        || '',
+    '{{PdSession}}':             pdSessionDisplay,
+    '{{PdCost}}':                pdCost > 0 ? '+ ' + fmtCurrency_(pdCost, currency) : '',
+    '{{MaintenanceCost}}':       maintCost > 0 ? '+ ' + fmtCurrency_(maintCost, currency) : '',
+    '{{GrandTotal}}':            grandTotal,
+    '{{DiscountBlock}}':         discountBlockHtml,
   };
+}
+
+/**
+ * Build the HTML for the "Pricing & Discounts" block shown in the
+ * Salesforce-link template view. Mirrors the email's discount table but
+ * styled to fit the template's design.
+ * @param {object} d — pre-computed discount info (see buildPlaceholderMap_)
+ * @return {string} HTML
+ */
+function buildDiscountBlockForTemplate_(d) {
+  function row(label, std, net, type, val) {
+    if (std <= 0) return '';
+    var hasD = (parseFloat(val) || 0) > 0;
+    var disc = std - net;
+    var discCell = hasD
+      ? '<td style="padding:10px 12px;text-align:right;color:#6551FF;font-size:13px;">−' + fmtCurrency_(disc, d.currency) + ' (−' + Math.round((disc / std) * 100) + '%)</td>'
+      : '<td style="padding:10px 12px;text-align:right;color:rgba(22,22,22,0.4);">—</td>';
+    var stdCell = hasD
+      ? '<td style="padding:10px 12px;text-align:right;color:#999;text-decoration:line-through;font-size:13px;">' + fmtCurrency_(std, d.currency) + '</td>'
+      : '<td style="padding:10px 12px;text-align:right;font-size:13px;">' + fmtCurrency_(std, d.currency) + '</td>';
+    return '<tr>' +
+      '<td style="padding:10px 12px;font-size:13px;color:#16161B;">' + label + '</td>' +
+      stdCell +
+      discCell +
+      '<td style="padding:10px 12px;text-align:right;font-weight:700;color:#16161B;font-size:13px;">' + fmtCurrency_(net, d.currency) + '</td>' +
+      '</tr>';
+  }
+
+  var rows = [];
+  rows.push(row('Subscription Fee', d.subStd, d.subNet, d.subDiscType, d.subDiscVal));
+  if (d.maintStd > 0) {
+    var maintLabel = 'Maintenance Fee' + (d.schoolsNum > 0
+      ? '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + d.schoolsNum + ' schools</span>'
+      : '');
+    rows.push(row(maintLabel, d.maintStd, d.maintNet, d.maintDiscType, d.maintDiscVal));
+  }
+  if (d.pdStd > 0) {
+    var pdLabel = 'Professional Development' +
+      '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(d.pdSessionDisplay) + '</span>';
+    rows.push(row(pdLabel, d.pdStd, d.pdNet, d.pdDiscType, d.pdDiscVal));
+  }
+
+  var totalDiscAmt = d.totalStd - d.totalNet;
+  var totalDiscStr = fmtDiscountBoth_(d.totalStd, totalDiscAmt, d.currency);
+  var border = 'border-top:2px solid #E5E5EA;';
+  var totalRow =
+    '<tr>' +
+      '<td style="padding:10px 12px;font-size:12px;font-weight:700;color:#555;' + border + '">Total</td>' +
+      '<td style="padding:10px 12px;text-align:right;font-size:13px;color:#999;text-decoration:line-through;' + border + '">' + fmtCurrency_(d.totalStd, d.currency) + '</td>' +
+      '<td style="padding:10px 12px;text-align:right;font-size:13px;color:#6551FF;' + border + '">' + escapeHtml_(totalDiscStr) + '</td>' +
+      '<td style="padding:10px 12px;text-align:right;font-size:14px;font-weight:800;color:#16161B;' + border + '">' + fmtCurrency_(d.totalNet, d.currency) + '</td>' +
+    '</tr>';
+
+  return [
+    '<div style="margin-top:32px;">',
+    '<div class="qt-section-title" style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:#6551FF;font-weight:700;margin-bottom:16px;">Pricing &amp; Discounts</div>',
+    '<table style="width:100%;border-collapse:collapse;background:#FDFDFE;border-radius:8px;overflow:hidden;">',
+    '<thead style="background:#271B73;color:#FDFDFE;">',
+    '<tr>',
+    '<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;width:40%;">Line Item</th>',
+    '<th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">List Price</th>',
+    '<th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Discount</th>',
+    '<th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Net Price</th>',
+    '</tr></thead>',
+    '<tbody>',
+    rows.join(''),
+    '</tbody>',
+    '<tfoot>',
+    totalRow,
+    '</tfoot>',
+    '</table>',
+    '</div>',
+  ].join('');
 }
 
 /**
@@ -613,7 +731,7 @@ function applyRegion_(html, region, currency) {
   );
 
   // data-placeholder="TaxNote" spans
-  var taxNote = TAX_NOTES[region] || TAX_NOTES['ROW'];
+  var taxNote = loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'];
   html = html.replace(
     /(<span[^>]*data-placeholder="TaxNote"[^>]*>)[^<]*(<\/span>)/gi,
     '$1' + escapeHtml_(taxNote) + '$2'
@@ -666,7 +784,7 @@ function stripPreviewScript_(html) {
 function setDisplayOnDataAttr_(html, attrName, attrValue, visible) {
   // Match any opening tag that contains attrName="attrValue"
   var tagRegex = new RegExp(
-    '(<(?:section|div|span|header|footer)[^>]*' +
+    '(<(?:section|div|span|header|footer|tr|td|table)[^>]*' +
     attrName.replace(/[-]/g, '\\-') + '="' + attrValue.replace(/[-]/g, '\\-') + '"[^>]*?)' +
     '(\\s*style="[^"]*")?' +
     '(>)',
@@ -703,7 +821,8 @@ function setDisplayOnDataAttr_(html, attrName, attrValue, visible) {
  * Returns { seats, maintenance, total } or null if plan/currency not found.
  */
 function calcPrice_(seats, plan, numSchools, currency) {
-  var row = PRICING[currency] && PRICING[currency][plan];
+  var pricing = loadConfig_().pricing;
+  var row = pricing[currency] && pricing[currency][plan];
   if (!row) return null;
   var n = Math.max(seats, 50);
   var t = row.t;
@@ -802,7 +921,7 @@ function calcSubscriptionCost_(data, currency) {
 
 /** Return the fixed USD cost for a PD session, or 0 if none selected. */
 function calcPdCost_(pdSession) {
-  return PD_PRICES[pdSession] || 0;
+  return loadConfig_().pdPrices[pdSession] || 0;
 }
 
 
@@ -817,13 +936,14 @@ function sendCustomerEmail_(data, quoteNumber, emailHtml) {
   var customerName = ((data.firstname || '') + ' ' + (data.lastname || '')).trim() || 'there';
   var replyTo      = data.account_manager_email || 'orders@soundtrap.com';
   var subject      = 'Your Soundtrap for Education Price Quote \u2014 ' + quoteNumber;
+  var region       = regionForCountry_(data.country || '');
 
   GmailApp.sendEmail(
     data.email,
     subject,
     'Hi ' + customerName + ', please view this email in an HTML-capable client to see your Soundtrap price quote (' + quoteNumber + ').',
     {
-      htmlBody: emailHtml,
+      htmlBody: buildEmailIntro_(customerName, region) + emailHtml,
       name:     'Soundtrap for Education',
       replyTo:  replyTo,
     }
@@ -910,8 +1030,8 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
   var cost      = fmtCurrency_(totalNet || totalStd, totalNet !== totalStd ? 'USD' : currency);
   var grandTotal = cost;
   var submDate     = formatDate_(timestamp);
-  var validUntil   = formatDate_(addDays_(timestamp, QUOTE_VALID_DAYS));
-  var taxNote      = TAX_NOTES[region] || TAX_NOTES['ROW'];
+  var validUntil   = formatDate_(addDays_(timestamp, loadConfig_().quoteValidDays));
+  var taxNote      = loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'];
   var endDate      = formatDateStr_(data.subscription_end_date);
   var renewalEnd   = calcRenewalEndDate_(data)  || '\u2014';
   var currentPlan  = data.current_plan    || '\u2014';
@@ -1124,14 +1244,18 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
   var tfR     = 'style="font-size:14px;font-weight:700;color:#16161B;padding:10px 12px;text-align:right;"';
 
   // Build discount pricing rows: one row per line item (sub fee, maint, PD)
-  // Shown below the main header/detail rows.
-  function discRow(label, std, disc, net, discType, discVal) {
-    var discStr = fmtDiscount_(discType, discVal, currency);
-    var stdCell = (parseFloat(discVal) || 0) > 0
+  // Shown below the main header/detail rows. Discount cell shows BOTH the
+  // monetary saving AND the percentage in parens, e.g. "−$224.70 (−10%)".
+  // If `labelIsHtml` is true, the label is inserted verbatim (caller must escape).
+  function discRow(label, std, disc, net, discType, discVal, labelIsHtml) {
+    var hasDisc = (parseFloat(discVal) || 0) > 0;
+    var discStr = hasDisc ? fmtDiscountBoth_(std, disc, currency) : '—';
+    var stdCell = hasDisc
       ? '<td ' + tdStrike + '>' + fmtCurrency_(std, currency) + '</td>'
       : '<td ' + tdR      + '>' + fmtCurrency_(std, currency) + '</td>';
+    var labelCell = labelIsHtml ? label : escapeHtml_(label);
     return '<tr>' +
-      '<td ' + tdStyle + '>' + escapeHtml_(label) + '</td>' +
+      '<td ' + tdStyle + '>' + labelCell + '</td>' +
       stdCell +
       '<td ' + tdDisc  + '>' + escapeHtml_(discStr) + '</td>' +
       '<td ' + tdNet   + '>' + fmtCurrency_(net, currency) + '</td>' +
@@ -1207,24 +1331,37 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
   if (di.maintStd > 0) {
     h.push(discRow('Maintenance Fee', di.maintStd, di.maintStd - di.maintNet, di.maintNet, di.maintType, di.maintVal));
   }
-  // PD session row
+  // PD session row — label uses the same two-line format as the Salesforce-link template:
+  // "Professional Development" main label + the session name (with "PD " stripped) as subtext.
   if (pdSession && di.pdStd > 0) {
-    h.push(discRow('PD — ' + pdSession, di.pdStd, di.pdStd - di.pdNet, di.pdNet, di.pdType, di.pdVal));
+    var pdSessionDisplay = pdSession.replace(/\bPD\s+/g, '');
+    var pdLabelHtml = 'Professional Development<br>' +
+      '<span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSessionDisplay) + '</span>';
+    h.push(discRow(pdLabelHtml, di.pdStd, di.pdStd - di.pdNet, di.pdNet, di.pdType, di.pdVal, true));
   }
 
   h.push('</tbody>');
 
-  // Total footer
+  // Total footer — shows strikethrough standard total, total discount (monetary + %),
+  // and net total.  Every cell gets the same `border-top:2px solid #E5E5EA` so the
+  // separator line above the Total row is uniform (no lighter gap).
   var stdTotalFmt = di.totalStd > 0 ? fmtCurrency_(di.totalStd, currency) : '';
   var netTotalFmt = di.totalNet > 0 ? fmtCurrency_(di.totalNet, currency) : escapeHtml_(grandTotal);
+  var totalDiscAmt = (di.totalStd || 0) - (di.totalNet || 0);
+  var totalDiscFmt = (hasDiscount && totalDiscAmt > 0)
+    ? fmtDiscountBoth_(di.totalStd, totalDiscAmt, currency)
+    : '';
+
+  var totalBorder = 'border-top:2px solid #E5E5EA;';
   var stdTotalCell = (hasDiscount && di.totalStd > 0)
-    ? '<td ' + tdStrike + '>' + stdTotalFmt + '</td>'
-    : '<td style="padding:10px 12px;text-align:right;border-top:2px solid #E5E5EA;"></td>';
+    ? '<td style="font-size:12px;color:#999;padding:10px 12px;text-align:right;text-decoration:line-through;' + totalBorder + '">' + stdTotalFmt + '</td>'
+    : '<td style="padding:10px 12px;text-align:right;' + totalBorder + '"></td>';
+
   h.push('<tfoot><tr>');
-  h.push('<td style="font-size:12px;font-weight:700;color:#555;padding:10px 12px;border-top:2px solid #E5E5EA;">Total</td>');
+  h.push('<td style="font-size:12px;font-weight:700;color:#555;padding:10px 12px;' + totalBorder + '">Total</td>');
   h.push(stdTotalCell);
-  h.push('<td style="padding:10px 12px;text-align:right;border-top:2px solid #E5E5EA;"></td>');
-  h.push('<td style="font-size:14px;font-weight:800;color:#16161B;padding:10px 12px;text-align:right;border-top:2px solid #E5E5EA;">' + netTotalFmt + '</td>');
+  h.push('<td style="font-size:12px;color:#6551FF;padding:10px 12px;text-align:right;' + totalBorder + '">' + escapeHtml_(totalDiscFmt) + '</td>');
+  h.push('<td style="font-size:14px;font-weight:800;color:#16161B;padding:10px 12px;text-align:right;' + totalBorder + '">' + netTotalFmt + '</td>');
   h.push('</tr></tfoot>');
   h.push('</table></td></tr>');
 
@@ -1341,7 +1478,7 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
     QuoteToCountry:          data.country || '',
     Subscription_Length_Months__c: parseInt(data.subscription_length || 0, 10) || null,
     Requested_At__c:         Utilities.formatDate(timestamp, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ssZ"),
-    ExpirationDate:          Utilities.formatDate(addDays_(timestamp, QUOTE_VALID_DAYS), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+    ExpirationDate:          Utilities.formatDate(addDays_(timestamp, loadConfig_().quoteValidDays), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
     Status:                  'New',
   };
 
@@ -1382,7 +1519,7 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
   // ── Fee calculations ─────────────────────────────────────────
   var months  = parseInt(data.subscription_length || 12, 10);
   var schools = parseInt(data.number_of_schools   || 0,  10);
-  var pdFee   = data.pd_session ? (PD_PRICES[data.pd_session] || 0) : 0;
+  var pdFee   = data.pd_session ? (loadConfig_().pdPrices[data.pd_session] || 0) : 0;
 
   var subscriptionFee = 0;
   var maintenanceFee  = 0;
@@ -1505,6 +1642,83 @@ function findAccountByNces_(auth, nces) {
 }
 
 /**
+ * Send a Slack notification about a new quote submission.
+ * Reads SLACK_WEBHOOK_URL from Script Properties (per-project). Best-effort:
+ * any failure is logged but does NOT break the submission.
+ *
+ *   data         — submission data (already parsed in doPost / submitQuote)
+ *   quoteNumber  — generated quote number
+ *   timestamp    — submission timestamp (Date)
+ *   sfRecordId   — Salesforce Quote record ID, if available
+ *                  (prefers the SF record URL; falls back to the doGet ?q= URL)
+ */
+function sendSlackNotification_(data, quoteNumber, timestamp, sfRecordId) {
+  var webhookUrl = '';
+  try {
+    webhookUrl = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL') || '';
+  } catch (_e) { return; }
+  if (!webhookUrl) return;  // Not configured — skip silently
+
+  var quoteType = normaliseQuoteType_(data.quote_type);
+
+  // Seats: ADD-ON uses additional_seats; everything else uses number_of_seats
+  var seats = (quoteType === 'ADD-ON'
+    ? (data.additional_seats || data.number_of_seats || '')
+    : (data.number_of_seats || ''));
+
+  var customerName = ((data.firstname || '') + ' ' + (data.lastname || '')).trim();
+  var schoolName   = data.school_name || data.school_district || '';
+  var createdOn    = Utilities.formatDate(
+    timestamp || new Date(),
+    Session.getScriptTimeZone(),
+    'MMM d, yyyy HH:mm'
+  );
+
+  // URL preference: SF record > doGet view URL. Both are clickable in Slack.
+  var quoteUrl = '';
+  if (sfRecordId) {
+    quoteUrl = SF_INSTANCE_URL + '/' + sfRecordId;
+  } else if (DEPLOYMENT_URL) {
+    quoteUrl = DEPLOYMENT_URL + '?q=' + encodeURIComponent(quoteNumber);
+  }
+
+  var repName  = data.account_manager || 'The Soundtrap Team';
+
+  var lines = [
+    'Hello, *' + repName + '*',
+    '',
+    'A new quote has been downloaded in your territory',
+    quoteUrl ? '<' + quoteUrl + '|Salesforce Quote URL>' : '',
+    '',
+    '*Number of Seats:* ' + seats,
+    '*School Name:* ' + schoolName,
+    '*Soundtrap Plan:* ' + (data.plan || ''),
+    '*Order Type:* ' + quoteType,
+    '*Country:* ' + (data.country || ''),
+    '*State:* ' + (data.state || ''),
+    '*Quote Number:* ' + quoteNumber,
+    '*Created on:* ' + createdOn,
+    '*Requested by:* ' + customerName,
+    "*Requestor's comments:* " + (data.use_case || '—'),
+    '*Email Address:* ' + (data.email || ''),
+  ];
+
+  try {
+    UrlFetchApp.fetch(webhookUrl, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ text: lines.join('\n') }),
+      muteHttpExceptions: true,
+    });
+  } catch (e) {
+    // Slack failure should never break the submission
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('Slack notification failed: ' + (e.message || e));
+    }
+  }
+}
+
+/**
  * Sends an admin alert email when a Salesforce sync fails.
  */
 function sendSFErrorAlert_(quoteNumber, customerName, errorMessage) {
@@ -1539,24 +1753,17 @@ function buildColIndex_() {
 
 /** Map a country string to its region: 'US' | 'Canada' | 'ANZ' | 'ROW' */
 function regionForCountry_(country) {
-  var c = (country || '').toLowerCase();
-  if (c === 'united states') return 'US';
-  if (c === 'canada')        return 'Canada';
-  if (c === 'australia' || c === 'new zealand') return 'ANZ';
-  return 'ROW';
+  var cfg = loadConfig_();
+  return (cfg.regionByCountry && cfg.regionByCountry[country]) || 'ROW';
 }
 
 /** Map a country string to its currency code. */
 function currencyForCountry_(country) {
-  var EUROZONE = ['Austria','Belgium','Croatia','Cyprus','Estonia','Finland','France',
-    'Germany','Greece','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta',
-    'Netherlands','Portugal','Slovakia','Slovenia','Spain'];
-  var map = {
-    'United States': 'USD', 'United Kingdom': 'GBP',
-    'Sweden': 'SEK', 'Norway': 'NOK', 'Canada': 'CAD', 'Australia': 'AUD',
-  };
-  if (map[country]) return map[country];
-  if (EUROZONE.indexOf(country) !== -1) return 'EUR';
+  var cfg = loadConfig_();
+  if (cfg.currencyByCountry && cfg.currencyByCountry[country]) {
+    return cfg.currencyByCountry[country];
+  }
+  if (cfg.eurozone && cfg.eurozone.indexOf(country) !== -1) return 'EUR';
   return 'USD';
 }
 
@@ -1636,6 +1843,31 @@ function fmtDiscount_(type, value, currency) {
   if (!v) return '—';
   if (type === '%') return '−' + v + '%';
   return '−' + fmtCurrency_(v, currency);
+}
+
+/**
+ * Format a discount showing BOTH the monetary saving and the percentage,
+ * e.g. "−$224.70 (−10%)" or "−$2,013.00 (−25.7%)".
+ *
+ * The percentage uses 1 decimal place when rounding to a whole number would
+ * lose precision by more than 0.05% (so per-line clean inputs like 10% / 25%
+ * still display as integers, but blended totals like 25.67% show as "25.7%"
+ * instead of misleadingly rounding to "26%").
+ *
+ *   base       = standard (pre-discount) price
+ *   discAmount = monetary amount being discounted (std − net)
+ *   currency   = display currency
+ */
+function fmtDiscountBoth_(base, discAmount, currency) {
+  var amt = parseFloat(discAmount) || 0;
+  var b   = parseFloat(base) || 0;
+  if (!amt || !b) return '—';
+  var pctRaw     = (amt / b) * 100;
+  var pctRounded = Math.round(pctRaw);
+  var pctDisplay = (Math.abs(pctRaw - pctRounded) < 0.05)
+    ? String(pctRounded)
+    : pctRaw.toFixed(1);
+  return '−' + fmtCurrency_(amt, currency) + ' (−' + pctDisplay + '%)';
 }
 
 

@@ -145,13 +145,13 @@ SF Status | SF Record ID
 Per school per year (added on top of per-seat cost). Defined in `PRICING[currency].District.m` in Code.gs.
 
 ### Pricing matrix
-Edit `PRICING` in both `Code.gs` (server-side) and `quote-form.html` (client-side preview). **Both must be updated together.**
+Pricing lives in the shared config (`/config/config.json`, key `pricing`). Edit there, commit + push — both frontend (via `loadConfig()` in `quote-form.html`) and backend (via `loadConfig_()` in `Code.gs`) pick it up within 1–5 min (no code edits, no redeploy needed).
 
 ---
 
 ## Professional Development (PD Sessions)
 
-US-only add-on. Prices defined in `PD_PRICES` in Code.gs and `PD_PRICES_FORM` in quote-form.html.
+US-only add-on. Prices defined in `/config/config.json` (key `pdPrices`); both frontend and backend fetch from there.
 Values must match Salesforce `PD_Session__c` picklist exactly:
 
 | Salesforce value | Price |
@@ -216,7 +216,7 @@ Radio toggle: **Public School** / **Private School**
 
 ## Territory Assignment
 
-Assigned client-side in `quote-form.html`, sent as form fields to Apps Script.
+Territory + rep routing data lives in `/config/config.json` under the `territory` key (`statePod`, `podRep`, `usNamed`, `rowNamedDomains`). The frontend reads it via `loadConfig()` and assigns territory client-side; the backend reads it via `loadConfig_()` and uses the same maps for the SMB email-override logic.
 
 ### Non-US
 | Territory | Countries |
@@ -229,8 +229,10 @@ Assigned client-side in `quote-form.html`, sent as form fields to Apps Script.
 | International | Everything else |
 
 ### US
-- Named accounts (specific districts → specific reps) take priority — see `NAMED_ACCOUNTS` in quote-form.html
-- All other US → POD assignment by state — see `TERRITORY_MAP` in quote-form.html
+- Named accounts (specific districts → specific reps) take priority — see `territory.usNamed` in `config.json`
+- All other US → POD assignment by state — see `territory.statePod` in `config.json`
+
+To change rep routing: edit `/config/config.json`, push, wait 1–5 min for caches to expire.
 
 ---
 
@@ -252,7 +254,10 @@ Assigned client-side in `quote-form.html`, sent as form fields to Apps Script.
 - Redirect chosen client-side in `quote-form.html` based on `pqf_plan` value at submission time
 
 ### Quote validity
-`QUOTE_VALID_DAYS = 30` in Code.gs
+Set in `/config/config.json` (`quoteValidDays`, currently 30).
+
+### Slack notifications
+Every submit posts to a Slack channel via Incoming Webhook (`sendSlackNotification_()` in `Code.gs`). The webhook URL is read from Script Properties as `SLACK_WEBHOOK_URL` (silently no-ops if unset). Currently posts to `#matteo-zapier-test`. Message includes rep name, Salesforce quote URL (or Apps Script `?q=` fallback if SF push failed), plan, seats, country/state, school, customer name + email, comments, and quote number.
 
 ---
 
@@ -351,17 +356,13 @@ Counter stored in `Counter` sheet, cell A1.
 ## How to Make Common Updates
 
 ### Update pricing
-1. Edit `PRICING` in `Code.gs`
-2. Edit `PRICING` in `quote-form.html`
-3. Redeploy Apps Script
+Edit `pricing` in `/config/config.json`, commit + push. No code edits, no redeploy needed — frontend cache TTL is 5 min, backend `CacheService` TTL is 10 min.
 
 ### Update rep/territory assignments
-Edit `TERRITORY_MAP` and `NAMED_ACCOUNTS` in `quote-form.html` — no Code.gs change needed
+Edit `territory` in `/config/config.json` (`statePod`, `podRep`, `usNamed`, or `rowNamedDomains`), commit + push.
 
 ### Update PD session prices
-1. Edit `PD_PRICES` in `Code.gs`
-2. Edit `PD_PRICES_FORM` + `<option>` values in `quote-form.html`
-3. Ensure values match Salesforce `PD_Session__c` picklist exactly
+Edit `pdPrices` in `/config/config.json`. The HTML `<option>` values for the PD select are also driven from the same keys — keep `<option value="...">` strings matching the keys in `pdPrices` (which must also match the Salesforce `PD_Session__c` picklist).
 
 ### Add a new form field
 1. Add HTML input to `quote-form.html`

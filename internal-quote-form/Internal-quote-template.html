@@ -590,18 +590,30 @@ body {
         <tbody>
           <tr>
             <td>Soundtrap for Education<br>
-              <span style="font-size:11px;color:rgba(22,22,22,0.5);">New subscription, school-wide licence</span>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">New subscription</span>
             </td>
             <td>{{SoundtrapPlan}}</td>
             <td>{{NumberOfSeats}}</td>
             <td>{{SubscriptionLength}}</td>
             <td>{{SubscriptionCost}}</td>
           </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="4">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="4">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="4">Total</td>
-            <td>{{SubscriptionCost}}</td>
+            <td>{{GrandTotal}}</td>
           </tr>
         </tfoot>
       </table>
@@ -649,11 +661,23 @@ body {
             <td>{{SubscriptionLength}}</td>
             <td>{{SubscriptionCost}}</td>
           </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="5">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="5">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="5">Total</td>
-            <td>{{SubscriptionCost}}</td>
+            <td>{{GrandTotal}}</td>
           </tr>
         </tfoot>
       </table>
@@ -699,11 +723,23 @@ body {
             <td>{{SubscriptionEndDate}}</td>
             <td>{{SubscriptionCost}}</td>
           </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="4">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="4">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="4">Total</td>
-            <td>{{SubscriptionCost}}</td>
+            <td>{{GrandTotal}}</td>
           </tr>
         </tfoot>
       </table>
@@ -753,16 +789,31 @@ body {
             <td>{{SubscriptionEndDate}}</td>
             <td>{{SubscriptionCost}}</td>
           </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="6">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="6">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="6">Total</td>
-            <td>{{SubscriptionCost}}</td>
+            <td>{{GrandTotal}}</td>
           </tr>
         </tfoot>
       </table>
       <p class="qt-tax-note">{{TaxNote}}</p>
     </section>
+
+    <!-- Server-injected discount breakdown (empty when no discounts applied) -->
+    {{DiscountBlock}}
 
     <hr class="qt-divider">
 

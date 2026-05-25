@@ -9,10 +9,10 @@ A single-file static HTML prototype — **Soundtrap Trial Request Form** — tha
 ## Dev Server
 
 ```bash
-python3 -m http.server --directory "/Users/matteo/Claude/Trial Form" 3002
+python3 -m http.server --directory "/Users/matteo/Claude/soundtrap-school-data/trial-form" 3002
 ```
 
-Or use the configured preview via `.claude/launch.json` (port 3002). The form is served at `http://localhost:3002/trial-form.html`.
+The form is served at `http://localhost:3002/trial-form.html`.
 
 ## Files
 
@@ -22,10 +22,10 @@ Or use the configured preview via `.claude/launch.json` (port 3002). The form is
 | `trial-flow-chart.html` | Mermaid.js end-to-end flowchart for the team |
 | `trial-form-documentation.html` | Developer documentation (10 sections, standalone HTML) |
 
-**GitHub Pages URLs** (after uploading to `matteo524/soundtrap-school-data`):
-- `https://matteo524.github.io/soundtrap-school-data/trial-form.html`
-- `https://matteo524.github.io/soundtrap-school-data/trial-flow-chart.html`
-- `https://matteo524.github.io/soundtrap-school-data/trial-form-documentation.html`
+**GitHub Pages URLs:**
+- `https://matteo524.github.io/soundtrap-school-data/trial-form/trial-form.html`
+- `https://matteo524.github.io/soundtrap-school-data/trial-form/trial-flow-chart.html`
+- `https://matteo524.github.io/soundtrap-school-data/trial-form/trial-form-documentation.html`
 
 ## Architecture — `trial-form.html`
 
@@ -33,8 +33,8 @@ Or use the configured preview via `.claude/launch.json` (port 3002). The form is
 
 ```javascript
 var PQF_CONFIG = {
-  indexUrl:       'https://matteo524.github.io/soundtrap-school-data/index.json',
-  schoolsBaseUrl: 'https://matteo524.github.io/soundtrap-school-data/schools-',
+  indexUrl:       'https://matteo524.github.io/soundtrap-school-data/schools/index.json',
+  schoolsBaseUrl: 'https://matteo524.github.io/soundtrap-school-data/schools/schools-',
 };
 ```
 

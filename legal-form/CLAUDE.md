@@ -1,7 +1,7 @@
 # Legal Form
 ## Claude Project Memory
 
-A DPA / Exhibit E legal request form used internally by Soundtrap. Deployed as a Google Apps Script web app via HtmlService. Customers (or reps on their behalf) submit a legal request and the form routes it to the right rep based on country/state.
+A DPA / Exhibit E legal request form. The HTML is hosted on GitHub Pages; the backend (Sheets + Drive + email + Slack) runs as an Apps Script web app. Customers (or reps on their behalf) submit a legal request and the form routes it to the right rep based on country/state.
 
 ---
 
@@ -9,17 +9,23 @@ A DPA / Exhibit E legal request form used internally by Soundtrap. Deployed as a
 
 | File | Purpose |
 |------|---------|
-| `legal-form.html` | Front-end form — served by HtmlService |
-| `LegalCode.gs` | Apps Script backend (Sheets + Drive + email routing) |
+| `legal-form.html` | Front-end form — served by GitHub Pages |
+| `LegalCode.gs` | Apps Script backend — `doPost` handles submissions (Sheets + Drive + email + Slack). `doGet` returns a JSON status payload only (not used by the form). |
 
 ---
 
 ## Hosting & Deployment
 
+**Frontend (GitHub Pages):**
+- URL: `https://matteo524.github.io/soundtrap-school-data/legal-form/legal-form.html`
+- Edit `legal-form.html` in this repo, commit + push, GH Pages rebuilds within ~1 min
+
+**Backend (Apps Script):**
 - **Execute as:** Me
-- **Who has access:** Anyone within Soundtrap (Google Workspace)
-- Form is pasted into the Apps Script project and served via `doGet`.
-- `appsScriptUrl` in `LF_CONFIG` (top of `legal-form.html`) and the Apps Script deployment URL must always match.
+- **Who has access:** Anyone
+- The form `POST`s to the Apps Script deployment URL via `fetch()` — works cross-origin from GH Pages
+- `appsScriptUrl` in `LF_CONFIG` (top of `legal-form.html`) must point to the live Apps Script deployment URL
+- After editing `LegalCode.gs`, paste it into the Apps Script editor and redeploy (Deploy → Manage deployments → New version)
 
 ---
 
@@ -34,15 +40,20 @@ A DPA / Exhibit E legal request form used internally by Soundtrap. Deployed as a
 
 ## Territory & rep routing
 
-The legal form uses the same territory/rep data as the quote forms:
-- `TERRITORY` in `legal-form.html` (frontend)
-- `TERRITORY` in `LegalCode.gs` (backend)
+The legal form fetches territory/rep data from the shared config at
+`https://matteo524.github.io/soundtrap-school-data/config/config.json`:
+- Frontend: `applyConfig()` in `legal-form.html` populates `TERRITORY`, `EXHIBIT_E_STATES`, `DPA_COUNTRIES`, `WORLD_COUNTRIES`, `US_STATES`, `CA_PROVINCES`, `AU_STATES` from `config.json` (cached in localStorage for 5 min, with stale fallback).
+- Backend: `loadConfig_()` in `LegalCode.gs` fetches the same JSON (cached in `CacheService` for 10 min); `computeTerritory()` reads `loadConfig_().territory`.
 
-⚠️ This data is duplicated with the quote forms. After the shared-config migration (in progress), both files will fetch `territory` from `https://matteo524.github.io/soundtrap-school-data/config/config.json`.
+`config.legal.exhibitEStates` and `config.legal.dpaCountries` are the legal-specific lists.
 
-Two legal-specific lists also live in the form (and will move to `config.legal` post-migration):
-- `EXHIBIT_E_STATES` — US states requiring an Exhibit E addendum
-- `DPA_COUNTRIES` — countries requiring a Data Processing Addendum
+To change rep routing or the legal lists, edit `/config/config.json` in the repo and push — both forms pick up the change within minutes (cache TTL).
+
+---
+
+## Slack notifications
+
+On every submit, `sendSlackNotification_()` in `LegalCode.gs` posts to a Slack channel via Incoming Webhook. The webhook URL is read from Script Properties as `SLACK_WEBHOOK_URL` (silently no-ops if unset). Message includes request type + agreements requested, school/district, country/state, requester, comments, email, and a link to the Legal Requests sheet.
 
 ---
 

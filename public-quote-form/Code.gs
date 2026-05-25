@@ -11,7 +11,8 @@
  *     (Submissions + Counter) with headers.
  *  4. Ensure quote-template.html is added as a file in this Apps Script project
  *     (click + next to Files → HTML → name it 'quote-template').
- *  5. Update PRICING to match your actual pricing sheet.
+ *  5. Pricing/territory/etc. are loaded from config.json at runtime — edit
+ *     the shared config in the soundtrap-school-data repo, not this file.
  *  6. Deploy → New deployment → Web app:
  *       Execute as: Me
  *       Who has access: Anyone
@@ -39,7 +40,6 @@ var COLUMNS = [
   'School Name',
   'NCES Number',
   'Manual Entry',
-  'School Type',
   'District Enrollment',
   // Contact
   'First Name',
@@ -80,7 +80,6 @@ var FIELD_MAP = {
   school_name:            'School Name',
   nces_number:            'NCES Number',
   manual_entry:           'Manual Entry',
-  school_type:            'School Type',
   district_enrollment:    'District Enrollment',
   firstname:              'First Name',
   lastname:               'Last Name',
@@ -104,43 +103,6 @@ var FIELD_MAP = {
   purchase_date:          'Purchase Date',
 };
 
-// ── Professional Development pricing (USD, US-only) ─────────
-var PD_PRICES = {
-  '1 hour Virtual PD for up to 50 teachers':    499,
-  '1 hour Virtual PD for more than 50 teachers': 599,
-  'In Person PD for 3 hours':                  3499,
-  'In Person PD for 6 hours':                  4499,
-};
-
-// ── Territory maps — mirrors quote-form.html (used for district rep routing) ──
-// US state → POD name (3,000+ student accounts)
-var STATE_POD = {
-  'alaska':'Northwest','california':'Northwest','idaho':'Northwest','montana':'Northwest',
-  'nevada':'Northwest','oregon':'Northwest','washington':'Northwest','wyoming':'Northwest',
-  'arizona':'Southwest','arkansas':'Southwest','colorado':'Southwest','hawaii':'Southwest',
-  'kansas':'Southwest','missouri':'Southwest','nebraska':'Southwest','new mexico':'Southwest',
-  'oklahoma':'Southwest','texas':'Southwest','utah':'Southwest',
-  'illinois':'Central','indiana':'Central','iowa':'Central','michigan':'Central',
-  'minnesota':'Central','north dakota':'Central','ohio':'Central','south dakota':'Central',
-  'wisconsin':'Central',
-  'connecticut':'Northeast','maine':'Northeast','massachusetts':'Northeast',
-  'new hampshire':'Northeast','new jersey':'Northeast','new york':'Northeast',
-  'rhode island':'Northeast','vermont':'Northeast',
-  'alabama':'Southeast','delaware':'Southeast','district of columbia':'Southeast',
-  'florida':'Southeast','georgia':'Southeast','kentucky':'Southeast','louisiana':'Southeast',
-  'maryland':'Southeast','mississippi':'Southeast','north carolina':'Southeast',
-  'pennsylvania':'Southeast','south carolina':'Southeast','tennessee':'Southeast',
-  'virginia':'Southeast','west virginia':'Southeast',
-};
-// POD → rep { name, email } — keep in sync with quote-form.html podRep
-var POD_REP = {
-  'Northwest': { name: 'Brittany Follet',   email: 'brittany@soundtrap.com'  },
-  'Southwest': { name: 'Maria Opirhory',    email: 'maria@soundtrap.com'     },
-  'Central':   { name: 'Chloe Taylor',      email: 'chloe@soundtrap.com'     },
-  'Northeast': { name: 'Chad Reisfelt',    email: 'chad@soundtrap.com'   },
-  'Southeast': { name: 'Tina Shah',         email: 'tina@soundtrap.com'      },
-};
-
 // ── Quote generation config ──────────────────────────────────
 
 // Deployment URL — same URL as appsScriptUrl in quote-form.html.
@@ -151,57 +113,54 @@ var DEPLOYMENT_URL      = 'https://script.google.com/macros/s/AKfycbw_0gpCmMbU4h
 // Set to the internal form's Apps Script deployment URL.
 var INTERNAL_FORM_URL   = '';
 
-// How many days the quote remains valid.
-var QUOTE_VALID_DAYS = 30;
+// ── Shared config (single source of truth) ───────────────────
+// JSON on GitHub Pages — see /config/README.md in the repo.
+var CONFIG_URL              = 'https://matteo524.github.io/soundtrap-school-data/config/config.json';
+var CONFIG_CACHE_KEY        = 'SHARED_CONFIG_v1';
+var CONFIG_CACHE_TTL_SECONDS = 600;  // 10 minutes
 
-// ── Pricing matrix (mirrors quote-form.html PRICING) ─────────
-// Tiers cover seat bands: 1–50 | 51–500 | 501–1k | 1k–5k |
-//   5k–10k | 10k–20k | 20k–50k | 50k–150k | 150k+
-// m = maintenance cost per school per year (District only).
-var PRICING = {
-  USD: {
-    School:    { t:[9.98,9.60,9.10,8.60,8.60,8.60,8.60,8.60,8.60], m:0 },
-    Classroom: { t:[7.98,7.60,7.30,6.90,6.90,6.90,6.90,6.90,6.90], m:0 },
-    District:  { t:[14.98,14.98,14.98,14.98,14.98,14.98,14.98,14.98,14.98], m:249 },
-    Legacy:    { t:[7.98,7.70,7.30,6.90,6.30,5.90,5.60,5.10,4.60], m:0 }
-  },
-  GBP: {
-    School:    { t:[8.18,7.80,7.50,7.10,7.10,7.10,7.10,7.10,7.10], m:0 },
-    Classroom: { t:[6.58,6.20,6.00,5.70,5.70,5.70,5.70,5.70,5.70], m:0 },
-    District:  { t:[12.18,12.18,12.18,12.18,12.18,12.18,12.18,12.18,12.18], m:189 },
-    Legacy:    { t:[6.58,6.20,6.00,5.70,5.30,5.00,4.70,4.20,3.80], m:0 }
-  },
-  EUR: {
-    School:    { t:[9.38,9.10,8.60,8.20,8.20,8.20,8.20,8.20,8.20], m:0 },
-    Classroom: { t:[7.58,7.30,6.90,6.60,6.60,6.60,6.60,6.60,6.60], m:0 },
-    District:  { t:[14.18,14.18,14.18,14.18,14.18,14.18,14.18,14.18,14.18], m:229 },
-    Legacy:    { t:[7.58,7.30,6.90,6.60,6.10,5.60,5.40,4.90,4.50], m:0 }
-  },
-  SEK: {
-    School:    { t:[105,100,96,91,91,91,91,91,91], m:0 },
-    Classroom: { t:[85,80,76,73,73,73,73,73,73], m:0 },
-    District:  { t:[157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98], m:2499 },
-    Legacy:    { t:[85,81,77,73,68,63,60,55,49], m:0 }
-  },
-  NOK: {
-    School:    { t:[105,100,96,91,91,91,91,91,91], m:0 },
-    Classroom: { t:[85,82,78,73,73,73,73,73,73], m:0 },
-    District:  { t:[157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98,157.98], m:2699 },
-    Legacy:    { t:[85,82,78,73,68,64,59,55,50], m:0 }
-  },
-  CAD: {
-    School:    { t:[11.18,10.80,10.30,9.70,9.70,9.70,9.70,9.70,9.70], m:0 },
-    Classroom: { t:[8.98,8.70,8.20,7.70,7.70,7.70,7.70,7.70,7.70], m:0 },
-    District:  { t:[16.78,16.78,16.78,16.78,16.78,16.78,16.78,16.78,16.78], m:349 },
-    Legacy:    { t:[8.98,8.70,8.20,7.70,7.10,6.70,6.40,5.80,5.30], m:0 }
-  },
-  AUD: {
-    School:    { t:[15.38,14.80,14.10,13.30,13.30,13.30,13.30,13.30,13.30], m:0 },
-    Classroom: { t:[12.38,11.80,11.30,10.60,10.60,10.60,10.60,10.60,10.60], m:0 },
-    District:  { t:[23.18,23.18,23.18,23.18,23.18,23.18,23.18,23.18,23.18], m:389 },
-    Legacy:    { t:[12.90,12.40,11.80,11.10,10.10,9.60,9.00,8.30,7.90], m:0 }
+// In-memory cache for the current invocation (avoid re-parsing within one request).
+var _configMemo = null;
+
+/**
+ * Loads the shared config from GitHub Pages. Cached in:
+ *   1. _configMemo — for the current invocation (fastest)
+ *   2. CacheService.getScriptCache() — for ~10 min across invocations
+ *   3. Network fetch from CONFIG_URL — only on cold cache
+ * Throws if the config can't be loaded — callers should treat this as fatal
+ * (pricing/territory/etc. can't be computed without it).
+ */
+function loadConfig_() {
+  if (_configMemo) return _configMemo;
+
+  // Try the script-wide cache (persists across invocations within TTL)
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get(CONFIG_CACHE_KEY);
+    if (cached) {
+      _configMemo = JSON.parse(cached);
+      return _configMemo;
+    }
+  } catch (_e) { /* CacheService may fail in some contexts — fall through */ }
+
+  // Cold cache — fetch fresh
+  var resp = UrlFetchApp.fetch(CONFIG_URL, {
+    muteHttpExceptions: true,
+    headers: { 'Cache-Control': 'no-cache' },
+  });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error('Failed to load shared config from ' + CONFIG_URL + ' — HTTP ' + resp.getResponseCode());
   }
-};
+  var text = resp.getContentText();
+  _configMemo = JSON.parse(text);
+
+  // Store in ScriptCache for the next invocation
+  try {
+    CacheService.getScriptCache().put(CONFIG_CACHE_KEY, text, CONFIG_CACHE_TTL_SECONDS);
+  } catch (_e) { /* best-effort */ }
+
+  return _configMemo;
+}
 
 // ── Salesforce integration config ───────────────────────────
 // Store credentials via Apps Script editor:
@@ -217,14 +176,6 @@ var SF_ALERT_EMAIL   = 'matteo@soundtrap.com';
 // When set to an email address ALL rep notifications go here instead of the
 // actual account manager. Clear to '' in production.
 var REP_NOTIFICATION_OVERRIDE = 'matteo@soundtrap.com';
-
-// Tax notes — one per region.
-var TAX_NOTES = {
-  'US':     'Taxes — e.g., state sales tax — are not included in this quote.',
-  'Canada': 'Applicable Canadian taxes (GST/HST/PST) are not included in this quote.',
-  'ROW':    'Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this quote.',
-  'ANZ':    'Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this quote.',
-};
 
 
 // ════════════════════════════════════════════════════════════
@@ -298,6 +249,12 @@ function doPost(e) {
         } catch (_) { /* alert failure is silent */ }
       }
     }
+
+    // Slack notification — non-fatal. Fires after SF push so we can include
+    // the SF record URL when available; otherwise falls back to the doGet URL.
+    try {
+      sendSlackNotification_(data, quoteNumber, timestamp, result.sfRecordId);
+    } catch (_slackErr) { /* best-effort */ }
 
   } catch (err) {
     result.error = err.message;
@@ -414,6 +371,10 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
   // Show correct quote-type section and update badge
   html = applyQuoteType_(html, quoteType);
 
+  // Show PD row(s) only when a PD session is on the quote
+  var hasPd = !!((data.pd_session || '').trim());
+  html = setDisplayOnDataAttr_(html, 'data-pd-row', 'active', hasPd);
+
   // Strip client-side preview JS — page is fully server-rendered
   html = stripPreviewScript_(html);
 
@@ -517,8 +478,9 @@ function sendDistrictRepNotification_(data, quoteNumber, timestamp) {
   // SMB override: Scaled Accounts → regional POD rep for the state
   if (recipientEmail === 'orders@soundtrap.com') {
     var state  = (data.state || '').toLowerCase();
-    var pod    = STATE_POD[state];
-    var podRep = pod ? POD_REP[pod] : null;
+    var _territoryCfg = loadConfig_().territory;
+    var pod    = _territoryCfg.statePod[state];
+    var podRep = pod ? _territoryCfg.podRep[pod] : null;
     if (podRep) {
       recipientEmail = podRep.email;
       recipientName  = podRep.name;
@@ -559,7 +521,6 @@ function sendDistrictRepNotification_(data, quoteNumber, timestamp) {
     'State        : ' + (data.state              || ''),
     'Country      : ' + (data.country            || ''),
     'Enrollment   : ' + (data.district_enrollment || ''),
-    'School Type  : ' + (data.school_type        || ''),
     '',
     '── Quote Details ─────────────────────────────────',
     'Submitted    : ' + submitted,
@@ -637,7 +598,6 @@ function sendDistrictRepNotification_(data, quoteNumber, timestamp) {
   h.push(row('State',       data.state));
   h.push(row('Country',     data.country));
   h.push(row('Enrollment',  data.district_enrollment));
-  h.push(row('School Type', data.school_type));
 
   h.push(sectionHeader('Quote Details'));
   h.push(row('Submitted',    submitted));
@@ -705,11 +665,15 @@ function generateAndSendQuote_(data, quoteNumber, timestamp) {
     sendDistrictAcknowledgment_(data, quoteNumber);
     sendDistrictRepNotification_(data, quoteNumber, timestamp);
   } else {
-    // School / Classroom: send full quote email to customer
+    // School / Classroom: send full quote email to customer.
+    // Uses buildFullQuoteEmail_() (programmatic, inline-styled, Gmail-safe) rather than
+    // the template — the template's <style>-block CSS doesn't survive Gmail's renderer.
+    // The template is still used for the web/print view via doGet (?q=...).
     var region    = regionForCountry_(data.country || '');
     var currency  = currencyForCountry_(data.country || '');
     var quoteType = normaliseQuoteType_(data.quote_type);
-    var emailHtml = buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quoteType, true);
+    var printUrl  = DEPLOYMENT_URL ? DEPLOYMENT_URL + '?q=' + encodeURIComponent(quoteNumber) : '';
+    var emailHtml = buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, quoteType, printUrl);
     sendCustomerEmail_(data, quoteNumber, emailHtml);
   }
 }
@@ -719,11 +683,17 @@ function generateAndSendQuote_(data, quoteNumber, timestamp) {
  */
 function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
   var totalSeatsAfterAddon = (parseInt(data.current_seats || 0) + parseInt(data.additional_seats || 0)) || '';
+  var subCostObj  = calcSubscriptionCost_(data, currency);
+  var pdSession   = (data.pd_session || '').trim();
+  var pdCost      = calcPdCost_(pdSession);
+  var grandTotal  = pdCost > 0
+                  ? fmtCurrency_((subCostObj.value || 0) + pdCost, 'USD')
+                  : subCostObj.formatted;
 
   return {
     '{{QuoteNumber}}':           quoteNumber,
     '{{SubmissionDate}}':        formatDate_(timestamp),
-    '{{ValidUntil}}':            formatDate_(addDays_(timestamp, QUOTE_VALID_DAYS)),
+    '{{ValidUntil}}':            formatDate_(addDays_(timestamp, loadConfig_().quoteValidDays)),
     '{{Currency}}':              currency,
     '{{SalesRepName}}':          data.account_manager        || '',
     '{{SalesRepEmail}}':         data.account_manager_email  || '',
@@ -738,14 +708,17 @@ function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
     '{{SoundtrapPlan}}':         data.plan                   || '',
     '{{NumberOfSeats}}':         data.number_of_seats        || '',
     '{{SubscriptionLength}}':    formatMonths_(parseInt(data.subscription_length || 12)),
-    '{{SubscriptionCost}}':      calcSubscriptionCost_(data, currency).formatted,
-    '{{TaxNote}}':               TAX_NOTES[region] || TAX_NOTES['ROW'],
+    '{{SubscriptionCost}}':      subCostObj.formatted,
+    '{{TaxNote}}':               loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'],
     '{{SubscriptionEndDate}}':   data.subscription_end_date  || '',
     '{{RenewalEndDate}}':        calcRenewalEndDate_(data),
     '{{CurrentPlan}}':           data.current_plan           || '',
     '{{CurrentSeats}}':          data.current_seats          || '',
     '{{AdditionalSeats}}':       data.additional_seats       || '',
     '{{TotalSeatsAfterAddon}}':  totalSeatsAfterAddon        || '',
+    '{{PdSession}}':             pdSession,
+    '{{PdCost}}':                pdCost > 0 ? '+ ' + fmtCurrency_(pdCost, 'USD') : '',
+    '{{GrandTotal}}':            grandTotal,
   };
 }
 
@@ -789,7 +762,7 @@ function applyRegion_(html, region, currency) {
   );
 
   // data-placeholder="TaxNote" spans
-  var taxNote = TAX_NOTES[region] || TAX_NOTES['ROW'];
+  var taxNote = loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'];
   html = html.replace(
     /(<span[^>]*data-placeholder="TaxNote"[^>]*>)[^<]*(<\/span>)/gi,
     '$1' + escapeHtml_(taxNote) + '$2'
@@ -842,7 +815,7 @@ function stripPreviewScript_(html) {
 function setDisplayOnDataAttr_(html, attrName, attrValue, visible) {
   // Match any opening tag that contains attrName="attrValue"
   var tagRegex = new RegExp(
-    '(<(?:section|div|span|header|footer)[^>]*' +
+    '(<(?:section|div|span|header|footer|tr|td|table)[^>]*' +
     attrName.replace(/[-]/g, '\\-') + '="' + attrValue.replace(/[-]/g, '\\-') + '"[^>]*?)' +
     '(\\s*style="[^"]*")?' +
     '(>)',
@@ -879,7 +852,8 @@ function setDisplayOnDataAttr_(html, attrName, attrValue, visible) {
  * Returns { seats, maintenance, total } or null if plan/currency not found.
  */
 function calcPrice_(seats, plan, numSchools, currency) {
-  var row = PRICING[currency] && PRICING[currency][plan];
+  var pricing = loadConfig_().pricing;
+  var row = pricing[currency] && pricing[currency][plan];
   if (!row) return null;
   var n = Math.max(seats, 50);
   var t = row.t;
@@ -978,7 +952,7 @@ function calcSubscriptionCost_(data, currency) {
 
 /** Return the fixed USD cost for a PD session, or 0 if none selected. */
 function calcPdCost_(pdSession) {
-  return PD_PRICES[pdSession] || 0;
+  return loadConfig_().pdPrices[pdSession] || 0;
 }
 
 
@@ -993,13 +967,14 @@ function sendCustomerEmail_(data, quoteNumber, emailHtml) {
   var customerName = ((data.firstname || '') + ' ' + (data.lastname || '')).trim() || 'there';
   var replyTo      = data.account_manager_email || 'orders@soundtrap.com';
   var subject      = 'Your Soundtrap for Education Price Quote \u2014 ' + quoteNumber;
+  var region       = regionForCountry_(data.country || '');
 
   GmailApp.sendEmail(
     data.email,
     subject,
     'Hi ' + customerName + ', please view this email in an HTML-capable client to see your Soundtrap price quote (' + quoteNumber + ').',
     {
-      htmlBody: emailHtml,
+      htmlBody: buildEmailIntro_(customerName, region) + emailHtml,
       name:     'Soundtrap for Education',
       replyTo:  replyTo,
     }
@@ -1056,8 +1031,8 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
                    ? fmtCurrency_(costObj.value + pdCost, 'USD')
                    : cost;
   var submDate     = formatDate_(timestamp);
-  var validUntil   = formatDate_(addDays_(timestamp, QUOTE_VALID_DAYS));
-  var taxNote      = TAX_NOTES[region] || TAX_NOTES['ROW'];
+  var validUntil   = formatDate_(addDays_(timestamp, loadConfig_().quoteValidDays));
+  var taxNote      = loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'];
   var endDate      = formatDateStr_(data.subscription_end_date);
   var renewalEnd   = calcRenewalEndDate_(data)  || '\u2014';
   var currentPlan  = data.current_plan    || '\u2014';
@@ -1237,7 +1212,6 @@ function buildInternalFormPrefillUrl_(data) {
     city:         data.city                  || '',
     district:     data.school_district      || '',
     school:       data.school_name           || '',
-    school_type:  data.school_type           || '',
     quote_type:   data.quote_type            || '',
     plan:         data.plan                  || '',
     seats:        data.number_of_seats       || '',
@@ -1291,8 +1265,11 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
   h.push('<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">');
 
   if (quoteType === 'NEW' || quoteType === 'RENEWAL') {
-    var span = quoteType === 'RENEWAL' ? '4' : '3';
+    var span = quoteType === 'RENEWAL' ? '5' : '4';
+    var descMain = quoteType === 'RENEWAL' ? 'Soundtrap for Education &mdash; Renewal' : 'Soundtrap for Education';
+    var descSub  = quoteType === 'RENEWAL' ? 'Renewal of existing subscription' : 'New subscription';
     h.push('<thead><tr>');
+    h.push('<th ' + thStyle + '>Description</th>');
     h.push('<th ' + thStyle + '>Plan</th>');
     h.push('<th ' + thStyle + '>Seats</th>');
     if (quoteType === 'RENEWAL') h.push('<th ' + thStyle + '>End Date</th>');
@@ -1300,6 +1277,7 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
     h.push(amtHdr);
     h.push('</tr></thead>');
     h.push('<tbody><tr>');
+    h.push('<td ' + tdStyle + '>' + descMain + '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + descSub + '</span></td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(plan) + '</td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(String(seats)) + '</td>');
     if (quoteType === 'RENEWAL') h.push('<td ' + tdStyle + '>' + escapeHtml_(endDate) + '</td>');
@@ -1307,7 +1285,7 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
     h.push('<td ' + tdR + '>' + escapeHtml_(cost) + '</td>');
     h.push('</tr>');
     if (pdSession && pdCost > 0) {
-      h.push('<tr><td colspan="' + span + '" ' + tdStyle + '>Professional Development &mdash; ' + escapeHtml_(pdSession) + '</td>');
+      h.push('<tr><td colspan="' + span + '" ' + tdStyle + '>Professional Development<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
       h.push('<td ' + tdR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
     }
     h.push('</tbody>');
@@ -1315,23 +1293,25 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
 
   } else if (quoteType === 'ADD-ON') {
     h.push('<thead><tr>');
+    h.push('<th ' + thStyle + '>Description</th>');
     h.push('<th ' + thStyle + '>Current Seats</th>');
     h.push('<th ' + thStyle + '>+Additional</th>');
     h.push('<th ' + thStyle + '>End Date</th>');
     h.push(amtHdr);
     h.push('</tr></thead>');
     h.push('<tbody><tr>');
+    h.push('<td ' + tdStyle + '>Soundtrap for Education &mdash; Seat Add-On<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">Added to your existing subscription</span></td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(String(currentSeats)) + '</td>');
     h.push('<td ' + tdStyle + '><strong>+' + escapeHtml_(String(addlSeats)) + '</strong></td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(endDate) + '</td>');
     h.push('<td ' + tdR + '>' + escapeHtml_(cost) + '</td>');
     h.push('</tr>');
     if (pdSession && pdCost > 0) {
-      h.push('<tr><td colspan="3" ' + tdStyle + '>Professional Development &mdash; ' + escapeHtml_(pdSession) + '</td>');
+      h.push('<tr><td colspan="4" ' + tdStyle + '>Professional Development<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
       h.push('<td ' + tdR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
     }
     h.push('</tbody>');
-    h.push('<tfoot><tr><td colspan="3" ' + tfL + '>Total</td><td ' + tfR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
+    h.push('<tfoot><tr><td colspan="4" ' + tfL + '>Total</td><td ' + tfR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
 
   } else if (quoteType === 'UPGRADE') {
     var thU = 'bgcolor="#16161B" style="background-color:#16161B;color:#FDFDFE;font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;padding:8px 10px;text-align:left;"';
@@ -1340,6 +1320,7 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
     var tdUR = 'style="font-size:11px;color:#16161B;padding:8px 10px;border-bottom:1px solid #F0F0F0;text-align:right;"';
     var tfUR = 'style="font-size:12px;font-weight:700;color:#16161B;padding:8px 10px;text-align:right;"';
     h.push('<thead><tr>');
+    h.push('<th ' + thU + '>Description</th>');
     h.push('<th ' + thU + '>Current Plan</th>');
     h.push('<th ' + thU + '>Cur. Seats</th>');
     h.push('<th ' + thU + '>New Plan</th>');
@@ -1348,6 +1329,7 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
     h.push('<th ' + thUR + '>Amount (' + escapeHtml_(currency) + ')</th>');
     h.push('</tr></thead>');
     h.push('<tbody><tr>');
+    h.push('<td ' + tdU + '>Soundtrap for Education &mdash; Plan Upgrade<br><span style="font-size:9px;color:rgba(22,22,22,0.5);">Subscription end date remains unchanged</span></td>');
     h.push('<td ' + tdU + '>' + escapeHtml_(String(currentPlan)) + '</td>');
     h.push('<td ' + tdU + '>' + escapeHtml_(String(currentSeats)) + '</td>');
     h.push('<td ' + tdU + '><strong>' + escapeHtml_(plan) + '</strong></td>');
@@ -1356,11 +1338,11 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
     h.push('<td ' + tdUR + '>' + escapeHtml_(cost) + '</td>');
     h.push('</tr>');
     if (pdSession && pdCost > 0) {
-      h.push('<tr><td colspan="5" ' + tdU + '>Professional Development &mdash; ' + escapeHtml_(pdSession) + '</td>');
+      h.push('<tr><td colspan="6" ' + tdU + '>Professional Development<br><span style="font-size:9px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
       h.push('<td ' + tdUR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
     }
     h.push('</tbody>');
-    h.push('<tfoot><tr><td colspan="5" ' + tfL + '>Total</td><td ' + tfUR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
+    h.push('<tfoot><tr><td colspan="6" ' + tfL + '>Total</td><td ' + tfUR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
   }
 
   h.push('</table>');
@@ -1556,7 +1538,7 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
     QuoteToCountry:          data.country || '',
     Subscription_Length_Months__c: parseInt(data.subscription_length || 0, 10) || null,
     Requested_At__c:         Utilities.formatDate(timestamp, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ssZ"),
-    ExpirationDate:          Utilities.formatDate(addDays_(timestamp, QUOTE_VALID_DAYS), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+    ExpirationDate:          Utilities.formatDate(addDays_(timestamp, loadConfig_().quoteValidDays), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
     Status:                  'New',
   };
 
@@ -1597,7 +1579,7 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
   // ── Fee calculations ─────────────────────────────────────────
   var months  = parseInt(data.subscription_length || 12, 10);
   var schools = parseInt(data.number_of_schools   || 0,  10);
-  var pdFee   = data.pd_session ? (PD_PRICES[data.pd_session] || 0) : 0;
+  var pdFee   = data.pd_session ? (loadConfig_().pdPrices[data.pd_session] || 0) : 0;
 
   var subscriptionFee = 0;
   var maintenanceFee  = 0;
@@ -1704,6 +1686,83 @@ function findAccountByNces_(auth, nces) {
 }
 
 /**
+ * Send a Slack notification about a new quote submission.
+ * Reads SLACK_WEBHOOK_URL from Script Properties (per-project). Best-effort:
+ * any failure is logged but does NOT break the submission.
+ *
+ *   data         — submission data (already parsed in doPost)
+ *   quoteNumber  — generated quote number
+ *   timestamp    — submission timestamp (Date)
+ *   sfRecordId   — Salesforce Quote record ID, if available
+ *                  (prefers the SF record URL; falls back to the doGet ?q= URL)
+ */
+function sendSlackNotification_(data, quoteNumber, timestamp, sfRecordId) {
+  var webhookUrl = '';
+  try {
+    webhookUrl = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL') || '';
+  } catch (_e) { return; }
+  if (!webhookUrl) return;  // Not configured — skip silently
+
+  var quoteType = normaliseQuoteType_(data.quote_type);
+
+  // Seats: ADD-ON uses additional_seats; everything else uses number_of_seats
+  var seats = (quoteType === 'ADD-ON'
+    ? (data.additional_seats || data.number_of_seats || '')
+    : (data.number_of_seats || ''));
+
+  var customerName = ((data.firstname || '') + ' ' + (data.lastname || '')).trim();
+  var schoolName   = data.school_name || data.school_district || '';
+  var createdOn    = Utilities.formatDate(
+    timestamp || new Date(),
+    Session.getScriptTimeZone(),
+    'MMM d, yyyy HH:mm'
+  );
+
+  // URL preference: SF record > doGet view URL. Both are clickable in Slack.
+  var quoteUrl = '';
+  if (sfRecordId) {
+    quoteUrl = SF_INSTANCE_URL + '/' + sfRecordId;
+  } else if (DEPLOYMENT_URL) {
+    quoteUrl = DEPLOYMENT_URL + '?q=' + encodeURIComponent(quoteNumber);
+  }
+
+  var repName  = data.account_manager || 'The Soundtrap Team';
+
+  var lines = [
+    'Hello, *' + repName + '*',
+    '',
+    'A new quote has been downloaded in your territory',
+    quoteUrl ? '<' + quoteUrl + '|Salesforce Quote URL>' : '',
+    '',
+    '*Number of Seats:* ' + seats,
+    '*School Name:* ' + schoolName,
+    '*Soundtrap Plan:* ' + (data.plan || ''),
+    '*Order Type:* ' + quoteType,
+    '*Country:* ' + (data.country || ''),
+    '*State:* ' + (data.state || ''),
+    '*Quote Number:* ' + quoteNumber,
+    '*Created on:* ' + createdOn,
+    '*Requested by:* ' + customerName,
+    "*Requestor's comments:* " + (data.use_case || '—'),
+    '*Email Address:* ' + (data.email || ''),
+  ];
+
+  try {
+    UrlFetchApp.fetch(webhookUrl, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ text: lines.join('\n') }),
+      muteHttpExceptions: true,
+    });
+  } catch (e) {
+    // Slack failure should never break the submission
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('Slack notification failed: ' + (e.message || e));
+    }
+  }
+}
+
+/**
  * Sends an admin alert email when a Salesforce sync fails.
  */
 function sendSFErrorAlert_(quoteNumber, customerName, errorMessage) {
@@ -1736,26 +1795,19 @@ function buildColIndex_() {
   return idx;
 }
 
-/** Map a country string to its region: 'US' | 'Canada' | 'ROW' */
+/** Map a country string to its region: 'US' | 'Canada' | 'ANZ' | 'ROW' */
 function regionForCountry_(country) {
-  var c = (country || '').toLowerCase();
-  if (c === 'united states') return 'US';
-  if (c === 'canada')        return 'Canada';
-  if (c === 'australia' || c === 'new zealand') return 'ANZ';
-  return 'ROW';
+  var cfg = loadConfig_();
+  return (cfg.regionByCountry && cfg.regionByCountry[country]) || 'ROW';
 }
 
 /** Map a country string to its currency code. */
 function currencyForCountry_(country) {
-  var EUROZONE = ['Austria','Belgium','Croatia','Cyprus','Estonia','Finland','France',
-    'Germany','Greece','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta',
-    'Netherlands','Portugal','Slovakia','Slovenia','Spain'];
-  var map = {
-    'United States': 'USD', 'United Kingdom': 'GBP',
-    'Sweden': 'SEK', 'Norway': 'NOK', 'Canada': 'CAD', 'Australia': 'AUD',
-  };
-  if (map[country]) return map[country];
-  if (EUROZONE.indexOf(country) !== -1) return 'EUR';
+  var cfg = loadConfig_();
+  if (cfg.currencyByCountry && cfg.currencyByCountry[country]) {
+    return cfg.currencyByCountry[country];
+  }
+  if (cfg.eurozone && cfg.eurozone.indexOf(country) !== -1) return 'EUR';
   return 'USD';
 }
 

@@ -40,64 +40,46 @@ var COLUMNS = [
   'Sales Rep Name', 'Sales Rep Email', 'Sales Rep Pod',
 ];
 
-// ── Territory data (mirrors legal-form.html) ─────────────────
-var TERRITORY = {
-  statePod: {
-    'alaska':'Northwest','california':'Northwest','idaho':'Northwest','montana':'Northwest',
-    'nevada':'Northwest','oregon':'Northwest','washington':'Northwest','wyoming':'Northwest',
-    'arizona':'Southwest','arkansas':'Southwest','colorado':'Southwest','hawaii':'Southwest',
-    'kansas':'Southwest','missouri':'Southwest','nebraska':'Southwest','new mexico':'Southwest',
-    'oklahoma':'Southwest','texas':'Southwest','utah':'Southwest',
-    'illinois':'Central','indiana':'Central','iowa':'Central','michigan':'Central',
-    'minnesota':'Central','north dakota':'Central','ohio':'Central','south dakota':'Central',
-    'wisconsin':'Central',
-    'connecticut':'Northeast','maine':'Northeast','massachusetts':'Northeast',
-    'new hampshire':'Northeast','new jersey':'Northeast','new york':'Northeast',
-    'rhode island':'Northeast','vermont':'Northeast',
-    'alabama':'Southeast','delaware':'Southeast','district of columbia':'Southeast',
-    'florida':'Southeast','georgia':'Southeast','kentucky':'Southeast','louisiana':'Southeast',
-    'maryland':'Southeast','mississippi':'Southeast','north carolina':'Southeast',
-    'pennsylvania':'Southeast','south carolina':'Southeast','tennessee':'Southeast',
-    'virginia':'Southeast','west virginia':'Southeast',
-  },
-  podRep: {
-    'Scaled Accounts':    { name: 'The Soundtrap Team',  email: 'orders@soundtrap.com'    },
-    'Northwest':          { name: 'Brittany Follet',      email: 'brittany@soundtrap.com'  },
-    'Southwest':          { name: 'Maria Opirhory',       email: 'maria@soundtrap.com'     },
-    'Central':            { name: 'Chloe Taylor',         email: 'chloe@soundtrap.com'     },
-    'Northeast':          { name: 'Chad Reisfelt',       email: 'chad@soundtrap.com'   },
-    'Southeast':          { name: 'Tina Shah',            email: 'tina@soundtrap.com'      },
-    'Canada':             { name: 'Chad Reisfelt',        email: 'chad@soundtrap.com'      },
-    'UK':                 { name: 'Michael Beardsley',    email: 'michael@soundtrap.com'  },
-    'ROW':                { name: 'Jennifer Meehleis',    email: 'jennifer@soundtrap.com'  },
-    'US Named Accounts':  { name: 'Leandro Otero',        email: 'leandro@soundtrap.com'   },
-    'ROW Named Accounts': { name: 'Angelica Johansson',   email: 'angelicaj@soundtrap.com' },
-  },
-  usNamed: [
-    'los angeles unified','san francisco unified',
-    'jefferson county school district no. r-1','district of columbia public schools',
-    'polk','broward','duval','miami-dade','orange','hillsborough',
-    'palm beach','hawaii department of education',
-    'chicago public schools dist 299','montgomery county public schools',
-    'baltimore county public schools',"prince george's county public schools",
-    'lincoln public schools','clark county','wake county schools',
-    'charlotte-mecklenburg schools','philadelphia city sd',
-    'puerto rico department of education','memphis-shelby county schools',
-    'dallas isd','houston isd','fairfax county public schools',
-  ],
-  rowNamedDomains: [
-    'solvesborg.se','simrishamn.se','educacio.ad','govern.ad','goteborg.se',
-    'engelska.se','ale.se','kunskapsskolan.se','bollebygd.se','trondheim.kommune.no',
-    'kalmar.se','dodea.edu','marks.se','ecolint.ch','stavanger.kommune.no',
-    'stpeters.vic.edu.au','stenungsund.se','sola.kommune.no','varberg.se',
-    'larvik.kommune.no','askoy.kommune.no','vastervik.se','fredrikstad.kommune.no',
-    'kungalv.se','pacifichills.nsw.edu.au','alingsas.se','stmonicas.vic.edu.au',
-    'makemusicmatter.org','sandnes.kommune.no','hudiksvall.se','mlc.vic.edu.au',
-    'angelholm.se','boras.se','ullensaker.kommune.no','orebro.se',
-    'watmaeducation.com','edu.laroverken.se','edu.nordicinternational.se',
-    'edu.kronobergskola.se','krono.se','bs.ch',
-  ],
-};
+// ── Shared config (single source of truth) ───────────────────
+// JSON on GitHub Pages — see /config/README.md in the repo.
+var CONFIG_URL              = 'https://matteo524.github.io/soundtrap-school-data/config/config.json';
+var CONFIG_CACHE_KEY        = 'SHARED_CONFIG_v1';
+var CONFIG_CACHE_TTL_SECONDS = 600;  // 10 minutes
+var _configMemo = null;
+
+/**
+ * Loads the shared config (territory, lists, legal lists, etc.) from GitHub Pages.
+ * Cached in: 1) memory for this invocation, 2) CacheService for ~10 min, 3) network on cold cache.
+ * Throws on failure — callers should treat as fatal.
+ */
+function loadConfig_() {
+  if (_configMemo) return _configMemo;
+
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get(CONFIG_CACHE_KEY);
+    if (cached) {
+      _configMemo = JSON.parse(cached);
+      return _configMemo;
+    }
+  } catch (_e) { /* fall through */ }
+
+  var resp = UrlFetchApp.fetch(CONFIG_URL, {
+    muteHttpExceptions: true,
+    headers: { 'Cache-Control': 'no-cache' },
+  });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error('Failed to load shared config from ' + CONFIG_URL + ' — HTTP ' + resp.getResponseCode());
+  }
+  var text = resp.getContentText();
+  _configMemo = JSON.parse(text);
+
+  try {
+    CacheService.getScriptCache().put(CONFIG_CACHE_KEY, text, CONFIG_CACHE_TTL_SECONDS);
+  } catch (_e) { /* best-effort */ }
+
+  return _configMemo;
+}
 
 /**
  * Compute the assigned sales rep from country / state / district / email.
@@ -108,6 +90,7 @@ var TERRITORY = {
  * @return {{ pod:string, rep:string, email:string }}
  */
 function computeTerritory(country, state, district, email) {
+  var TERRITORY  = loadConfig_().territory;
   var stateLc    = (state    || '').toLowerCase();
   var districtLc = (district || '').toLowerCase();
   var emailDomain = (email || '').indexOf('@') !== -1 ? email.split('@')[1].toLowerCase() : '';
@@ -169,6 +152,11 @@ function doPost(e) {
     // 4. Send emails
     sendConfirmation(data, fileUrls, territory);
     sendRepNotification(data, fileUrls, territory);
+
+    // 5. Slack notification (best-effort, non-fatal)
+    try {
+      sendSlackNotification_(data, fileUrls, territory);
+    } catch (_slackErr) { /* best-effort */ }
 
     return jsonResponse({ success: true });
 
@@ -409,4 +397,59 @@ function escHtml(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Slack notification
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Post a notification to Slack via Incoming Webhook.
+ * Webhook URL stored in Script Properties as SLACK_WEBHOOK_URL.
+ * Silently no-ops if the property is unset (so dev/test deployments don't spam).
+ */
+function sendSlackNotification_(data, fileUrls, territory) {
+  var webhookUrl = '';
+  try {
+    webhookUrl = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL') || '';
+  } catch (_e) { return; }
+  if (!webhookUrl) return;
+
+  var agreements = [];
+  if (data.vpatRequested === 'Yes') agreements.push('VPAT');
+  if (data.ndpa          === 'Yes') agreements.push('NDPA');
+  if (data.exhibitE      === 'Yes') agreements.push('Exhibit E');
+  if (data.pubAvtal      === 'Yes') agreements.push('Pub-Avtal');
+  if (data.dpa           === 'Yes') agreements.push('DPA');
+
+  var repName     = territory.rep   || 'Legal Team';
+  var school      = data.school   || data.district || '';
+  var customerName = ((data.firstName || '') + ' ' + (data.lastName || '')).trim();
+  var createdOn   = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMM d, yyyy HH:mm');
+
+  var sheetUrl = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID;
+
+  var lines = [
+    'Hello, *' + repName + '*',
+    '',
+    'A new legal request has been submitted in your territory',
+    '<' + sheetUrl + '|View in Legal Requests sheet>',
+    '',
+    '*Request Type:* ' + (data.requestType || '') + (agreements.length ? ' (' + agreements.join(', ') + ')' : ''),
+    '*School / District:* ' + school,
+    '*Country:* ' + (data.country || ''),
+    '*State:* ' + (data.state || ''),
+    '*Created on:* ' + createdOn,
+    '*Requested by:* ' + customerName,
+    "*Requestor's comments:* " + (data.summary || '—'),
+    '*Email Address:* ' + (data.email || ''),
+    (fileUrls && fileUrls.length ? '*Attachments:* ' + fileUrls.length + ' file(s)' : ''),
+  ];
+
+  UrlFetchApp.fetch(webhookUrl, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({ text: lines.filter(function (l) { return l !== ''; }).join('\n') }),
+    muteHttpExceptions: true,
+  });
 }

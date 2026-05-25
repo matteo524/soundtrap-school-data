@@ -1274,20 +1274,69 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   var API_URL          = CFG.appsScriptUrl  || '';
   var INDEX_URL        = CFG.indexUrl       || '';
   var SCHOOLS_BASE_URL = CFG.schoolsBaseUrl || '';
+  var CONFIG_URL       = CFG.configUrl      || 'https://matteo524.github.io/soundtrap-school-data/config/config.json';
 
-  /* ── Legal-specific constants ─────────────────────────────── */
-  var EXHIBIT_E_STATES = [
-    'Florida','Arizona','Texas','Wisconsin','New York','Missouri','Oregon',
-    'Ohio','Maine','Massachusetts','New Hampshire','New Jersey','Rhode Island',
-    'Tennessee','Vermont','Virginia','Illinois','California','Washington','Arkansas'
-  ];
-  var DPA_COUNTRIES = [
-    'Austria','Belgium','Bulgaria','Croatia','Cyprus','Czechia','Denmark',
-    'Estonia','Finland','France','Germany','Greece','Hungary','Iceland',
-    'Ireland','Italy','Latvia','Liechtenstein','Lithuania','Luxembourg',
-    'Malta','Netherlands','Norway','Poland','Portugal','Romania','Slovakia',
-    'Slovenia','Spain','Sweden','Switzerland','United Kingdom'
-  ];
+  /* ── Shared config (fetched from config/config.json) ────────
+     Populated by applyConfig(). All data variables below start
+     as null/[] until config loads — init waits on loadConfig(). */
+  var SHARED_CONFIG       = null;
+  var CONFIG_CACHE_KEY    = 'lf_shared_config_v1';
+  var CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;  // 5 minutes
+
+  var TERRITORY        = null;
+  var EXHIBIT_E_STATES = [];
+  var DPA_COUNTRIES    = [];
+  var WORLD_COUNTRIES  = [];
+  var US_STATES        = [];
+  var CA_PROVINCES     = [];
+  var AU_STATES        = [];
+
+  function loadConfig(callback) {
+    var cached = readCachedConfig();
+    if (cached.data && cached.fresh) {
+      applyConfig(cached.data);
+      callback(null);
+      return;
+    }
+    fetch(CONFIG_URL, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (data) {
+        try {
+          localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({ data: data, fetchedAt: Date.now() }));
+        } catch (e) { /* localStorage may be unavailable */ }
+        applyConfig(data);
+        callback(null);
+      })
+      .catch(function (err) {
+        if (cached.data) {
+          applyConfig(cached.data);
+          callback(null);
+          return;
+        }
+        callback(err);
+      });
+  }
+
+  function readCachedConfig() {
+    try {
+      var raw = localStorage.getItem(CONFIG_CACHE_KEY);
+      if (!raw) return { data: null, fresh: false };
+      var wrapper = JSON.parse(raw);
+      var age = Date.now() - (wrapper.fetchedAt || 0);
+      return { data: wrapper.data || null, fresh: age < CONFIG_CACHE_TTL_MS };
+    } catch (e) { return { data: null, fresh: false }; }
+  }
+
+  function applyConfig(c) {
+    SHARED_CONFIG    = c;
+    TERRITORY        = c.territory;
+    EXHIBIT_E_STATES = (c.legal && c.legal.exhibitEStates) || [];
+    DPA_COUNTRIES    = (c.legal && c.legal.dpaCountries)   || [];
+    WORLD_COUNTRIES  = (c.lists && c.lists.worldCountries) || [];
+    US_STATES        = (c.lists && c.lists.usStates)       || [];
+    CA_PROVINCES     = (c.lists && c.lists.caProvinces)    || [];
+    AU_STATES        = (c.lists && c.lists.auStates)       || [];
+  }
 
   /* ── Uploaded files array ─────────────────────────────────── */
   var uploadedFiles = [];
@@ -1307,75 +1356,11 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   /* ── District enrollment (populated from _enrollment key in state JSON) ── */
   var _districtEnrollment  = {};    // { "district name lc": enrollment_int }
 
-  /* ── Territory assignment data ────────────────────────────── */
-  var TERRITORY = {
-    // US state → POD name (for accounts with 3,000+ students)
-    statePod: {
-      'alaska':'Northwest','california':'Northwest','idaho':'Northwest','montana':'Northwest',
-      'nevada':'Northwest','oregon':'Northwest','washington':'Northwest','wyoming':'Northwest',
-      'arizona':'Southwest','arkansas':'Southwest','colorado':'Southwest','hawaii':'Southwest',
-      'kansas':'Southwest','missouri':'Southwest','nebraska':'Southwest','new mexico':'Southwest',
-      'oklahoma':'Southwest','texas':'Southwest','utah':'Southwest',
-      'illinois':'Central','indiana':'Central','iowa':'Central','michigan':'Central',
-      'minnesota':'Central','north dakota':'Central','ohio':'Central','south dakota':'Central',
-      'wisconsin':'Central',
-      'connecticut':'Northeast','maine':'Northeast','massachusetts':'Northeast',
-      'new hampshire':'Northeast','new jersey':'Northeast','new york':'Northeast',
-      'rhode island':'Northeast','vermont':'Northeast',
-      'alabama':'Southeast','delaware':'Southeast','district of columbia':'Southeast',
-      'florida':'Southeast','georgia':'Southeast','kentucky':'Southeast','louisiana':'Southeast',
-      'maryland':'Southeast','mississippi':'Southeast','north carolina':'Southeast',
-      'pennsylvania':'Southeast','south carolina':'Southeast','tennessee':'Southeast',
-      'virginia':'Southeast','west virginia':'Southeast',
-    },
-    // POD → { name, email }
-    podRep: {
-      'Scaled Accounts':    { name: 'The Soundtrap Team',  email: 'orders@soundtrap.com'   },
-      'Northwest':          { name: 'Brittany Follet',      email: 'brittany@soundtrap.com' },
-      'Southwest':          { name: 'Maria Opirhory',       email: 'maria@soundtrap.com'    },
-      'Central':            { name: 'Chloe Taylor',         email: 'chloe@soundtrap.com'    },
-      'Northeast':          { name: 'Chad Reisfelt',       email: 'chad@soundtrap.com'  },
-      'Southeast':          { name: 'Tina Shah',            email: 'tina@soundtrap.com'     },
-      'Canada':             { name: 'Chad Reisfelt',        email: 'chad@soundtrap.com'     },
-      'UK':                 { name: 'Michael Beardsley',    email: 'michael@soundtrap.com' },
-      'ROW':                { name: 'Jennifer Meehleis',    email: 'jennifer@soundtrap.com' },
-      'US Named Accounts':  { name: 'Leandro Otero',        email: 'leandro@soundtrap.com'  },
-      'ROW Named Accounts': { name: 'Angelica Johansson',   email: 'angelicaj@soundtrap.com'},
-    },
-    // US Named Accounts — matched by district name (lowercase, must match NCES JSON keys exactly)
-    usNamed: [
-      'los angeles unified','san francisco unified',
-      'jefferson county school district no. r-1','district of columbia public schools',
-      'polk','broward',
-      'duval','miami-dade',
-      'orange','hillsborough',
-      'palm beach','hawaii department of education',
-      'chicago public schools dist 299','montgomery county public schools',
-      'baltimore county public schools',"prince george's county public schools",
-      'lincoln public schools','clark county',
-      // NYC: matched via prefix in computeTerritory (see below)
-      'wake county schools',
-      'charlotte-mecklenburg schools','philadelphia city sd',
-      'puerto rico department of education','memphis-shelby county schools',
-      'dallas isd','houston isd',
-      'fairfax county public schools',
-    ],
-    // ROW Named Accounts — matched by customer email domain
-    rowNamedDomains: [
-      'solvesborg.se','simrishamn.se','educacio.ad','govern.ad','goteborg.se',
-      'engelska.se','ale.se','kunskapsskolan.se','bollebygd.se','trondheim.kommune.no',
-      'kalmar.se','dodea.edu','marks.se','ecolint.ch','stavanger.kommune.no',
-      'stpeters.vic.edu.au','stenungsund.se','sola.kommune.no','varberg.se',
-      'larvik.kommune.no','askoy.kommune.no','vastervik.se','fredrikstad.kommune.no',
-      'kungalv.se','pacifichills.nsw.edu.au','alingsas.se','stmonicas.vic.edu.au',
-      'makemusicmatter.org','sandnes.kommune.no','hudiksvall.se','mlc.vic.edu.au',
-      'angelholm.se','boras.se','ullensaker.kommune.no','orebro.se',
-      'watmaeducation.com','edu.laroverken.se','edu.nordicinternational.se',
-      'edu.kronobergskola.se','krono.se','bs.ch',
-    ],
-  };
+  /* ── Territory assignment data ─────────────────────────────
+     TERRITORY is populated by applyConfig() from config.json. */
 
   function computeTerritory() {
+    if (!TERRITORY) return { pod: '', rep: '', email: '' };
     var country    = sel.country.value;
     var state      = (sel.state.value || '').toLowerCase();
     var districtRaw = manualMode
@@ -1600,40 +1585,8 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   makeCombobox('country');
   makeCombobox('manual_state');
 
-  /* ── World countries list (ISO 3166-1, alphabetical) ─────── */
-  var WORLD_COUNTRIES = [
-    'Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda',
-    'Argentina','Armenia','Australia','Austria','Azerbaijan','Bahamas','Bahrain',
-    'Bangladesh','Barbados','Belarus','Belgium','Belize','Benin','Bhutan','Bolivia',
-    'Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria','Burkina Faso',
-    'Burundi','Cabo Verde','Cambodia','Cameroon','Canada','Central African Republic',
-    'Chad','Chile','China','Colombia','Comoros','Congo','Costa Rica','Croatia','Cuba',
-    'Cyprus','Czechia','Denmark','Djibouti','Dominica','Dominican Republic','Ecuador',
-    'Egypt','El Salvador','Equatorial Guinea','Eritrea','Estonia','Eswatini','Ethiopia',
-    'Fiji','Finland','France','Gabon','Gambia','Georgia','Germany','Ghana','Greece',
-    'Grenada','Guatemala','Guinea','Guinea-Bissau','Guyana','Haiti','Honduras',
-    'Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy',
-    'Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kiribati','Kuwait','Kyrgyzstan',
-    'Laos','Latvia','Lebanon','Lesotho','Liberia','Libya','Liechtenstein','Lithuania',
-    'Luxembourg','Madagascar','Malawi','Malaysia','Maldives','Mali','Malta',
-    'Marshall Islands','Mauritania','Mauritius','Mexico','Micronesia','Moldova',
-    'Monaco','Mongolia','Montenegro','Morocco','Mozambique','Myanmar','Namibia',
-    'Nauru','Nepal','Netherlands','New Zealand','Nicaragua','Niger','Nigeria',
-    'North Korea','North Macedonia','Norway','Oman','Pakistan','Palau','Panama',
-    'Papua New Guinea','Paraguay','Peru','Philippines','Poland','Portugal','Qatar',
-    'Romania','Russia','Rwanda','Saint Kitts and Nevis','Saint Lucia',
-    'Saint Vincent and the Grenadines','Samoa','San Marino','Sao Tome and Principe',
-    'Saudi Arabia','Senegal','Serbia','Seychelles','Sierra Leone','Singapore',
-    'Slovakia','Slovenia','Solomon Islands','Somalia','South Africa','South Korea',
-    'South Sudan','Spain','Sri Lanka','Sudan','Suriname','Sweden','Switzerland',
-    'Syria','Tajikistan','Tanzania','Thailand','Timor-Leste','Togo','Tonga',
-    'Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Tuvalu','Uganda',
-    'Ukraine','United Arab Emirates','United Kingdom','United States','Uruguay',
-    'Uzbekistan','Vanuatu','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe'
-  ];
-
-  // Country combo is populated immediately — no network call needed
-  if (combos.country) combos.country.setOptions(WORLD_COUNTRIES, false, 'Select a country\u2026');
+  /* WORLD_COUNTRIES is populated from config.json by applyConfig();
+     combos.country.setOptions(...) is called in setupAfterConfigLoad(). */
 
   /* ── Manual mode helpers ──────────────────────────────────── */
 
@@ -1928,31 +1881,9 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     }
   }
 
-  /* US states (for manual entry panel) */
-  var US_STATES = [
-    'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
-    'Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
-    'Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan',
-    'Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada',
-    'New Hampshire','New Jersey','New Mexico','New York','North Carolina',
-    'North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island',
-    'South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont',
-    'Virginia','Washington','West Virginia','Wisconsin','Wyoming',
-    'District of Columbia','Puerto Rico','Guam','U.S. Virgin Islands',
-    'American Samoa','Northern Mariana Islands'
-  ];
-  if (combos.manual_state) combos.manual_state.setOptions(US_STATES, false, 'Select a state\u2026');
+  /* US_STATES populated from config.json; combos.manual_state.setOptions(...) in setupAfterConfigLoad(). */
 
-  /* Canadian provinces/territories and Australian states/territories */
-  var CA_PROVINCES = [
-    'Alberta','British Columbia','Manitoba','New Brunswick',
-    'Newfoundland and Labrador','Northwest Territories','Nova Scotia',
-    'Nunavut','Ontario','Prince Edward Island','Quebec','Saskatchewan','Yukon'
-  ];
-  var AU_STATES = [
-    'Australian Capital Territory','New South Wales','Northern Territory',
-    'Queensland','South Australia','Tasmania','Victoria','Western Australia'
-  ];
+  /* CA_PROVINCES + AU_STATES populated from config.json by applyConfig(). */
 
 
   /* ── Legal form: section visibility logic ─────────────────── */
@@ -2864,11 +2795,34 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     } catch (e) { /* localStorage may be unavailable */ }
   }
 
+  /* ── Setup that depends on config data (combo box options) ── */
+  function setupAfterConfigLoad() {
+    if (combos.country)      combos.country.setOptions(WORLD_COUNTRIES, false, 'Select a country…');
+    if (combos.manual_state) combos.manual_state.setOptions(US_STATES,  false, 'Select a state…');
+  }
+
+  function showConfigErrorBanner(err) {
+    var banner = document.getElementById('lf_error_banner');
+    if (banner) {
+      banner.textContent = 'Could not load form configuration. Please refresh the page or contact legal@soundtrap.com. (' + (err && err.message || err) + ')';
+      banner.style.display = 'block';
+    } else {
+      alert('Could not load form configuration. Please refresh the page.');
+    }
+  }
+
   /* ── Init ─────────────────────────────────────────────────── */
-  loadIndex();
-  toggleStateField(true); // show state by default; hidden dynamically for non-US
-  updateFormSections();   // all conditional sections start hidden until type is chosen
-  initWelcomeBanner();
+  loadConfig(function (err) {
+    if (err) {
+      showConfigErrorBanner(err);
+      return;
+    }
+    setupAfterConfigLoad();
+    loadIndex();
+    toggleStateField(true); // show state by default; hidden dynamically for non-US
+    updateFormSections();   // all conditional sections start hidden until type is chosen
+    initWelcomeBanner();
+  });
 
 })();
 </script>
