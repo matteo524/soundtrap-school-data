@@ -1474,7 +1474,7 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
     Email:                   data.email              || '',
     CurrencyIsoCode:         currency,
     QuoteToCity:             data.city    || '',
-    QuoteToState:            data.state   || '',
+    QuoteToState:            stateAbbrev_(data.state) || '',
     QuoteToCountry:          data.country || '',
     Subscription_Length_Months__c: parseInt(data.subscription_length || 0, 10) || null,
     Requested_At__c:         Utilities.formatDate(timestamp, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ssZ"),
@@ -1765,6 +1765,23 @@ function currencyForCountry_(country) {
   }
   if (cfg.eurozone && cfg.eurozone.indexOf(country) !== -1) return 'EUR';
   return 'USD';
+}
+
+/**
+ * Convert a full US state/territory name to its USPS 2-letter code for Salesforce.
+ * Map lives in config.json (usStateAbbrev). Non-US or unmapped values (and values
+ * that are already abbreviations) are returned unchanged.
+ */
+function stateAbbrev_(stateName) {
+  var s = (stateName || '').trim();
+  if (!s) return '';
+  var map = loadConfig_().usStateAbbrev || {};
+  if (map[s]) return map[s];
+  var lc = s.toLowerCase();
+  for (var k in map) {
+    if (k !== '_comment' && k.toLowerCase() === lc) return map[k];
+  }
+  return s;
 }
 
 /** Format a Date object as "Mar 28, 2026". */

@@ -19,8 +19,9 @@ Before making any change to shared logic (see `config/`), always check which for
 | `assets/` | Shared images (currently just the white "Soundtrap for Education" logo). |
 | `public-quote-form/` | Customer-facing quote form. HTML served via GitHub Pages (migration to HubSpot planned). Backend lives in an Apps Script project. |
 | `internal-quote-form/` | Sales-rep quote form. Restricted to `@soundtrap.com` Google accounts. Deployed as an Apps Script web app (HtmlService). |
-| `legal-form/` | DPA / Exhibit E legal request form. Deployed as an Apps Script web app. |
-| `trial-form/` | Trial signup form + documentation. |
+| `internal-order-form/` | ⚠️ **Scaffold only.** Order equivalent of the internal quote form — sales reps place orders on behalf of customers. Not yet deployed; Salesforce Order mapping deferred. See its own `CLAUDE.md`. |
+| `legal-form/` | DPA / Exhibit E legal request form. Frontend on GitHub Pages, backend on Apps Script. |
+| `trial-form/` | Trial signup prototype + documentation. |
 
 Each form folder contains its own `CLAUDE.md` with project-specific details.
 

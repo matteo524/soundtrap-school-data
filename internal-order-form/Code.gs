@@ -1,37 +1,46 @@
 /**
  * ============================================================
- *  Soundtrap for Education — Quote Request: Apps Script
+ *  Soundtrap for Education — Internal Order Form: Apps Script
  * ============================================================
  *
+ *  Scaffolded from internal-quote-form/Code.gs. Many quote-specific
+ *  bits still need to be reworked — search for TODO in this file.
+ *
+ *  KEY DIFFERENCES FROM THE QUOTE FORM:
+ *  - Order number prefix is IORD- (not INT-)
+ *  - Orders don't expire (no ValidUntil / ExpirationDate)
+ *  - Salesforce push is DEFERRED — see TODO(salesforce-order-mapping).
+ *    The doPost / submitQuote handlers currently write
+ *    "Skipped: SF Order mapping pending" to the SF Status column.
+ *  - New columns: Quote Reference, PO Number, PO File URL, Billing Address fields
+ *  - The PO upload + Billing Address sections are stubbed in the HTML;
+ *    saveFiles_() / Drive upload logic for the PO is not yet wired up.
+ *
  *  SETUP (one-time):
- *  1. In Google Sheets: create a new spreadsheet named
- *     "Soundtrap Quote Submissions".
- *  2. Open Extensions → Apps Script, paste this file, save.
- *  3. Run initSheets() once manually to create the two sheets
- *     (Submissions + Counter) with headers.
- *  4. Ensure quote-template.html is added as a file in this Apps Script project
- *     (click + next to Files → HTML → name it 'quote-template').
- *  5. Pricing/territory/etc. are loaded from config.json at runtime — edit
- *     the shared config in the soundtrap-school-data repo, not this file.
- *  6. Deploy → New deployment → Web app:
+ *  1. Create a new Google Sheet named "Soundtrap Order Submissions".
+ *  2. Paste this file into a fresh Apps Script project.
+ *  3. Run initSheets() once to create the Submissions + Counter tabs.
+ *  4. Deploy → New deployment → Web app:
  *       Execute as: Me
- *       Who has access: Anyone
- *  7. Copy the deployment URL into PQF_CONFIG.appsScriptUrl
- *     in quote-form.html.
+ *       Who has access: Anyone within Soundtrap (Google Workspace)
+ *  5. Copy the deployment URL into:
+ *       - PQF_CONFIG.appsScriptUrl in internal-order-form.html
+ *       - DEPLOYMENT_URL constant below
+ *  6. Set Script Properties: SF_CLIENT_ID, SF_CLIENT_SECRET, SLACK_WEBHOOK_URL.
  *
  *  SHEETS:
  *  ┌─────────────────┬──────────────────────────────────────┐
- *  │ "Submissions"   │ One row per quote request            │
- *  │ "Counter"       │ A1 = last used quote number (int)    │
+ *  │ "Submissions"   │ One row per order                    │
+ *  │ "Counter"       │ A1 = last used order number (int)    │
  *  └─────────────────┴──────────────────────────────────────┘
  * ============================================================
  */
 
 // ── Column order for the Submissions sheet ──────────────────
 var COLUMNS = [
-  'Quote Number',
+  'Order Number',
   'Timestamp',
-  'Quote Type',
+  'Order Type',
   // Location
   'Country',
   'State',
@@ -65,6 +74,27 @@ var COLUMNS = [
   'School Website',
   'PD Session',
   'Purchase Date',
+  // Discounts
+  'Sub Discount Type',
+  'Sub Discount Value',
+  'Maint Discount Type',
+  'Maint Discount Value',
+  'PD Discount Type',
+  'PD Discount Value',
+  'Total Discounted Cost',
+  // Order-specific (new vs. quote form) — see TODO notes in this file
+  'Quote Reference',          // optional: existing quote number this order was generated from
+  'PO Number',
+  'PO File URL',              // Drive URL of uploaded PO doc (when implemented)
+  'Billing Same As School',   // 'Yes' | 'No'
+  'Billing Contact Name',
+  'Billing Contact Email',
+  'Billing Address Line 1',
+  'Billing Address Line 2',
+  'Billing City',
+  'Billing State',
+  'Billing Postal Code',
+  'Billing Country',
   // Salesforce sync
   'SF Status',
   'SF Record ID',
@@ -72,7 +102,7 @@ var COLUMNS = [
 
 // Maps incoming field names → column headers above
 var FIELD_MAP = {
-  quote_type:             'Quote Type',
+  quote_type:             'Order Type',
   country:                'Country',
   state:                  'State',
   city:                   'City',
@@ -101,17 +131,147 @@ var FIELD_MAP = {
   school_website:         'School Website',
   pd_session:             'PD Session',
   purchase_date:          'Purchase Date',
+  sub_discount_type:      'Sub Discount Type',
+  sub_discount_value:     'Sub Discount Value',
+  maint_discount_type:    'Maint Discount Type',
+  maint_discount_value:   'Maint Discount Value',
+  pd_discount_type:       'PD Discount Type',
+  pd_discount_value:      'PD Discount Value',
+  total_discounted_cost:  'Total Discounted Cost',
+  // Order-specific (new vs. quote form)
+  quote_reference:        'Quote Reference',
+  po_number:              'PO Number',
+  po_file_url:            'PO File URL',
+  billing_same_as_school: 'Billing Same As School',
+  billing_contact_name:   'Billing Contact Name',
+  billing_contact_email:  'Billing Contact Email',
+  billing_address_1:      'Billing Address Line 1',
+  billing_address_2:      'Billing Address Line 2',
+  billing_city:           'Billing City',
+  billing_state:          'Billing State',
+  billing_postal_code:    'Billing Postal Code',
+  billing_country:        'Billing Country',
 };
 
 // ── Quote generation config ──────────────────────────────────
 
 // Deployment URL — same URL as appsScriptUrl in quote-form.html.
 // Used to build the PRINT link in customer emails. Leave empty to disable.
-var DEPLOYMENT_URL      = 'https://script.google.com/macros/s/AKfycbw_0gpCmMbU4hpi1V1qRm8vaeiO3aKLHMyDkLy7UPNg9hEA1qKJ8GBGbE-VG-AeZOES/exec';
+// TODO: replace with the actual Apps Script deployment URL after first deploy.
+var DEPLOYMENT_URL = 'INTERNAL_ORDER_DEPLOYMENT_URL';
 
-// Internal quote generator URL — used to deep-link reps into a pre-filled form.
-// Set to the internal form's Apps Script deployment URL.
-var INTERNAL_FORM_URL   = '';
+// ── Quote-reference pre-fill ─────────────────────────────────
+// When a rep enters an existing quote number in the order form, lookupQuote()
+// searches these source spreadsheets (the quote forms' "Submissions" tabs) and
+// returns the matching row so the order form can be pre-filled.
+//
+// TODO: paste the real spreadsheet IDs here. The ID is the long string between
+// /d/ and /edit in a Google Sheet URL. The deploying user ("Execute as: Me")
+// must have at least read access to each sheet.
+//   - Internal quote form sheet  (quotes prefixed INT-)
+//   - Public quote form sheet    (quotes prefixed DIR- / SCH- / CLS-)
+var QUOTE_SOURCE_SHEET_IDS = [
+  // 'INTERNAL_QUOTE_SHEET_ID',
+  // 'PUBLIC_QUOTE_SHEET_ID',
+];
+
+// Tab name to search within each source spreadsheet.
+var QUOTE_SOURCE_TAB = 'Submissions';
+
+// Maps the quote sheets' column headers → this order form's payload field names.
+// Only fields that make sense to carry over to an order are listed. The cascade
+// (NCES / enrollment) is intentionally omitted — the order form pre-fills
+// location via manual-entry mode (see the client-side handler).
+var QUOTE_PREFILL_HEADER_MAP = {
+  'Quote Type':            'quote_type',
+  'Country':               'country',
+  'State':                 'state',
+  'City':                  'city',
+  'School District':       'school_district',
+  'School Name':           'school_name',
+  'School Website':        'school_website',
+  'Manual Entry':          'manual_entry',
+  'NCES Number':           'nces_number',
+  'District Enrollment':   'district_enrollment',
+  'First Name':            'firstname',
+  'Last Name':             'lastname',
+  'Email':                 'email',
+  'Your Role':             'your_role',
+  'Soundtrap Account ID':  'soundtrap_account_id',
+  'Plan':                  'plan',
+  'Number of Seats':       'number_of_seats',
+  'Current Plan':          'current_plan',
+  'Current Seats':         'current_seats',
+  'Additional Seats':      'additional_seats',
+  'Subscription End Date': 'subscription_end_date',
+  'Number of Schools':     'number_of_schools',
+  'Subscription Length':   'subscription_length',
+  'PD Session':            'pd_session',
+  'Purchase Date':         'purchase_date',
+  'Use Case':              'use_case',
+};
+
+/**
+ * Look up an existing quote by its number across the configured source sheets.
+ * Called via google.script.run from the order form when a rep enters a quote
+ * reference. Returns a plain object the client can use to pre-fill fields:
+ *
+ *   { found: true,  fields: { firstname: 'Jane', plan: 'School', ... }, source: 'INT-…' }
+ *   { found: false, error: 'Quote INT-2026-00042 not found.' }
+ *
+ * Never throws — always returns a result object (errors are returned, not raised),
+ * so the client gets a clean message.
+ */
+function lookupQuote(quoteNumber) {
+  var q = String(quoteNumber || '').trim();
+  if (!q) return { found: false, error: 'Please enter a quote number.' };
+
+  if (!QUOTE_SOURCE_SHEET_IDS.length) {
+    return { found: false, error: 'Quote pre-fill is not configured yet (no source sheets set). Enter the order details manually.' };
+  }
+
+  for (var s = 0; s < QUOTE_SOURCE_SHEET_IDS.length; s++) {
+    var id = QUOTE_SOURCE_SHEET_IDS[s];
+    if (!id || id.indexOf('_SHEET_ID') !== -1) continue; // skip unset placeholders
+    try {
+      var ss    = SpreadsheetApp.openById(id);
+      var sheet = ss.getSheetByName(QUOTE_SOURCE_TAB);
+      if (!sheet) continue;
+
+      var values = sheet.getDataRange().getValues();
+      if (values.length < 2) continue;
+
+      var headers = values[0];
+      // The quote sheets' first column is "Quote Number".
+      var qNumCol = headers.indexOf('Quote Number');
+      if (qNumCol === -1) qNumCol = 0;
+
+      for (var r = 1; r < values.length; r++) {
+        if (String(values[r][qNumCol]).trim() !== q) continue;
+
+        // Found it — build the pre-fill field map.
+        var fields = {};
+        Object.keys(QUOTE_PREFILL_HEADER_MAP).forEach(function (header) {
+          var col = headers.indexOf(header);
+          if (col === -1) return;
+          var val = values[r][col];
+          if (val instanceof Date) {
+            val = Utilities.formatDate(val, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+          }
+          fields[QUOTE_PREFILL_HEADER_MAP[header]] = (val === null || val === undefined) ? '' : String(val);
+        });
+        return { found: true, fields: fields, source: q };
+      }
+    } catch (e) {
+      // Skip unreadable sheets (permissions, bad ID) — try the next one.
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('lookupQuote: could not read sheet ' + id + ' — ' + (e.message || e));
+      }
+    }
+  }
+
+  return { found: false, error: 'Quote ' + q + ' not found in the connected quote sheets.' };
+}
 
 // ── Shared config (single source of truth) ───────────────────
 // JSON on GitHub Pages — see /config/README.md in the repo.
@@ -169,13 +329,8 @@ function loadConfig_() {
 //     SF_CLIENT_SECRET = your Consumer Secret
 var SF_INSTANCE_URL  = 'https://soundtrap.my.salesforce.com';
 var SF_API_VERSION   = 'v59.0';
-// Email to notify on Salesforce sync failure (falls back to REP_NOTIFICATION_OVERRIDE)
+// Email to notify on Salesforce sync failure.
 var SF_ALERT_EMAIL   = 'matteo@soundtrap.com';
-
-// Rep notification override for testing.
-// When set to an email address ALL rep notifications go here instead of the
-// actual account manager. Clear to '' in production.
-var REP_NOTIFICATION_OVERRIDE = 'matteo@soundtrap.com';
 
 
 // ════════════════════════════════════════════════════════════
@@ -204,7 +359,7 @@ function doPost(e) {
     var colIndex = buildColIndex_();
 
     var row = new Array(COLUMNS.length).fill('');
-    row[colIndex['Quote Number']] = quoteNumber;
+    row[colIndex['Order Number']] = quoteNumber;
     row[colIndex['Timestamp']]    = Utilities.formatDate(
       timestamp,
       Session.getScriptTimeZone(),
@@ -231,27 +386,24 @@ function doPost(e) {
       result.emailError = emailErr.message;
     }
 
-    // Push to Salesforce — skipped for District quotes (rep creates the record manually)
-    var isDistrictPlan = (data.plan || '').trim().toLowerCase() === 'district';
-    if (isDistrictPlan) {
-      sheet.getRange(sheetRow, colIndex['SF Status'] + 1).setValue('N/A — District');
-    } else {
-      try {
-        var sfResult = createSalesforceQuote_(data, quoteNumber, timestamp);
-        sheet.getRange(sheetRow, colIndex['SF Status']   + 1).setValue('Created');
-        sheet.getRange(sheetRow, colIndex['SF Record ID'] + 1).setValue(sfResult.id);
-        result.sfRecordId = sfResult.id;
-      } catch (sfErr) {
-        sheet.getRange(sheetRow, colIndex['SF Status'] + 1).setValue('Failed: ' + sfErr.message);
-        result.sfError = sfErr.message;
-        try {
-          sendSFErrorAlert_(quoteNumber, (data.firstname || '') + ' ' + (data.lastname || ''), sfErr.message);
-        } catch (_) { /* alert failure is silent */ }
-      }
-    }
+    // TODO(salesforce-order-mapping): push to Salesforce Order object.
+    // The SF Order object already exists in the org; field mapping is not yet done.
+    // When ready: implement createSalesforceOrder_() (modelled on createSalesforceQuote_
+    // in Code.gs, which is kept below as reference) and uncomment the block below.
+    //
+    // try {
+    //   var sfResult = createSalesforceOrder_(data, quoteNumber, timestamp);
+    //   sheet.getRange(sheetRow, colIndex['SF Status']    + 1).setValue('Created');
+    //   sheet.getRange(sheetRow, colIndex['SF Record ID'] + 1).setValue(sfResult.id);
+    //   result.sfRecordId = sfResult.id;
+    // } catch (sfErr) {
+    //   sheet.getRange(sheetRow, colIndex['SF Status'] + 1).setValue('Failed: ' + sfErr.message);
+    //   result.sfError = sfErr.message;
+    //   try { sendSFErrorAlert_(quoteNumber, (data.firstname || '') + ' ' + (data.lastname || ''), sfErr.message); } catch (_) {}
+    // }
+    sheet.getRange(sheetRow, colIndex['SF Status'] + 1).setValue('Skipped: SF Order mapping pending');
 
-    // Slack notification — non-fatal. Fires after SF push so we can include
-    // the SF record URL when available; otherwise falls back to the doGet URL.
+    // Slack notification — non-fatal. Includes SF record URL when available.
     try {
       sendSlackNotification_(data, quoteNumber, timestamp, result.sfRecordId);
     } catch (_slackErr) { /* best-effort */ }
@@ -265,55 +417,125 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── Health check / Print page ─────────────────────────────────
+/**
+ * Called via google.script.run from the HtmlService form.
+ * Identical logic to doPost but accepts a plain JS object directly.
+ */
+function submitQuote(data) {
+  var result = { success: false };
+
+  try {
+    var ss          = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet       = ss.getSheetByName('Submissions');
+    var quoteNumber = generateQuoteNumber_();
+    var timestamp   = new Date();
+
+    var colIndex = buildColIndex_();
+    var row = new Array(COLUMNS.length).fill('');
+    row[colIndex['Order Number']] = quoteNumber;
+    row[colIndex['Timestamp']]    = Utilities.formatDate(
+      timestamp, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'
+    );
+
+    Object.keys(data).forEach(function (key) {
+      var col = FIELD_MAP[key];
+      if (col && colIndex[col] !== undefined) row[colIndex[col]] = data[key] || '';
+    });
+
+    sheet.appendRow(row);
+    var sheetRow = sheet.getLastRow();
+
+    result.success     = true;
+    result.quoteNumber = quoteNumber;
+
+    try {
+      generateAndSendQuote_(data, quoteNumber, timestamp);
+    } catch (emailErr) {
+      result.emailError = emailErr.message;
+    }
+
+    // TODO(salesforce-order-mapping): see comment at the doPost call site above.
+    // Same stub here — SF Order push is deferred until the field mapping is built.
+    sheet.getRange(sheetRow, colIndex['SF Status'] + 1).setValue('Skipped: SF Order mapping pending');
+
+    // Slack notification — non-fatal. Includes SF record URL when available.
+    try {
+      sendSlackNotification_(data, quoteNumber, timestamp, result.sfRecordId);
+    } catch (_slackErr) { /* best-effort */ }
+
+  } catch (err) {
+    result.error = err.message;
+  }
+
+  return result;
+}
+
+// ── HtmlService entry point ────────────────────────────────────
 function doGet(e) {
-  var q = e && e.parameter && e.parameter.q;
+  var page = (e && e.parameter && e.parameter.page) || '';
+  var q    = (e && e.parameter && e.parameter.q)    || '';
 
-  if (!q) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok', service: 'Soundtrap Quote API' }))
-      .setMimeType(ContentService.MimeType.JSON);
+  // Thank-you page
+  if (page === 'thank-you') {
+    return HtmlService.createHtmlOutputFromFile('thank-you')
+      .setTitle('Order Submitted — Soundtrap')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
 
-  // Look up the quote row in the Submissions sheet by quote number
-  var ss     = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet  = ss.getSheetByName('Submissions');
-  var values = sheet.getDataRange().getValues();
+  // Print / view a saved quote
+  if (q) {
+    var ss     = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet  = ss.getSheetByName('Submissions');
+    var values = sheet.getDataRange().getValues();
+    var colIdx = buildColIndex_();
+    var colToField = {};
+    Object.keys(FIELD_MAP).forEach(function(field) { colToField[FIELD_MAP[field]] = field; });
 
-  // Build column-name → index map from the COLUMNS array
-  var colIdx = buildColIndex_();
+    var row = null;
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][colIdx['Order Number']]) === String(q)) { row = values[i]; break; }
+    }
 
-  // Build reverse FIELD_MAP: column name → form field name
-  var colToField = {};
-  Object.keys(FIELD_MAP).forEach(function(field) { colToField[FIELD_MAP[field]] = field; });
+    if (!row) {
+      return HtmlService
+        .createHtmlOutput('<p style="font-family:sans-serif;padding:40px;color:#555;">Order <strong>' + escapeHtml_(q) + '</strong> not found.</p>')
+        .setTitle('Order Not Found');
+    }
 
-  // Find the matching row (skip header row if present)
-  var row = null;
-  for (var i = 0; i < values.length; i++) {
-    if (String(values[i][colIdx['Quote Number']]) === String(q)) { row = values[i]; break; }
+    var data = {};
+    COLUMNS.forEach(function(col, i) {
+      var field = colToField[col];
+      if (field) data[field] = String(row[i] || '');
+    });
+
+    var quoteNumber = String(row[colIdx['Order Number']]);
+    var timestamp   = new Date(String(row[colIdx['Timestamp']]));
+    var region      = regionForCountry_(data.country || '');
+    var currency    = currencyForCountry_(data.country || '');
+    var quoteType   = normaliseQuoteType_(data.quote_type);
+
+    var page = buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quoteType);
+    return HtmlService.createHtmlOutput(page).setTitle('Quote ' + quoteNumber);
   }
 
-  if (!row) {
-    return HtmlService
-      .createHtmlOutput('<p style="font-family:sans-serif;padding:40px;color:#555;">Quote <strong>' + escapeHtml_(q) + '</strong> not found.</p>')
-      .setTitle('Quote Not Found');
+  // Default: serve the form, injecting any prefill data passed as URL params
+  var prefill = {};
+  var prefillKeys = ['firstname','lastname','email','role','country','state','city',
+    'district','school','quote_type','plan','seats','schools','months',
+    'current_plan','current_seats','end_date','use_case','website','purchase_date',
+    'account_id','pd_session'];
+  if (e && e.parameter) {
+    prefillKeys.forEach(function(k) {
+      if (e.parameter[k]) prefill[k] = e.parameter[k];
+    });
   }
-
-  // Reconstruct the data object from the stored row values
-  var data = {};
-  COLUMNS.forEach(function(col, i) {
-    var field = colToField[col];
-    if (field) data[field] = String(row[i] || '');
-  });
-
-  var quoteNumber = String(row[colIdx['Quote Number']]);
-  var timestamp   = new Date(String(row[colIdx['Timestamp']]));
-  var region      = regionForCountry_(data.country || '');
-  var currency    = currencyForCountry_(data.country || '');
-  var quoteType   = normaliseQuoteType_(data.quote_type);
-
-  var page = buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quoteType);
-  return HtmlService.createHtmlOutput(page).setTitle('Quote ' + quoteNumber);
+  var formHtml = HtmlService.createHtmlOutputFromFile('internal-order-form').getContent();
+  formHtml = formHtml.replace('</head>',
+    '<script>var PREFILL_DATA=' + JSON.stringify(prefill) + ';<\/script></head>'
+  );
+  return HtmlService.createHtmlOutput(formHtml)
+    .setTitle('Internal Order Form — Soundtrap')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 
@@ -340,7 +562,7 @@ function buildPrintPage_(quoteHtml, quoteNumber) {
     '</style></head><body>' +
     '<div id="print-bar">' +
       '<span>Soundtrap for Education &mdash; ' + escapeHtml_(quoteNumber) + '</span>' +
-      '<button id="print-btn" onclick="window.print()">Print this Quote</button>' +
+      '<button id="print-btn" onclick="window.print()">Print this Order</button>' +
     '</div>' +
     '<div id="quote-wrap">' + quoteHtml + '</div>' +
     '</body></html>';
@@ -352,14 +574,14 @@ function buildPrintPage_(quoteHtml, quoteNumber) {
 // ════════════════════════════════════════════════════════════
 
 /**
- * Loads quote-template.html from the Apps Script project, fills in all
+ * Loads Internal-order-template.html from the Apps Script project, fills in all
  * {{placeholders}}, applies server-side region/quote-type rendering, strips
  * the client-side preview JS, and injects a print bar.
  * Returns a complete HTML string ready to pass to HtmlService.createHtmlOutput().
  */
 function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quoteType, forEmail) {
   // Load template from Apps Script project — no Drive fetch needed
-  var html = HtmlService.createHtmlOutputFromFile('quote-template').getContent();
+  var html = HtmlService.createHtmlOutputFromFile('Internal-order-template').getContent();
 
   // Fill {{placeholders}} with real values
   var map = buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency);
@@ -374,6 +596,11 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
   // Show PD row(s) only when a PD session is on the quote
   var hasPd = !!((data.pd_session || '').trim());
   html = setDisplayOnDataAttr_(html, 'data-pd-row', 'active', hasPd);
+
+  // Show Maintenance row(s) only for District plan
+  var hasMaint = ((data.plan || '').trim().toLowerCase() === 'district') &&
+                 (parseInt(data.number_of_schools || 0) > 0);
+  html = setDisplayOnDataAttr_(html, 'data-maint-row', 'active', hasMaint);
 
   // Strip client-side preview JS — page is fully server-rendered
   html = stripPreviewScript_(html);
@@ -400,7 +627,7 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
     html = html.replace('<body>',
       '<body><div id="qt-print-bar">' +
       '<span>Soundtrap for Education &mdash; ' + escapeHtml_(quoteNumber) + '</span>' +
-      '<button id="qt-print-btn" onclick="window.print()">&#9113;&nbsp; Print this Quote</button>' +
+      '<button id="qt-print-btn" onclick="window.print()">&#9113;&nbsp; Print this Order</button>' +
       '</div>'
     );
   }
@@ -414,268 +641,18 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
 // ════════════════════════════════════════════════════════════
 
 /**
- * Sends a simple branded acknowledgment to the customer for District quotes.
- * The full quote is not sent — a rep will follow up directly.
- */
-function sendDistrictAcknowledgment_(data, quoteNumber) {
-  var firstName = (data.firstname || '').trim() || 'there';
-  var repName   = data.account_manager || 'your sales representative';
-  var plain = [
-    'Hi ' + firstName + ',',
-    '',
-    'Thank you for your interest in Soundtrap for Education.',
-    'Your sales representative will be in contact with you at their earliest convenience.',
-    '',
-    'Best regards,',
-    'Soundtrap for Education',
-  ].join('\n');
-
-  var html = [
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F5;padding:40px 0;">',
-    '<tr><td align="center">',
-    '<table width="560" cellpadding="0" cellspacing="0" style="background:#FDFDFE;border-radius:8px;overflow:hidden;">',
-    '<tr><td height="4" style="background:#6551FF;font-size:0;">&nbsp;</td></tr>',
-    '<tr><td style="background:#16161B;padding:28px 36px;">',
-    '<img src="https://matteo524.github.io/soundtrap-school-data/assets/SoundtrapForEducation_BarryWhite.png" alt="Soundtrap for Education" width="200" style="display:block;border:0;outline:none;text-decoration:none;height:auto;max-width:200px;">',
-    '</td></tr>',
-    '<tr><td style="padding:40px 36px;">',
-    '<p style="font-family:Helvetica Neue,Arial,sans-serif;font-size:22px;font-weight:700;color:#16161B;margin:0 0 16px;">Thank you, ' + escapeHtml_(firstName) + '!</p>',
-    '<p style="font-family:Helvetica Neue,Arial,sans-serif;font-size:15px;color:rgba(22,22,22,0.7);line-height:1.65;margin:0;">',
-    'We have received your district quote request. ' + escapeHtml_(repName) + ' will be in contact with you at their earliest convenience.',
-    '</p>',
-    '</td></tr>',
-    '<tr><td style="background:#16161B;padding:16px 36px;">',
-    '<span style="font-family:Helvetica Neue,Arial,sans-serif;font-size:11px;color:rgba(253,253,245,0.5);">',
-    'Questions? <a href="mailto:orders@soundtrap.com" style="color:#8F8FFF;">orders@soundtrap.com</a>',
-    '</span>',
-    '</td></tr>',
-    '</table></td></tr></table>',
-  ].join('');
-
-  GmailApp.sendEmail(
-    data.email,
-    'Your Soundtrap for Education Quote Request',
-    plain,
-    {
-      htmlBody: html,
-      name:     'Soundtrap for Education',
-      replyTo:  data.account_manager_email || 'orders@soundtrap.com',
-    }
-  );
-}
-
-/**
- * Sends a rep notification email when a District quote is submitted.
- * SMB districts (currently assigned to orders@soundtrap.com) are re-routed
- * to the regional POD rep for that state.
- * matteo@soundtrap.com is always CC'd.
- */
-function sendDistrictRepNotification_(data, quoteNumber, timestamp) {
-  // Determine recipient
-  var recipientEmail = data.account_manager_email || '';
-  var recipientName  = data.account_manager       || 'Sales Rep';
-
-  // SMB override: Scaled Accounts → regional POD rep for the state
-  if (recipientEmail === 'orders@soundtrap.com') {
-    var state  = (data.state || '').toLowerCase();
-    var _territoryCfg = loadConfig_().territory;
-    var pod    = _territoryCfg.statePod[state];
-    var podRep = pod ? _territoryCfg.podRep[pod] : null;
-    if (podRep) {
-      recipientEmail = podRep.email;
-      recipientName  = podRep.name;
-    }
-  }
-
-  var toEmail = (REP_NOTIFICATION_OVERRIDE && REP_NOTIFICATION_OVERRIDE.length > 0)
-    ? REP_NOTIFICATION_OVERRIDE
-    : recipientEmail;
-
-  if (!toEmail) return;
-
-  var quoteType    = normaliseQuoteType_(data.quote_type);
-  var customerName = ((data.firstname || '') + ' ' + (data.lastname || '')).trim();
-  var submitted    = Utilities.formatDate(timestamp || new Date(), Session.getScriptTimeZone(), 'MMM d, yyyy HH:mm');
-  var repFirstName = (recipientName || 'there').split(' ')[0];
-
-  // ── Plain-text fallback ───────────────────────────────────────────────
-  var plain = [
-    'Hi ' + repFirstName + ',',
-    '',
-    "You're receiving this email because a prospect in your territory has submitted a request for a District Quote.",
-    '',
-    'Please note: The customer has not received a quote yet.',
-    'For district quotes it is required that the Sales Rep creates a custom quote and contacts the customer to understand their needs and present available options.',
-    '',
-    'Below is a summary of the information submitted by the customer.',
-    '',
-    '── Customer ──────────────────────────────────────',
-    'Name         : ' + customerName,
-    'Email        : ' + (data.email     || ''),
-    'Role         : ' + (data.your_role || ''),
-    '',
-    '── School / District ─────────────────────────────',
-    'School Name  : ' + (data.school_name        || ''),
-    'District     : ' + (data.school_district    || ''),
-    'City         : ' + (data.city               || ''),
-    'State        : ' + (data.state              || ''),
-    'Country      : ' + (data.country            || ''),
-    'Enrollment   : ' + (data.district_enrollment || ''),
-    '',
-    '── Quote Details ─────────────────────────────────',
-    'Submitted    : ' + submitted,
-    'Quote Type   : ' + quoteType,
-    'Plan         : ' + (data.plan              || ''),
-    'Seats        : ' + (data.number_of_seats   || ''),
-    'Length       : ' + (data.subscription_length || '') + ' months',
-    'Schools      : ' + (data.number_of_schools || ''),
-  ];
-
-  if (data.subscription_end_date) plain.push('End Date     : ' + data.subscription_end_date);
-  if (data.current_plan)          plain.push('Current Plan : ' + data.current_plan);
-  if (data.current_seats)         plain.push('Current Seats: ' + data.current_seats);
-  if (data.use_case)              plain.push('Use Case     : ' + data.use_case);
-  if (data.purchase_date)         plain.push('Purchase Date: ' + formatDateStr_(data.purchase_date));
-  if (data.school_website)        plain.push('Website      : ' + data.school_website);
-  if (DEPLOYMENT_URL)             plain.push('', 'View Quote   : ' + DEPLOYMENT_URL + '?q=' + encodeURIComponent(quoteNumber));
-
-  plain.push('', 'Please reach out to the prospect and provide them with a quote at your earliest convenience.', '', 'Thanks,', 'Matteo');
-
-  // ── HTML email ────────────────────────────────────────────────────────
-  var s  = 'font-family:\'Helvetica Neue\',Helvetica,Arial,sans-serif;';
-  var h  = [];
-
-  // Wrapper
-  h.push('<table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F5;padding:40px 0;">');
-  h.push('<tr><td align="center">');
-  h.push('<table width="600" cellpadding="0" cellspacing="0" style="background:#FDFDFE;border-radius:8px;overflow:hidden;">');
-
-  // Header bar
-  h.push('<tr><td height="4" style="background:#6551FF;font-size:0;">&nbsp;</td></tr>');
-  h.push('<tr><td style="background:#16161B;padding:24px 36px;">');
-  h.push('<img src="https://matteo524.github.io/soundtrap-school-data/assets/SoundtrapForEducation_BarryWhite.png" alt="Soundtrap for Education" width="180" style="display:block;border:0;outline:none;text-decoration:none;height:auto;max-width:180px;margin:0 0 6px;">');
-  h.push('<span style="' + s + 'font-size:11px;color:#8F8FFF;letter-spacing:0.5px;">District Quote Request</span>');
-  h.push('</td></tr>');
-
-  // Body
-  h.push('<tr><td style="' + s + 'padding:36px 36px 28px;color:#16161B;">');
-
-  h.push('<p style="margin:0 0 20px;font-size:15px;line-height:1.5;">Hi ' + escapeHtml_(repFirstName) + ',</p>');
-  h.push('<p style="margin:0 0 16px;font-size:14px;line-height:1.65;color:rgba(22,22,22,0.85);">You\'re receiving this email because a prospect in your territory has submitted a request for a District Quote.</p>');
-
-  // Alert box
-  h.push('<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">');
-  h.push('<tr><td style="background:#FFF8E1;border-left:4px solid #F59E0B;border-radius:4px;padding:14px 16px;">');
-  h.push('<p style="' + s + 'margin:0 0 6px;font-size:13px;font-weight:700;color:#92400E;">The customer has not received a quote yet.</p>');
-  h.push('<p style="' + s + 'margin:0;font-size:13px;line-height:1.6;color:#78350F;">For district quotes it is required that the Sales Rep creates a custom quote and contacts the customer to understand their needs and present available options.</p>');
-  h.push('</td></tr></table>');
-
-  h.push('<p style="margin:0 0 24px;font-size:14px;line-height:1.65;color:rgba(22,22,22,0.85);">Below is a summary of the information submitted by the customer.</p>');
-
-  // Details table helper
-  function row(label, value) {
-    if (!value) return '';
-    return '<tr>' +
-      '<td style="' + s + 'padding:8px 12px;font-size:12px;font-weight:700;color:rgba(22,22,22,0.45);white-space:nowrap;vertical-align:top;width:140px;">' + label + '</td>' +
-      '<td style="' + s + 'padding:8px 12px;font-size:13px;color:#16161B;vertical-align:top;">' + escapeHtml_(String(value)) + '</td>' +
-      '</tr>';
-  }
-  function sectionHeader(title) {
-    return '<tr><td colspan="2" style="' + s + 'padding:14px 12px 6px;font-size:10px;font-weight:700;color:#6551FF;letter-spacing:1px;text-transform:uppercase;">' + title + '</td></tr>';
-  }
-
-  h.push('<table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F5;border-radius:6px;margin:0 0 24px;">');
-
-  h.push(sectionHeader('Customer'));
-  h.push(row('Name',  customerName));
-  h.push(row('Email', data.email));
-  h.push(row('Role',  data.your_role));
-
-  h.push(sectionHeader('School / District'));
-  h.push(row('School Name', data.school_name));
-  h.push(row('District',    data.school_district));
-  h.push(row('City',        data.city));
-  h.push(row('State',       data.state));
-  h.push(row('Country',     data.country));
-  h.push(row('Enrollment',  data.district_enrollment));
-
-  h.push(sectionHeader('Quote Details'));
-  h.push(row('Submitted',    submitted));
-  h.push(row('Quote Type',   quoteType));
-  h.push(row('Plan',         data.plan));
-  h.push(row('Seats',        data.number_of_seats));
-  h.push(row('Length',       data.subscription_length ? data.subscription_length + ' months' : ''));
-  h.push(row('Schools',      data.number_of_schools));
-  if (data.subscription_end_date) h.push(row('End Date',     data.subscription_end_date));
-  if (data.current_plan)          h.push(row('Current Plan', data.current_plan));
-  if (data.current_seats)         h.push(row('Current Seats',data.current_seats));
-  if (data.use_case)              h.push(row('Use Case',     data.use_case));
-  if (data.purchase_date)         h.push(row('Purchase Date',formatDateStr_(data.purchase_date)));
-  if (data.school_website)        h.push(row('Website',      data.school_website));
-
-  h.push('</table>');
-
-  // Action buttons
-  h.push('<table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">');
-  h.push('<tr>');
-
-  var prefillUrl = buildInternalFormPrefillUrl_(data);
-  if (prefillUrl) {
-    h.push('<td style="padding-right:12px;">');
-    h.push('<a href="' + prefillUrl + '" style="' + s + 'display:inline-block;background:#6551FF;color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:4px;text-decoration:none;letter-spacing:0.4px;">Open Internal Quote Generator ↗</a>');
-    h.push('</td>');
-  }
-
-  var replyUrl = 'mailto:' + (data.email || '') + '?subject=' + encodeURIComponent('Re: Your Soundtrap for Education District Quote Request');
-  h.push('<td>');
-  h.push('<a href="' + replyUrl + '" style="' + s + 'display:inline-block;background:#FDFDFE;color:#6551FF;font-size:13px;font-weight:700;padding:10px 20px;border-radius:4px;text-decoration:none;letter-spacing:0.4px;border:2px solid #6551FF;">Reply to Customer ✉</a>');
-  h.push('</td>');
-
-  h.push('</tr></table>');
-
-
-  h.push('<p style="margin:0 0 16px;font-size:14px;line-height:1.65;color:rgba(22,22,22,0.85);">Please reach out to the prospect and provide them with a quote at your earliest convenience.</p>');
-  h.push('<p style="margin:0 0 4px;font-size:14px;color:#16161B;">Thanks,</p>');
-  h.push('<p style="margin:0 0 0;font-size:14px;font-weight:700;color:#16161B;">Matteo</p>');
-  h.push('</td></tr>');
-
-  // Footer
-  h.push('<tr><td style="background:#16161B;padding:16px 36px;">');
-  h.push('<span style="' + s + 'font-size:11px;color:rgba(253,253,245,0.4);">Questions? <a href="mailto:orders@soundtrap.com" style="color:#8F8FFF;">orders@soundtrap.com</a></span>');
-  h.push('</td></tr>');
-
-  h.push('</table></td></tr></table>');
-
-  GmailApp.sendEmail(
-    toEmail,
-    'District Quote Request — ' + (data.school_district || data.school_name || ''),
-    plain.join('\n'),
-    { name: 'Soundtrap for Education', replyTo: data.email || '', cc: 'matteo@soundtrap.com', htmlBody: h.join('') }
-  );
-}
-
-/**
  * Orchestrator: build the filled-in quote email and send it.
  */
 function generateAndSendQuote_(data, quoteNumber, timestamp) {
-  var isDistrict = (data.plan || '').trim().toLowerCase() === 'district';
-
-  if (isDistrict) {
-    // District: send acknowledgment to customer + detailed notification to rep
-    sendDistrictAcknowledgment_(data, quoteNumber);
-    sendDistrictRepNotification_(data, quoteNumber, timestamp);
-  } else {
-    // School / Classroom: send full quote email to customer.
-    // Uses buildFullQuoteEmail_() (programmatic, inline-styled, Gmail-safe) rather than
-    // the template — the template's <style>-block CSS doesn't survive Gmail's renderer.
-    // The template is still used for the web/print view via doGet (?q=...).
-    var region    = regionForCountry_(data.country || '');
-    var currency  = currencyForCountry_(data.country || '');
-    var quoteType = normaliseQuoteType_(data.quote_type);
-    var printUrl  = DEPLOYMENT_URL ? DEPLOYMENT_URL + '?q=' + encodeURIComponent(quoteNumber) : '';
-    var emailHtml = buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, quoteType, printUrl);
-    sendCustomerEmail_(data, quoteNumber, emailHtml);
-  }
+  // Uses buildFullQuoteEmail_() (programmatic, inline-styled, Gmail-safe) rather than
+  // the template — the template's <style>-block CSS doesn't survive Gmail's renderer.
+  // The template is still used for the web/print view via doGet (?q=...).
+  var region    = regionForCountry_(data.country || '');
+  var currency  = currencyForCountry_(data.country || '');
+  var quoteType = normaliseQuoteType_(data.quote_type);
+  var printUrl  = DEPLOYMENT_URL ? DEPLOYMENT_URL + '?q=' + encodeURIComponent(quoteNumber) : '';
+  var emailHtml = buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, quoteType, printUrl);
+  sendCustomerEmail_(data, quoteNumber, emailHtml);
 }
 
 /**
@@ -683,17 +660,79 @@ function generateAndSendQuote_(data, quoteNumber, timestamp) {
  */
 function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
   var totalSeatsAfterAddon = (parseInt(data.current_seats || 0) + parseInt(data.additional_seats || 0)) || '';
+
+  // Standard-price line items for the template
   var subCostObj  = calcSubscriptionCost_(data, currency);
   var pdSession   = (data.pd_session || '').trim();
   var pdCost      = calcPdCost_(pdSession);
-  var grandTotal  = pdCost > 0
-                  ? fmtCurrency_((subCostObj.value || 0) + pdCost, 'USD')
-                  : subCostObj.formatted;
+  // Display name with "PD " stripped (e.g. "In Person PD for 3 hours" -> "In Person for 3 hours")
+  var pdSessionDisplay = pdSession.replace(/\bPD\s+/g, '');
+
+  // Maintenance fee — District plan only
+  var schoolsNum  = parseInt(data.number_of_schools || 0) || 0;
+  var monthsNum   = parseInt(data.subscription_length || 12) || 12;
+  var planName    = (data.plan || '').trim();
+  var maintCost   = 0;
+  if (planName.toLowerCase() === 'district' && schoolsNum > 0) {
+    try {
+      var pricing = loadConfig_().pricing;
+      var perSchool = pricing[currency] && pricing[currency].District && pricing[currency].District.m;
+      if (perSchool) {
+        maintCost = Math.round(perSchool * schoolsNum * (monthsNum / 12));
+      }
+    } catch (_e) { /* fall through */ }
+  }
+
+  // Discount-adjusted (net) prices — same logic as buildFullQuoteEmail_
+  var subDiscType   = data.sub_discount_type   || '%';
+  var subDiscVal    = parseFloat(data.sub_discount_value)   || 0;
+  var maintDiscType = data.maint_discount_type || '%';
+  var maintDiscVal  = parseFloat(data.maint_discount_value) || 0;
+  var pdDiscType    = data.pd_discount_type    || '%';
+  var pdDiscVal     = parseFloat(data.pd_discount_value)    || 0;
+  var subNet   = applyDiscount_(subCostObj.value || 0, subDiscType, subDiscVal);
+  var maintNet = applyDiscount_(maintCost, maintDiscType, maintDiscVal);
+  var pdNet    = applyDiscount_(pdCost,    pdDiscType,    pdDiscVal);
+  var totalStd = (subCostObj.value || 0) + maintCost + pdCost;
+  var totalNet = subNet + maintNet + pdNet;
+  var hasDiscount = (subDiscVal > 0) || (maintDiscVal > 0) || (pdDiscVal > 0);
+
+  // GrandTotal in the template's Total row: use net total (matches what the customer pays)
+  var grandTotalValue = totalNet;
+  var grandTotal      = (pdCost > 0 || maintCost > 0 || hasDiscount)
+                      ? fmtCurrency_(grandTotalValue, currency)
+                      : subCostObj.formatted;
+
+  // Build the discount block HTML (empty string when no discounts applied)
+  var discountBlockHtml = '';
+  if (hasDiscount) {
+    discountBlockHtml = buildDiscountBlockForTemplate_({
+      currency:        currency,
+      subStd:          subCostObj.value || 0,
+      subNet:          subNet,
+      subDiscType:     subDiscType,
+      subDiscVal:      subDiscVal,
+      maintStd:        maintCost,
+      maintNet:        maintNet,
+      maintDiscType:   maintDiscType,
+      maintDiscVal:    maintDiscVal,
+      pdStd:           pdCost,
+      pdNet:           pdNet,
+      pdDiscType:      pdDiscType,
+      pdDiscVal:       pdDiscVal,
+      pdSessionDisplay:pdSessionDisplay,
+      schoolsNum:      schoolsNum,
+      totalStd:        totalStd,
+      totalNet:        totalNet,
+    });
+  }
 
   return {
     '{{QuoteNumber}}':           quoteNumber,
     '{{SubmissionDate}}':        formatDate_(timestamp),
-    '{{ValidUntil}}':            formatDate_(addDays_(timestamp, loadConfig_().quoteValidDays)),
+    // Orders don't expire — kept for template compatibility but blank.
+    // TODO: drop the {{ValidUntil}} row from Internal-order-template.html.
+    '{{ValidUntil}}':            '',
     '{{Currency}}':              currency,
     '{{SalesRepName}}':          data.account_manager        || '',
     '{{SalesRepEmail}}':         data.account_manager_email  || '',
@@ -707,6 +746,7 @@ function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
     '{{SoundtrapAccountID}}':    data.soundtrap_account_id   || 'N/A',
     '{{SoundtrapPlan}}':         data.plan                   || '',
     '{{NumberOfSeats}}':         data.number_of_seats        || '',
+    '{{NumberOfSchools}}':       data.number_of_schools      || '',
     '{{SubscriptionLength}}':    formatMonths_(parseInt(data.subscription_length || 12)),
     '{{SubscriptionCost}}':      subCostObj.formatted,
     '{{TaxNote}}':               loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'],
@@ -716,10 +756,85 @@ function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
     '{{CurrentSeats}}':          data.current_seats          || '',
     '{{AdditionalSeats}}':       data.additional_seats       || '',
     '{{TotalSeatsAfterAddon}}':  totalSeatsAfterAddon        || '',
-    '{{PdSession}}':             pdSession,
-    '{{PdCost}}':                pdCost > 0 ? '+ ' + fmtCurrency_(pdCost, 'USD') : '',
+    '{{PdSession}}':             pdSessionDisplay,
+    '{{PdCost}}':                pdCost > 0 ? '+ ' + fmtCurrency_(pdCost, currency) : '',
+    '{{MaintenanceCost}}':       maintCost > 0 ? '+ ' + fmtCurrency_(maintCost, currency) : '',
     '{{GrandTotal}}':            grandTotal,
+    '{{DiscountBlock}}':         discountBlockHtml,
   };
+}
+
+/**
+ * Build the HTML for the "Pricing & Discounts" block shown in the
+ * Salesforce-link template view. Mirrors the email's discount table but
+ * styled to fit the template's design.
+ * @param {object} d — pre-computed discount info (see buildPlaceholderMap_)
+ * @return {string} HTML
+ */
+function buildDiscountBlockForTemplate_(d) {
+  function row(label, std, net, type, val) {
+    if (std <= 0) return '';
+    var hasD = (parseFloat(val) || 0) > 0;
+    var disc = std - net;
+    var discCell = hasD
+      ? '<td style="padding:10px 12px;text-align:right;color:#6551FF;font-size:13px;">−' + fmtCurrency_(disc, d.currency) + ' (−' + Math.round((disc / std) * 100) + '%)</td>'
+      : '<td style="padding:10px 12px;text-align:right;color:rgba(22,22,22,0.4);">—</td>';
+    var stdCell = hasD
+      ? '<td style="padding:10px 12px;text-align:right;color:#999;text-decoration:line-through;font-size:13px;">' + fmtCurrency_(std, d.currency) + '</td>'
+      : '<td style="padding:10px 12px;text-align:right;font-size:13px;">' + fmtCurrency_(std, d.currency) + '</td>';
+    return '<tr>' +
+      '<td style="padding:10px 12px;font-size:13px;color:#16161B;">' + label + '</td>' +
+      stdCell +
+      discCell +
+      '<td style="padding:10px 12px;text-align:right;font-weight:700;color:#16161B;font-size:13px;">' + fmtCurrency_(net, d.currency) + '</td>' +
+      '</tr>';
+  }
+
+  var rows = [];
+  rows.push(row('Subscription Fee', d.subStd, d.subNet, d.subDiscType, d.subDiscVal));
+  if (d.maintStd > 0) {
+    var maintLabel = 'Maintenance Fee' + (d.schoolsNum > 0
+      ? '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + d.schoolsNum + ' schools</span>'
+      : '');
+    rows.push(row(maintLabel, d.maintStd, d.maintNet, d.maintDiscType, d.maintDiscVal));
+  }
+  if (d.pdStd > 0) {
+    var pdLabel = 'Professional Development' +
+      '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(d.pdSessionDisplay) + '</span>';
+    rows.push(row(pdLabel, d.pdStd, d.pdNet, d.pdDiscType, d.pdDiscVal));
+  }
+
+  var totalDiscAmt = d.totalStd - d.totalNet;
+  var totalDiscStr = fmtDiscountBoth_(d.totalStd, totalDiscAmt, d.currency);
+  var border = 'border-top:2px solid #E5E5EA;';
+  var totalRow =
+    '<tr>' +
+      '<td style="padding:10px 12px;font-size:12px;font-weight:700;color:#555;' + border + '">Total</td>' +
+      '<td style="padding:10px 12px;text-align:right;font-size:13px;color:#999;text-decoration:line-through;' + border + '">' + fmtCurrency_(d.totalStd, d.currency) + '</td>' +
+      '<td style="padding:10px 12px;text-align:right;font-size:13px;color:#6551FF;' + border + '">' + escapeHtml_(totalDiscStr) + '</td>' +
+      '<td style="padding:10px 12px;text-align:right;font-size:14px;font-weight:800;color:#16161B;' + border + '">' + fmtCurrency_(d.totalNet, d.currency) + '</td>' +
+    '</tr>';
+
+  return [
+    '<div style="margin-top:32px;">',
+    '<div class="qt-section-title" style="font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:#6551FF;font-weight:700;margin-bottom:16px;">Pricing &amp; Discounts</div>',
+    '<table style="width:100%;border-collapse:collapse;background:#FDFDFE;border-radius:8px;overflow:hidden;">',
+    '<thead style="background:#271B73;color:#FDFDFE;">',
+    '<tr>',
+    '<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;width:40%;">Line Item</th>',
+    '<th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">List Price</th>',
+    '<th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Discount</th>',
+    '<th style="padding:10px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">Net Price</th>',
+    '</tr></thead>',
+    '<tbody>',
+    rows.join(''),
+    '</tbody>',
+    '<tfoot>',
+    totalRow,
+    '</tfoot>',
+    '</table>',
+    '</div>',
+  ].join('');
 }
 
 /**
@@ -966,13 +1081,13 @@ function calcPdCost_(pdSession) {
 function sendCustomerEmail_(data, quoteNumber, emailHtml) {
   var customerName = ((data.firstname || '') + ' ' + (data.lastname || '')).trim() || 'there';
   var replyTo      = data.account_manager_email || 'orders@soundtrap.com';
-  var subject      = 'Your Soundtrap for Education Price Quote \u2014 ' + quoteNumber;
+  var subject      = 'Your Soundtrap for Education Order Confirmation \u2014 ' + quoteNumber;
   var region       = regionForCountry_(data.country || '');
 
   GmailApp.sendEmail(
     data.email,
     subject,
-    'Hi ' + customerName + ', please view this email in an HTML-capable client to see your Soundtrap price quote (' + quoteNumber + ').',
+    'Hi ' + customerName + ', please view this email in an HTML-capable client to see your Soundtrap order confirmation (' + quoteNumber + ').',
     {
       htmlBody: buildEmailIntro_(customerName, region) + emailHtml,
       name:     'Soundtrap for Education',
@@ -982,28 +1097,23 @@ function sendCustomerEmail_(data, quoteNumber, emailHtml) {
 }
 
 /**
- * Builds the plain intro block that appears above the quote in the customer email.
- * Includes next-steps instructions and a US-only W9 link.
+ * Builds the plain intro block that appears above the order summary in the
+ * customer email. Includes a US-only W9 link.
  */
 function buildEmailIntro_(customerName, region) {
   var h = [];
   var s = 'font-family:\'Helvetica Neue\',Helvetica,Arial,sans-serif;';
   h.push('<div style="' + s + 'max-width:600px;margin:0 auto;padding:32px 24px 24px;color:#333;">');
   h.push('<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hello ' + escapeHtml_(customerName) + ',</p>');
-  h.push('<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Thank you for requesting a price quote for a Soundtrap for Education subscription.</p>');
-  h.push('<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">When you are ready to submit your order, please follow these steps:</p>');
-  h.push('<ul style="margin:0 0 16px;padding-left:22px;font-size:14px;line-height:1.9;">');
-  h.push('<li>Download the price quote attached to this email.</li>');
-  h.push('<li><a href="https://soundtrap.me/order_form" style="color:#6551FF;">Go to the Order Submission Page</a> and fill out all the mandatory fields.</li>');
-  h.push('<li>Attach the Price Quote when you submit your order.</li>');
-  h.push('</ul>');
+  h.push('<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Thank you for your order. This email confirms the Soundtrap for Education order we have received on your behalf. A summary is shown below.</p>');
+  h.push('<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Your order is now being processed. Your sales representative will be in touch to finalise the details and arrange invoicing.</p>');
   if (region === 'US') {
     h.push('<p style="margin:0 0 16px;font-size:14px;"><a href="https://support.soundtrap.com/hc/en-us/articles/4402504684306-Where-can-I-find-the-W9-form" style="color:#6551FF;">You can access the Soundtrap W9, here.</a></p>');
   }
-  h.push('<p style="margin:0 0 24px;font-size:14px;line-height:1.6;">If you have any questions, feel free to reach out to the sales representative responsible for your country — you have their contact details in the quote below.</p>');
+  h.push('<p style="margin:0 0 24px;font-size:14px;line-height:1.6;">If you have any questions, feel free to reach out to the sales representative responsible for your country \u2014 you have their contact details in the order confirmation below.</p>');
   h.push('<p style="margin:0 0 2px;font-size:14px;">Best regards,</p>');
   h.push('<p style="margin:0 0 24px;font-size:14px;">The Soundtrap Team</p>');
-  h.push('<p style="margin:0 0 32px;font-size:15px;font-weight:700;color:#6551FF;">— Soundtrap® for Education</p>');
+  h.push('<p style="margin:0 0 32px;font-size:15px;font-weight:700;color:#6551FF;">\u2014 Soundtrap\u00ae for Education</p>');
   h.push('</div>');
   h.push('<hr style="border:none;border-top:2px solid #E5E5EA;margin:0 0 32px;">');
   return h.join('');
@@ -1023,15 +1133,45 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
   var plan         = data.plan             || '\u2014';
   var seats        = data.number_of_seats  || '\u2014';
   var months       = formatMonths_(parseInt(data.subscription_length || 12));
-  var costObj      = calcSubscriptionCost_(data, currency);
-  var cost         = costObj.formatted;
+  var monthsNum    = parseInt(data.subscription_length || 12);
+  var schoolsNum   = parseInt(data.number_of_schools || 0);
+  var seatsNum     = parseInt(data.number_of_seats   || 0);
   var pdSession    = (data.pd_session || '').trim();
   var pdCost       = calcPdCost_(pdSession);
-  var grandTotal   = (pdCost > 0 && costObj.value > 0)
-                   ? fmtCurrency_(costObj.value + pdCost, 'USD')
-                   : cost;
+
+  // \u2500\u2500 Compute standard line-item fees \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var subFeeStd   = 0;
+  var maintFeeStd = 0;
+  var quoteTypeN  = normaliseQuoteType_(data.quote_type);
+  if (quoteTypeN === 'NEW' || quoteTypeN === 'RENEWAL') {
+    var annualPricing = calcPrice_(seatsNum, data.plan || '', schoolsNum, currency);
+    if (annualPricing) {
+      subFeeStd   = Math.round(calcMultiYearPrice_(annualPricing.seats, monthsNum));
+      maintFeeStd = Math.round(annualPricing.maintenance * (monthsNum / 12));
+    }
+  } else {
+    var costObj2 = calcSubscriptionCost_(data, currency);
+    subFeeStd = costObj2 ? costObj2.value : 0;
+  }
+  var totalStd = subFeeStd + maintFeeStd + pdCost;
+
+  // \u2500\u2500 Apply discounts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var subDiscType  = data.sub_discount_type  || '%';
+  var subDiscVal   = data.sub_discount_value  || '0';
+  var maintDiscType = data.maint_discount_type || '%';
+  var maintDiscVal = data.maint_discount_value || '0';
+  var pdDiscType   = data.pd_discount_type   || '%';
+  var pdDiscVal    = data.pd_discount_value   || '0';
+
+  var subFeeNet   = applyDiscount_(subFeeStd,   subDiscType,  subDiscVal);
+  var maintFeeNet = applyDiscount_(maintFeeStd, maintDiscType, maintDiscVal);
+  var pdFeeNet    = applyDiscount_(pdCost,      pdDiscType,   pdDiscVal);
+  var totalNet    = subFeeNet + maintFeeNet + pdFeeNet;
+
+  var cost      = fmtCurrency_(totalNet || totalStd, totalNet !== totalStd ? 'USD' : currency);
+  var grandTotal = cost;
   var submDate     = formatDate_(timestamp);
-  var validUntil   = formatDate_(addDays_(timestamp, loadConfig_().quoteValidDays));
+  var validUntil   = '';  // Orders don't expire — see TODO in buildPlaceholderMap_().
   var taxNote      = loadConfig_().taxNotes[region] || loadConfig_().taxNotes['ROW'];
   var endDate      = formatDateStr_(data.subscription_end_date);
   var renewalEnd   = calcRenewalEndDate_(data)  || '\u2014';
@@ -1061,7 +1201,7 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
   h.push('<td style="vertical-align:bottom;">');
   h.push('<div style="font-family:\'Arial Black\',\'Arial Bold\',Arial,sans-serif;font-size:26px;font-weight:900;color:#FDFDFE;margin-bottom:4px;">Soundtrap</div>');
   h.push('<div style="font-size:11px;color:rgba(253,253,245,0.55);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">for Education</div>');
-  h.push('<div style="font-size:18px;font-weight:700;color:#FDFDFE;letter-spacing:1px;">PRICE QUOTE</div>');
+  h.push('<div style="font-size:18px;font-weight:700;color:#FDFDFE;letter-spacing:1px;">ORDER CONFIRMATION</div>');
   h.push('</td>');
   h.push('<td style="text-align:right;vertical-align:top;font-size:11px;line-height:1.7;color:rgba(253,253,245,0.65);">');
   if (printUrl) {
@@ -1081,11 +1221,11 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
       '<div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(253,253,245,0.55);margin-bottom:4px;">' + label + '</div>' +
       '<div style="font-size:12px;color:#FDFDFE;">' + value + '</div></td>';
   }
-  h.push(metaCell('Quote Number', '<span style="font-family:monospace;">' + escapeHtml_(quoteNumber) + '</span>'));
+  h.push(metaCell('Order Number', '<span style="font-family:monospace;">' + escapeHtml_(quoteNumber) + '</span>'));
   h.push(metaCell('Date', escapeHtml_(submDate)));
   h.push(metaCell('Valid Until', escapeHtml_(validUntil)));
   h.push('<td style="vertical-align:top;text-align:right;">');
-  h.push('<div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(253,253,245,0.55);margin-bottom:6px;">Quote Type</div>');
+  h.push('<div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(253,253,245,0.55);margin-bottom:6px;">Order Type</div>');
   h.push('<span style="display:inline-block;background-color:' + badgeBg + ';color:#FDFDFE;font-size:10px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:4px;">' + escapeHtml_(quoteType) + '</span>');
   h.push('</td>');
   h.push('</tr></table></td></tr>');
@@ -1135,7 +1275,13 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
     ));
   }
 
-  h.push(buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, endDate, currentPlan, currentSeats, addlSeats, currency, pdSession, pdCost, grandTotal));
+  var discountInfo = {
+    subStd: subFeeStd, subNet: subFeeNet, subType: subDiscType, subVal: subDiscVal,
+    maintStd: maintFeeStd, maintNet: maintFeeNet, maintType: maintDiscType, maintVal: maintDiscVal,
+    pdStd: pdCost, pdNet: pdFeeNet, pdType: pdDiscType, pdVal: pdDiscVal,
+    totalStd: totalStd, totalNet: totalNet,
+  };
+  h.push(buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, endDate, currentPlan, currentSeats, addlSeats, currency, pdSession, pdCost, grandTotal, discountInfo));
   if (quoteType === 'NEW' && data.purchase_date) {
     h.push('<p style="font-size:12px;color:#555;margin:10px 0 0;">Planned purchase date: <strong>' + escapeHtml_(formatDateStr_(data.purchase_date)) + '</strong></p>');
   }
@@ -1175,9 +1321,9 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
   h.push('<tr><td style="padding:20px 36px;">');
   h.push('<div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#16161B;margin-bottom:12px;">Important Ordering Information</div>');
   h.push('<ul style="margin:0;padding-left:20px;font-size:12px;color:#555;line-height:1.9;">');
-  h.push('<li>This document is a <strong>price quote, not an invoice.</strong></li>');
+  h.push('<li>This document is an <strong>order confirmation, not an invoice.</strong></li>');
   h.push('<li><strong>Terms of Use:</strong> <a href="https://www.soundtrap.com/legal/terms/edu/us" style="color:#6551FF;">soundtrap.com/legal/terms/edu/us</a></li>');
-  h.push('<li>For questions, contact the sales representative listed on this quote or reach out to <a href="mailto:orders@soundtrap.com" style="color:#6551FF;">orders@soundtrap.com</a>.</li>');
+  h.push('<li>For questions, contact the sales representative listed on this order or reach out to <a href="mailto:orders@soundtrap.com" style="color:#6551FF;">orders@soundtrap.com</a>.</li>');
   h.push('</ul></td></tr>');
 
   // ── Footer ───────────────────────────────────────────────────
@@ -1196,43 +1342,6 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
 }
 
 /** Change-cards row — shows before → after for RENEWAL / ADD-ON / UPGRADE. */
-/**
- * Builds the pre-fill URL for the internal quote generator.
- * Returns '' if INTERNAL_FORM_URL is not set.
- */
-function buildInternalFormPrefillUrl_(data) {
-  if (!INTERNAL_FORM_URL) return '';
-  var params = {
-    firstname:    data.firstname             || '',
-    lastname:     data.lastname              || '',
-    email:        data.email                 || '',
-    role:         data.your_role            || '',
-    country:      data.country               || '',
-    state:        data.state                 || '',
-    city:         data.city                  || '',
-    district:     data.school_district      || '',
-    school:       data.school_name           || '',
-    quote_type:   data.quote_type            || '',
-    plan:         data.plan                  || '',
-    seats:        data.number_of_seats       || '',
-    schools:      data.number_of_schools     || '',
-    months:       data.subscription_length   || '',
-    current_plan: data.current_plan          || '',
-    current_seats:data.current_seats         || '',
-    end_date:     data.subscription_end_date || '',
-    use_case:     data.use_case              || '',
-    website:      data.school_website        || '',
-    purchase_date:data.purchase_date         || '',
-    account_id:   data.soundtrap_account_id  || '',
-    pd_session:   data.pd_session            || ''
-  };
-  var qs = Object.keys(params)
-    .filter(function(k) { return params[k]; })
-    .map(function(k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
-    .join('&');
-  return qs ? INTERNAL_FORM_URL + '?' + qs : INTERNAL_FORM_URL;
-}
-
 function buildChangeCards_(leftLabel, leftValue, rightLabel, rightValue) {
   var card = 'cellpadding="0" cellspacing="0" border="0" style="width:100%;margin-bottom:16px;"';
   return '<table ' + card + '><tr>' +
@@ -1248,102 +1357,154 @@ function buildChangeCards_(leftLabel, leftValue, rightLabel, rightValue) {
     '</tr></table>';
 }
 
-/** Subscription details table — columns vary by quote type. */
-function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, endDate, currentPlan, currentSeats, addlSeats, currency, pdSession, pdCost, grandTotal) {
+/**
+ * Subscription details table with standard / discount / net columns.
+ * discountInfo = { subStd, subNet, subType, subVal, maintStd, maintNet, ...,
+ *                  pdStd, pdNet, pdType, pdVal, totalStd, totalNet }
+ */
+function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, endDate, currentPlan, currentSeats, addlSeats, currency, pdSession, pdCost, grandTotal, discountInfo) {
   pdSession  = pdSession  || '';
   pdCost     = pdCost     || 0;
   grandTotal = grandTotal || cost;
+  var di = discountInfo || {};
+  var hasDiscount = !!(
+    (parseFloat(di.subVal)   || 0) > 0 ||
+    (parseFloat(di.maintVal) || 0) > 0 ||
+    (parseFloat(di.pdVal)    || 0) > 0
+  );
+
+  // Shared cell styles
   var thStyle = 'bgcolor="#16161B" style="background-color:#16161B;color:#FDFDFE;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:10px 12px;text-align:left;"';
   var thR     = 'bgcolor="#16161B" style="background-color:#16161B;color:#FDFDFE;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:10px 12px;text-align:right;"';
   var tdStyle = 'style="font-size:13px;color:#16161B;padding:10px 12px;border-bottom:1px solid #F0F0F0;"';
   var tdR     = 'style="font-size:13px;color:#16161B;padding:10px 12px;border-bottom:1px solid #F0F0F0;text-align:right;"';
+  var tdStrike= 'style="font-size:12px;color:#999;padding:10px 12px;border-bottom:1px solid #F0F0F0;text-align:right;text-decoration:line-through;"';
+  var tdDisc  = 'style="font-size:12px;color:#6551FF;padding:10px 12px;border-bottom:1px solid #F0F0F0;text-align:right;"';
+  var tdNet   = 'style="font-size:13px;font-weight:700;color:#16161B;padding:10px 12px;border-bottom:1px solid #F0F0F0;text-align:right;"';
   var tfL     = 'style="font-size:12px;color:#555;padding:10px 12px;"';
   var tfR     = 'style="font-size:14px;font-weight:700;color:#16161B;padding:10px 12px;text-align:right;"';
-  var amtHdr  = '<th ' + thR + '>Amount (' + escapeHtml_(currency) + ')</th>';
+
+  // Build discount pricing rows: one row per line item (sub fee, maint, PD)
+  // Shown below the main header/detail rows. Discount cell shows BOTH the
+  // monetary saving AND the percentage in parens, e.g. "−$224.70 (−10%)".
+  // If `labelIsHtml` is true, the label is inserted verbatim (caller must escape).
+  function discRow(label, std, disc, net, discType, discVal, labelIsHtml) {
+    var hasDisc = (parseFloat(discVal) || 0) > 0;
+    var discStr = hasDisc ? fmtDiscountBoth_(std, disc, currency) : '—';
+    var stdCell = hasDisc
+      ? '<td ' + tdStrike + '>' + fmtCurrency_(std, currency) + '</td>'
+      : '<td ' + tdR      + '>' + fmtCurrency_(std, currency) + '</td>';
+    var labelCell = labelIsHtml ? label : escapeHtml_(label);
+    return '<tr>' +
+      '<td ' + tdStyle + '>' + labelCell + '</td>' +
+      stdCell +
+      '<td ' + tdDisc  + '>' + escapeHtml_(discStr) + '</td>' +
+      '<td ' + tdNet   + '>' + fmtCurrency_(net, currency) + '</td>' +
+      '</tr>';
+  }
 
   var h = [];
   h.push('<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">');
 
+  // ── Header section (plan / seats / dates) ─────────────────────
+  var thD = 'bgcolor="#271B73" style="background-color:#271B73;color:#FDFDFE;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:7px 12px;"';
+
   if (quoteType === 'NEW' || quoteType === 'RENEWAL') {
-    var span = quoteType === 'RENEWAL' ? '5' : '4';
-    var descMain = quoteType === 'RENEWAL' ? 'Soundtrap for Education &mdash; Renewal' : 'Soundtrap for Education';
-    var descSub  = quoteType === 'RENEWAL' ? 'Renewal of existing subscription' : 'New subscription';
     h.push('<thead><tr>');
-    h.push('<th ' + thStyle + '>Description</th>');
     h.push('<th ' + thStyle + '>Plan</th>');
     h.push('<th ' + thStyle + '>Seats</th>');
     if (quoteType === 'RENEWAL') h.push('<th ' + thStyle + '>End Date</th>');
     h.push('<th ' + thStyle + '>Sub. Length</th>');
-    h.push(amtHdr);
     h.push('</tr></thead>');
     h.push('<tbody><tr>');
-    h.push('<td ' + tdStyle + '>' + descMain + '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + descSub + '</span></td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(plan) + '</td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(String(seats)) + '</td>');
     if (quoteType === 'RENEWAL') h.push('<td ' + tdStyle + '>' + escapeHtml_(endDate) + '</td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(months) + '</td>');
-    h.push('<td ' + tdR + '>' + escapeHtml_(cost) + '</td>');
     h.push('</tr>');
-    if (pdSession && pdCost > 0) {
-      h.push('<tr><td colspan="' + span + '" ' + tdStyle + '>Professional Development<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
-      h.push('<td ' + tdR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
-    }
-    h.push('</tbody>');
-    h.push('<tfoot><tr><td colspan="' + span + '" ' + tfL + '>Total</td><td ' + tfR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
 
   } else if (quoteType === 'ADD-ON') {
     h.push('<thead><tr>');
-    h.push('<th ' + thStyle + '>Description</th>');
     h.push('<th ' + thStyle + '>Current Seats</th>');
     h.push('<th ' + thStyle + '>+Additional</th>');
     h.push('<th ' + thStyle + '>End Date</th>');
-    h.push(amtHdr);
     h.push('</tr></thead>');
     h.push('<tbody><tr>');
-    h.push('<td ' + tdStyle + '>Soundtrap for Education &mdash; Seat Add-On<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">Added to your existing subscription</span></td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(String(currentSeats)) + '</td>');
     h.push('<td ' + tdStyle + '><strong>+' + escapeHtml_(String(addlSeats)) + '</strong></td>');
     h.push('<td ' + tdStyle + '>' + escapeHtml_(endDate) + '</td>');
-    h.push('<td ' + tdR + '>' + escapeHtml_(cost) + '</td>');
     h.push('</tr>');
-    if (pdSession && pdCost > 0) {
-      h.push('<tr><td colspan="4" ' + tdStyle + '>Professional Development<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
-      h.push('<td ' + tdR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
-    }
-    h.push('</tbody>');
-    h.push('<tfoot><tr><td colspan="4" ' + tfL + '>Total</td><td ' + tfR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
 
   } else if (quoteType === 'UPGRADE') {
-    var thU = 'bgcolor="#16161B" style="background-color:#16161B;color:#FDFDFE;font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;padding:8px 10px;text-align:left;"';
-    var thUR = 'bgcolor="#16161B" style="background-color:#16161B;color:#FDFDFE;font-size:9px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;padding:8px 10px;text-align:right;"';
-    var tdU  = 'style="font-size:11px;color:#16161B;padding:8px 10px;border-bottom:1px solid #F0F0F0;"';
-    var tdUR = 'style="font-size:11px;color:#16161B;padding:8px 10px;border-bottom:1px solid #F0F0F0;text-align:right;"';
-    var tfUR = 'style="font-size:12px;font-weight:700;color:#16161B;padding:8px 10px;text-align:right;"';
+    var tdU = 'style="font-size:11px;color:#16161B;padding:8px 10px;border-bottom:1px solid #F0F0F0;"';
     h.push('<thead><tr>');
-    h.push('<th ' + thU + '>Description</th>');
-    h.push('<th ' + thU + '>Current Plan</th>');
-    h.push('<th ' + thU + '>Cur. Seats</th>');
-    h.push('<th ' + thU + '>New Plan</th>');
-    h.push('<th ' + thU + '>New Seats</th>');
-    h.push('<th ' + thU + '>End Date</th>');
-    h.push('<th ' + thUR + '>Amount (' + escapeHtml_(currency) + ')</th>');
+    h.push('<th ' + thStyle + '>Current Plan</th>');
+    h.push('<th ' + thStyle + '>Cur. Seats</th>');
+    h.push('<th ' + thStyle + '>New Plan</th>');
+    h.push('<th ' + thStyle + '>New Seats</th>');
+    h.push('<th ' + thStyle + '>End Date</th>');
     h.push('</tr></thead>');
     h.push('<tbody><tr>');
-    h.push('<td ' + tdU + '>Soundtrap for Education &mdash; Plan Upgrade<br><span style="font-size:9px;color:rgba(22,22,22,0.5);">Subscription end date remains unchanged</span></td>');
     h.push('<td ' + tdU + '>' + escapeHtml_(String(currentPlan)) + '</td>');
     h.push('<td ' + tdU + '>' + escapeHtml_(String(currentSeats)) + '</td>');
     h.push('<td ' + tdU + '><strong>' + escapeHtml_(plan) + '</strong></td>');
     h.push('<td ' + tdU + '>' + escapeHtml_(String(seats)) + '</td>');
     h.push('<td ' + tdU + '>' + escapeHtml_(endDate) + '</td>');
-    h.push('<td ' + tdUR + '>' + escapeHtml_(cost) + '</td>');
     h.push('</tr>');
-    if (pdSession && pdCost > 0) {
-      h.push('<tr><td colspan="6" ' + tdU + '>Professional Development<br><span style="font-size:9px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
-      h.push('<td ' + tdUR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
-    }
-    h.push('</tbody>');
-    h.push('<tfoot><tr><td colspan="6" ' + tfL + '>Total</td><td ' + tfUR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
   }
+  h.push('</tbody>');
+
+  // ── Pricing sub-table (standard | discount | net) ─────────────
+  h.push('<tr><td colspan="' + (quoteType === 'UPGRADE' ? '5' : (quoteType === 'RENEWAL' ? '4' : '3')) + '" style="padding:0;">');
+  h.push('<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:4px;">');
+  h.push('<thead><tr>');
+  h.push('<th ' + thD + ' style="background-color:#271B73;width:40%;">Line Item</th>');
+  h.push('<th ' + thD + ' style="background-color:#271B73;text-align:right;">List Price</th>');
+  h.push('<th ' + thD + ' style="background-color:#271B73;text-align:right;">Discount</th>');
+  h.push('<th ' + thD + ' style="background-color:#271B73;text-align:right;">Net Price</th>');
+  h.push('</tr></thead><tbody>');
+
+  // Subscription fee row
+  if (di.subStd > 0) {
+    h.push(discRow('Subscription Fee', di.subStd, di.subStd - di.subNet, di.subNet, di.subType, di.subVal));
+  }
+  // Maintenance fee row (District only)
+  if (di.maintStd > 0) {
+    h.push(discRow('Maintenance Fee', di.maintStd, di.maintStd - di.maintNet, di.maintNet, di.maintType, di.maintVal));
+  }
+  // PD session row — label uses the same two-line format as the Salesforce-link template:
+  // "Professional Development" main label + the session name (with "PD " stripped) as subtext.
+  if (pdSession && di.pdStd > 0) {
+    var pdSessionDisplay = pdSession.replace(/\bPD\s+/g, '');
+    var pdLabelHtml = 'Professional Development<br>' +
+      '<span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSessionDisplay) + '</span>';
+    h.push(discRow(pdLabelHtml, di.pdStd, di.pdStd - di.pdNet, di.pdNet, di.pdType, di.pdVal, true));
+  }
+
+  h.push('</tbody>');
+
+  // Total footer — shows strikethrough standard total, total discount (monetary + %),
+  // and net total.  Every cell gets the same `border-top:2px solid #E5E5EA` so the
+  // separator line above the Total row is uniform (no lighter gap).
+  var stdTotalFmt = di.totalStd > 0 ? fmtCurrency_(di.totalStd, currency) : '';
+  var netTotalFmt = di.totalNet > 0 ? fmtCurrency_(di.totalNet, currency) : escapeHtml_(grandTotal);
+  var totalDiscAmt = (di.totalStd || 0) - (di.totalNet || 0);
+  var totalDiscFmt = (hasDiscount && totalDiscAmt > 0)
+    ? fmtDiscountBoth_(di.totalStd, totalDiscAmt, currency)
+    : '';
+
+  var totalBorder = 'border-top:2px solid #E5E5EA;';
+  var stdTotalCell = (hasDiscount && di.totalStd > 0)
+    ? '<td style="font-size:12px;color:#999;padding:10px 12px;text-align:right;text-decoration:line-through;' + totalBorder + '">' + stdTotalFmt + '</td>'
+    : '<td style="padding:10px 12px;text-align:right;' + totalBorder + '"></td>';
+
+  h.push('<tfoot><tr>');
+  h.push('<td style="font-size:12px;font-weight:700;color:#555;padding:10px 12px;' + totalBorder + '">Total</td>');
+  h.push(stdTotalCell);
+  h.push('<td style="font-size:12px;color:#6551FF;padding:10px 12px;text-align:right;' + totalBorder + '">' + escapeHtml_(totalDiscFmt) + '</td>');
+  h.push('<td style="font-size:14px;font-weight:800;color:#16161B;padding:10px 12px;text-align:right;' + totalBorder + '">' + netTotalFmt + '</td>');
+  h.push('</tr></tfoot>');
+  h.push('</table></td></tr>');
 
   h.push('</table>');
   return h.join('');
@@ -1378,93 +1539,12 @@ function buildPaymentSection_(region) {
     '</tr></table>';
 }
 
-/**
- * Send a notification to the account manager / rep.
- * REP_NOTIFICATION_OVERRIDE redirects all notifications during testing.
- */
-function sendRepNotification_(data, quoteNumber) {
-  var toEmail = (REP_NOTIFICATION_OVERRIDE && REP_NOTIFICATION_OVERRIDE.length > 0)
-    ? REP_NOTIFICATION_OVERRIDE
-    : (data.account_manager_email || '');
-
-  if (!toEmail) return; // no rep email → skip
-
-  var subject = '[New Quote Request] ' + quoteNumber + ' \u2014 ' + (data.school_name || data.school_district || 'Unknown School');
-  var quoteType = normaliseQuoteType_(data.quote_type);
-
-  var lines = [
-    'A new quote request has been submitted.',
-    '',
-    'Quote Number : ' + quoteNumber,
-    'Quote Type   : ' + quoteType,
-    'Submitted    : ' + formatDate_(new Date()),
-    '',
-    '── Customer ──────────────────────────────',
-    'Name         : ' + ((data.firstname || '') + ' ' + (data.lastname || '')).trim(),
-    'Email        : ' + (data.email || ''),
-    'Role         : ' + (data.your_role || ''),
-    'Account ID   : ' + (data.soundtrap_account_id || 'N/A'),
-    '',
-    '── Location ──────────────────────────────',
-    'School       : ' + (data.school_name || data.school_district || ''),
-    'District     : ' + (data.school_district || ''),
-    'City         : ' + (data.city || ''),
-    'State        : ' + (data.state || ''),
-    'Country      : ' + (data.country || ''),
-    '',
-    '── Quote Details ─────────────────────────',
-    'Plan         : ' + (data.plan || ''),
-    'Seats        : ' + (data.number_of_seats || ''),
-    'Sub. Length  : ' + formatMonths_(parseInt(data.subscription_length || 12)),
-  ];
-
-  // Quote-type-specific fields
-  if (quoteType === 'RENEWAL' || quoteType === 'UPGRADE') {
-    lines.push('End Date     : ' + formatDateStr_(data.subscription_end_date));
-  }
-  if (quoteType === 'NEW' && data.purchase_date) {
-    lines.push('Purchase Date: ' + formatDateStr_(data.purchase_date));
-  }
-  if (quoteType === 'ADD-ON') {
-    lines.push('Current Seats: ' + (data.current_seats || ''));
-    lines.push('Add\'l Seats  : ' + (data.additional_seats || ''));
-  }
-  if (quoteType === 'UPGRADE') {
-    lines.push('Current Plan : ' + (data.current_plan || ''));
-    lines.push('Current Seats: ' + (data.current_seats || ''));
-  }
-  if ((data.plan || '').toLowerCase().indexOf('district') !== -1) {
-    lines.push('Schools      : ' + (data.number_of_schools || ''));
-    lines.push('Enrollment   : ' + (data.district_enrollment || ''));
-  }
-
-  lines = lines.concat([
-    '',
-    '── Rep ───────────────────────────────────',
-    'Territory    : ' + (data.territory || ''),
-    'Sales Rep    : ' + (data.account_manager || ''),
-    '',
-    '── Use Case ──────────────────────────────',
-    (data.use_case || '(not provided)'),
-    '',
-    'School Website: ' + (data.school_website || ''),
-  ]);
-
-  if (REP_NOTIFICATION_OVERRIDE && REP_NOTIFICATION_OVERRIDE.length > 0 && data.account_manager_email) {
-    lines.push('');
-    lines.push('(Testing: this notification was redirected from ' + data.account_manager_email + ')');
-  }
-
-  GmailApp.sendEmail(toEmail, subject, lines.join('\n'));
-}
-
-
 // ════════════════════════════════════════════════════════════
 //  HELPERS
 // ════════════════════════════════════════════════════════════
 
 /**
- * Normalise quote type: maps 'UPGRADE PLAN' (form value) → 'UPGRADE' (internal key).
+ * Normalise order type: maps 'UPGRADE PLAN' (form value) → 'UPGRADE' (internal key).
  * All other values are returned as-is uppercased.
  */
 function normaliseQuoteType_(qt) {
@@ -1508,8 +1588,19 @@ function getSalesforceToken_() {
 }
 
 /**
- * Creates a Quote record in Salesforce from the submitted form data.
- * Returns { id } on success; throws on failure.
+ * ⚠️ REFERENCE ONLY — not called from this Order form.
+ *
+ * This is the Quote-form's Salesforce push, retained verbatim so it can be
+ * adapted into a future createSalesforceOrder_() that writes to the SF Order
+ * object instead of Quote. The doPost / submitQuote call sites currently
+ * skip SF entirely (they write "Skipped: SF Order mapping pending" to the
+ * SF Status column). See TODO(salesforce-order-mapping) comments above.
+ *
+ * When implementing the Order mapping:
+ * - Rename to createSalesforceOrder_
+ * - Replace the SObject path /sobjects/Quote with /sobjects/Order
+ * - Drop ExpirationDate (orders don't expire)
+ * - Add PO Number, Billing Address fields, optional Quote lookup, etc.
  */
 function createSalesforceQuote_(data, quoteNumber, timestamp) {
   var auth      = getSalesforceToken_();
@@ -1528,6 +1619,7 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
     EDU_Account_ID__c:       data.soundtrap_account_id || '',
     Sales_Representative__c: data.account_manager    || '',
     Sales_Rep_Email__c:      data.account_manager_email || '',
+    Quote_Created_By__c:     Session.getActiveUser().getEmail() || '',
     Soundtrap_Plan__c:       data.plan               || '',
     First_Name__c:           data.firstname          || '',
     Last_Name__c:            data.lastname           || '',
@@ -1542,7 +1634,7 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
     Status:                  'New',
   };
 
-  // ── Seats — mapped by quote type ────────────────────────────
+  // ── Seats — mapped by order type ────────────────────────────
   if (quoteType === 'NEW') {
     record.Seats_Number_NEW__c = seats || null;
   } else if (quoteType === 'RENEWAL') {
@@ -1601,7 +1693,23 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
   if (subscriptionFee) record.Subscription_Fee__c         = subscriptionFee;
   if (maintenanceFee)  record.District_Maintenance_Fee__c = maintenanceFee;
   if (pdFee)           record.PD_Fee__c                   = pdFee;
-  if (totalCost)       record.Total_Standard_Cost__c      = totalCost;
+  // Total_Standard_Cost__c and Total_Discounted_Cost__c are formula fields in Salesforce.
+
+  // ── Discounted fees ──────────────────────────────────────────
+  var subDiscType   = data.sub_discount_type   || '%';
+  var subDiscVal    = parseFloat(data.sub_discount_value)   || 0;
+  var maintDiscType = data.maint_discount_type  || '%';
+  var maintDiscVal  = parseFloat(data.maint_discount_value) || 0;
+  var pdDiscType    = data.pd_discount_type    || '%';
+  var pdDiscVal     = parseFloat(data.pd_discount_value)    || 0;
+
+  var subFeeDisc   = subDiscVal   ? applyDiscount_(subscriptionFee, subDiscType,   subDiscVal)   : subscriptionFee;
+  var maintFeeDisc = maintDiscVal ? applyDiscount_(maintenanceFee,  maintDiscType, maintDiscVal) : maintenanceFee;
+  var pdFeeDisc    = pdDiscVal    ? applyDiscount_(pdFee,           pdDiscType,    pdDiscVal)    : pdFee;
+
+  if (subFeeDisc   && subFeeDisc   !== subscriptionFee) record.Discounted_Subscription_Fee__c = subFeeDisc;
+  if (maintFeeDisc && maintFeeDisc !== maintenanceFee)  record.Discounted_Maintenance_Fee__c  = maintFeeDisc;
+  if (pdFeeDisc    && pdFeeDisc    !== pdFee)           record.Discounted_PD_Fee__c           = pdFeeDisc;
 
   // ── Optional fields ──────────────────────────────────────────
   if (data.purchase_date)         record.Expected_date_of_purchase__c      = data.purchase_date;
@@ -1690,8 +1798,8 @@ function findAccountByNces_(auth, nces) {
  * Reads SLACK_WEBHOOK_URL from Script Properties (per-project). Best-effort:
  * any failure is logged but does NOT break the submission.
  *
- *   data         — submission data (already parsed in doPost)
- *   quoteNumber  — generated quote number
+ *   data         — submission data (already parsed in doPost / submitQuote)
+ *   quoteNumber  — generated order number
  *   timestamp    — submission timestamp (Date)
  *   sfRecordId   — Salesforce Quote record ID, if available
  *                  (prefers the SF record URL; falls back to the doGet ?q= URL)
@@ -1731,8 +1839,8 @@ function sendSlackNotification_(data, quoteNumber, timestamp, sfRecordId) {
   var lines = [
     'Hello, *' + repName + '*',
     '',
-    'A new quote has been downloaded in your territory',
-    quoteUrl ? '<' + quoteUrl + '|Salesforce Quote URL>' : '',
+    'A new order has been placed in your territory',
+    quoteUrl ? '<' + quoteUrl + '|Salesforce Order URL>' : '',
     '',
     '*Number of Seats:* ' + seats,
     '*School Name:* ' + schoolName,
@@ -1740,7 +1848,7 @@ function sendSlackNotification_(data, quoteNumber, timestamp, sfRecordId) {
     '*Order Type:* ' + quoteType,
     '*Country:* ' + (data.country || ''),
     '*State:* ' + (data.state || ''),
-    '*Quote Number:* ' + quoteNumber,
+    '*Order Number:* ' + quoteNumber,
     '*Created on:* ' + createdOn,
     '*Requested by:* ' + customerName,
     "*Requestor's comments:* " + (data.use_case || '—'),
@@ -1766,21 +1874,21 @@ function sendSlackNotification_(data, quoteNumber, timestamp, sfRecordId) {
  * Sends an admin alert email when a Salesforce sync fails.
  */
 function sendSFErrorAlert_(quoteNumber, customerName, errorMessage) {
-  var recipient = SF_ALERT_EMAIL || REP_NOTIFICATION_OVERRIDE || 'matteo@soundtrap.com';
+  var recipient = SF_ALERT_EMAIL || 'matteo@soundtrap.com';
   GmailApp.sendEmail(
     recipient,
     '[Action Required] Salesforce Sync Failed — ' + quoteNumber,
     [
       'A Salesforce Quote record could not be created automatically.',
       '',
-      'Quote Number : ' + quoteNumber,
+      'Order Number : ' + quoteNumber,
       'Customer     : ' + customerName,
       'Error        : ' + errorMessage,
       '',
       'The submission has been saved to the Google Sheet.',
       'Please create the Salesforce record manually using the data in the sheet.',
     ].join('\n'),
-    { name: 'Soundtrap Quote Form — System Alert' }
+    { name: 'Soundtrap Order Form — System Alert' }
   );
 }
 
@@ -1887,6 +1995,51 @@ function fmtCurrency_(amount, currency) {
   return s + formatted + f;
 }
 
+/**
+ * Apply a discount (% or $) to a base amount server-side.
+ * Returns the net amount (never negative).
+ */
+function applyDiscount_(base, type, value) {
+  var v = parseFloat(value) || 0;
+  if (!v || !base) return base;
+  if (type === '%') return Math.max(0, Math.round(base * (1 - v / 100)));
+  return Math.max(0, Math.round(base - v));
+}
+
+/** Format a discount as a human-readable string, e.g. "5%" or "−$250". */
+function fmtDiscount_(type, value, currency) {
+  var v = parseFloat(value) || 0;
+  if (!v) return '—';
+  if (type === '%') return '−' + v + '%';
+  return '−' + fmtCurrency_(v, currency);
+}
+
+/**
+ * Format a discount showing BOTH the monetary saving and the percentage,
+ * e.g. "−$224.70 (−10%)" or "−$2,013.00 (−25.7%)".
+ *
+ * The percentage uses 1 decimal place when rounding to a whole number would
+ * lose precision by more than 0.05% (so per-line clean inputs like 10% / 25%
+ * still display as integers, but blended totals like 25.67% show as "25.7%"
+ * instead of misleadingly rounding to "26%").
+ *
+ *   base       = standard (pre-discount) price
+ *   discAmount = monetary amount being discounted (std − net)
+ *   currency   = display currency
+ */
+function fmtDiscountBoth_(base, discAmount, currency) {
+  var amt = parseFloat(discAmount) || 0;
+  var b   = parseFloat(base) || 0;
+  if (!amt || !b) return '—';
+  var pctRaw     = (amt / b) * 100;
+  var pctRounded = Math.round(pctRaw);
+  var pctDisplay = (Math.abs(pctRaw - pctRounded) < 0.05)
+    ? String(pctRounded)
+    : pctRaw.toFixed(1);
+  return '−' + fmtCurrency_(amt, currency) + ' (−' + pctDisplay + '%)';
+}
+
+
 /** Escape a string for safe insertion into HTML. */
 function escapeHtml_(str) {
   return String(str || '')
@@ -1896,7 +2049,7 @@ function escapeHtml_(str) {
     .replace(/"/g, '&quot;');
 }
 
-/** Quote-number format: DIR-2026-00042 */
+/** Order-number format: IORD-2026-00042 */
 function generateQuoteNumber_() {
   var ss      = SpreadsheetApp.getActiveSpreadsheet();
   var counter = ss.getSheetByName('Counter');
@@ -1904,7 +2057,7 @@ function generateQuoteNumber_() {
   var n       = (cell.getValue() || 0) + 1;
   cell.setValue(n);
   var year = new Date().getFullYear();
-  return 'DIR-' + year + '-' + String(n).padStart(5, '0');
+  return 'IORD-' + year + '-' + String(n).padStart(5, '0');
 }
 
 
@@ -1931,7 +2084,7 @@ function initSheets() {
     header.setFontColor('#FDFDFE');
     header.setFontWeight('bold');
     sub.setFrozenRows(1);
-    sub.setColumnWidth(1, 140);   // Quote Number
+    sub.setColumnWidth(1, 140);   // Order Number
     sub.setColumnWidth(2, 160);   // Timestamp
     sub.setColumnWidth(14, 220);  // Email
     sub.setColumnWidth(25, 200);  // Account Manager
@@ -1946,7 +2099,7 @@ function initSheets() {
     ctr.getRange('A1').setNote('Auto-incremented quote counter. Do not edit manually.');
   }
 
-  SpreadsheetApp.getUi().alert('✅ Sheets created and ready.');
+  Logger.log('✅ Sheets created and ready.');
 }
 
 
@@ -1957,7 +2110,7 @@ function initSheets() {
 /**
  * Run this function from the Apps Script editor (▶ Run button) to:
  *  1. Trigger OAuth authorization for GmailApp if not yet granted.
- *  2. Send a test quote email (inline, no attachment) to REP_NOTIFICATION_OVERRIDE.
+ *  2. Send a test quote email (inline, no attachment) to your own address.
  * Check View → Executions for any error messages.
  */
 function testQuoteEmail() {
@@ -1970,7 +2123,7 @@ function testQuoteEmail() {
     school_name:           'Mission High School',
     firstname:             'Jane',
     lastname:              'Smith',
-    email:                 REP_NOTIFICATION_OVERRIDE || Session.getActiveUser().getEmail(),
+    email:                 Session.getActiveUser().getEmail(),
     your_role:             'Music Teacher',
     soundtrap_account_id:  'TEST-12345',
     plan:                  'School',
@@ -1978,7 +2131,7 @@ function testQuoteEmail() {
     subscription_length:   '12',
     number_of_schools:     '',
     account_manager:       'Test Rep',
-    account_manager_email: REP_NOTIFICATION_OVERRIDE || Session.getActiveUser().getEmail(),
+    account_manager_email: Session.getActiveUser().getEmail(),
     territory:             'West',
     use_case:              'Music production class for grades 9–12.',
     school_website:        'missionhigh.sfusd.edu',

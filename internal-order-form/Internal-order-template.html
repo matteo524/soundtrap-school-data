@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soundtrap for Education — Order Confirmation</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
+<style>
+/*
+  Brand tokens — Soundtrap Brand Guidelines 2026
+  ─────────────────────────────────────────────
+  Purple Rain (primary)   : #6551FF
+  Black Sabbath (dark)    : #16161B
+  Deep Purple             : #271B73
+  Violette Echo           : #8F8FFF
+  Lilac Fade              : #D5CCFF
+  Barry White (near-white): #FDFDFE
+  UI Background           : #F2F2F5
+  Negative (error)        : #B40748
+  Body font               : 'Helvetica Neue', Helvetica, Arial
+  Headline font           : 'Bebas Neue'
+*/
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #16161B;
+  background: #F2F2F5;
+  padding: 32px 16px 64px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ── Page wrapper ───────────────────────────────────────────── */
+.qt-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  background: #FDFDFE;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 32px rgba(101,81,242,0.10);
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.qt-header {
+  background: #16161B;
+  padding: 36px 48px 32px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+}
+.qt-header-left { flex: 1; min-width: 0; }
+.qt-header-address {
+  text-align: right;
+  font-size: 11px;
+  line-height: 1.7;
+  color: rgba(253,253,245,0.65);
+  position: relative;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.qt-header-address strong {
+  display: block;
+  color: #FDFDFE;
+  font-size: 12px;
+  margin-bottom: 1px;
+}
+.qt-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: #6551FF;
+}
+.qt-header::after {
+  content: '';
+  position: absolute;
+  bottom: -50px; right: -50px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(101,81,242,0.22) 0%, transparent 70%);
+  pointer-events: none;
+}
+.qt-logo {
+  display: block;
+  width: 140px;
+  height: auto;
+  margin-bottom: 20px;
+  margin-left: -10px;
+  position: relative;
+  opacity: 0.95;
+}
+.qt-header-title {
+  font-family: 'Bebas Neue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 42px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: #FDFDFE;
+  line-height: 1.05;
+  position: relative;
+  margin-bottom: 6px;
+}
+.qt-header-sub {
+  font-size: 13px;
+  color: rgba(253,253,245,0.55);
+  position: relative;
+  letter-spacing: 0.2px;
+}
+
+/* ── Meta bar: order number, dates ─────────────────────────── */
+.qt-meta-bar {
+  background: #271B73;
+  padding: 14px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.qt-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.qt-meta-item--center { align-items: center; }
+.qt-meta-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(253,253,245,0.5);
+}
+.qt-meta-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FDFDFE;
+  letter-spacing: 0.2px;
+}
+.qt-meta-value.qt-quote-num {
+  font-family: 'Bebas Neue', monospace;
+  font-size: 18px;
+  letter-spacing: 1.5px;
+  color: #8F8FFF;
+}
+
+/* ── Body ───────────────────────────────────────────────────── */
+.qt-body {
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── Two-column info grid (parties) ─────────────────────────── */
+.qt-parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.qt-party {
+  background: #F2F2F5;
+  border-radius: 10px;
+  padding: 20px 22px;
+  position: relative;
+}
+.qt-party::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: #6551FF;
+  border-radius: 10px 0 0 10px;
+}
+.qt-party-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #6551FF;
+  margin-bottom: 10px;
+}
+.qt-party-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #16161B;
+  margin-bottom: 4px;
+}
+.qt-party-detail {
+  font-size: 13px;
+  color: rgba(22,22,22,0.65);
+  line-height: 1.7;
+}
+.qt-party-detail a {
+  color: #6551FF;
+  text-decoration: none;
+}
+.qt-party-detail a:hover { text-decoration: underline; }
+
+/* ── Section titles ─────────────────────────────────────────── */
+.qt-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #6551FF;
+  margin-bottom: 12px;
+}
+
+/* ── Subscription table ─────────────────────────────────────── */
+.qt-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.qt-table thead tr {
+  background: #16161B;
+}
+.qt-table thead th {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(253,253,245,0.7);
+  padding: 12px 16px;
+  text-align: left;
+}
+.qt-table thead th:last-child { text-align: right; }
+.qt-table tbody tr {
+  background: #F4F4F5;
+}
+.qt-table tbody tr:nth-child(even) {
+  background: #EFEFEF;
+}
+.qt-table tbody td {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #16161B;
+  line-height: 1.5;
+  vertical-align: top;
+}
+.qt-table tbody td:last-child {
+  text-align: right;
+  font-weight: 700;
+}
+.qt-table tfoot tr {
+  background: #6551FF;
+}
+.qt-table tfoot td {
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FDFDFE;
+  letter-spacing: 0.2px;
+}
+.qt-table tfoot td:last-child { text-align: right; font-size: 16px; }
+
+/* Compact variant — for tables with 6+ columns */
+.qt-table--compact { table-layout: fixed; }
+.qt-table--compact thead th { padding: 10px 8px; font-size: 9px; }
+.qt-table--compact tbody td { padding: 10px 8px; font-size: 12px; word-break: break-word; }
+.qt-table--compact tfoot td { padding: 10px 8px; }
+.qt-table--compact tfoot td:last-child { font-size: 14px; }
+
+.qt-tax-note {
+  font-size: 11px;
+  color: rgba(22,22,22,0.5);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* ── Payment section ─────────────────────────────────────────── */
+.qt-payment-grid {
+  display: grid;
+  gap: 16px;
+}
+
+/* Dynamic: 1 col for non-US, 2 cols for US (has two payment methods) */
+.qt-payment-grid.two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.qt-payment-card {
+  background: #F4F4F5;
+  border-radius: 10px;
+  padding: 20px 22px;
+  border: 1.5px solid transparent;
+}
+.qt-payment-card.primary {
+  border-color: #6551FF;
+  background: #FDFDFE;
+}
+.qt-payment-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #16161B;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qt-payment-card-title .qt-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  background: #6551FF;
+  color: #FDFDFE;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.qt-payment-card p {
+  font-size: 12px;
+  color: rgba(22,22,22,0.65);
+  line-height: 1.7;
+}
+.qt-payment-card a {
+  color: #6551FF;
+  text-decoration: none;
+  font-weight: 600;
+}
+.qt-payment-card a:hover { text-decoration: underline; }
+
+/* ── Entity notice (dynamic per country) ─────────────────────── */
+.qt-entity-notice {
+  background: #F4F4F5;
+  border-radius: 10px;
+  padding: 18px 22px;
+  border-left: 3px solid #D5CCFF;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.qt-entity-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.qt-entity-notice p {
+  font-size: 12px;
+  color: rgba(22,22,22,0.7);
+  line-height: 1.7;
+}
+.qt-entity-notice strong {
+  color: #16161B;
+  font-weight: 700;
+}
+
+/* ── Important info list ─────────────────────────────────────── */
+.qt-info-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.qt-info-list li {
+  font-size: 12px;
+  color: rgba(22,22,22,0.7);
+  line-height: 1.7;
+  padding-left: 16px;
+  position: relative;
+}
+.qt-info-list li::before {
+  content: '•';
+  color: #6551FF;
+  font-weight: 700;
+  position: absolute;
+  left: 0;
+}
+.qt-info-list li strong {
+  color: #16161B;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.qt-footer {
+  background: #16161B;
+  padding: 24px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.qt-footer-note {
+  font-size: 11px;
+  color: rgba(253,253,245,0.45);
+  line-height: 1.6;
+}
+.qt-footer-contact {
+  font-size: 12px;
+  color: rgba(253,253,245,0.7);
+}
+.qt-footer-contact a {
+  color: #8F8FFF;
+  text-decoration: none;
+}
+.qt-footer-contact a:hover { text-decoration: underline; }
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.qt-divider {
+  border: none;
+  border-top: 1px solid rgba(22,22,22,0.08);
+  margin: 0;
+}
+
+/* ── Quote type badge ────────────────────────────────────────── */
+.qt-type-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #6551FF;
+  color: #FDFDFE;
+}
+.qt-type-badge.renewal { background: rgba(255,255,255,0.15); border: 1px solid rgba(253,253,245,0.45); color: #FDFDFE; }
+.qt-type-badge.addon   { background: #8F8FFF; color: #16161B; }
+.qt-type-badge.upgrade { background: #D5CCFF; color: #271B73; }
+
+/* ── Subscription change summary cards (ADD-ON / UPGRADE) ─────── */
+.qt-change-summary {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.qt-change-card {
+  background: #F4F4F5;
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.qt-change-card.highlight {
+  background: #FDFDFE;
+  border: 1.5px solid #6551FF;
+}
+.qt-change-card-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #6551FF;
+  margin-bottom: 6px;
+}
+.qt-change-card.addon .qt-change-card-label  { color: #8F8FFF; }
+.qt-change-card-value {
+  font-size: 20px;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 1px;
+  color: #16161B;
+  line-height: 1.1;
+}
+.qt-change-card-sub {
+  font-size: 11px;
+  color: rgba(22,22,22,0.5);
+  margin-top: 3px;
+}
+.qt-change-arrow {
+  text-align: center;
+  font-size: 22px;
+  color: #6551FF;
+  line-height: 1;
+}
+
+/* ── Print styles ────────────────────────────────────────────── */
+@media print {
+  body { background: white; padding: 0; }
+  .qt-wrap { box-shadow: none; border-radius: 0; }
+  .qt-no-print { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="qt-wrap">
+
+  <!-- ── Header ─────────────────────────────────────── -->
+  <header class="qt-header">
+    <div class="qt-header-left">
+    <!-- Soundtrap wordmark SVG -->
+    <svg class="qt-logo" viewBox="0 0 8921 1683" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Soundtrap" role="img">
+    <path d="M2071.98 837.55H1102.55C1064.38 837.55 1033.44 806.6 1033.44 768.44C1033.44 730.28 1064.39 699.33 1102.55 699.33H2071.99C2110.15 699.33 2141.1 730.28 2141.1 768.44C2141.1 806.6 2110.15 837.55 2071.99 837.55H2071.98Z" fill="white"/>
+    <path d="M963.33 1253.87C945.61 1253.87 927.89 1247.11 914.37 1233.59C657.88 977.1 657.88 559.77 914.36 303.28C941.41 276.25 985.24 276.25 1012.29 303.28C1039.34 330.32 1039.34 374.17 1012.29 401.21C809.8 603.7 809.8 933.18 1012.29 1135.67C1039.34 1162.71 1039.34 1206.56 1012.29 1233.6C998.77 1247.12 981.05 1253.88 963.33 1253.88V1253.87Z" fill="white"/>
+    <path d="M2211.19 1253.88C2193.47 1253.88 2175.75 1247.12 2162.23 1233.6C2135.19 1206.56 2135.19 1162.71 2162.23 1135.67C2364.72 933.18 2364.72 603.7 2162.23 401.2C2135.19 374.16 2135.19 330.31 2162.23 303.27C2189.29 276.24 2233.12 276.24 2260.16 303.27C2516.65 559.76 2516.65 977.1 2260.16 1233.59C2246.64 1247.11 2228.92 1253.87 2211.2 1253.87L2211.19 1253.88Z" fill="white"/>
+    <path d="M2940.72 940.1L3066.39 901.34C3080.49 1007.05 3161.53 1076.34 3260.19 1076.34C3358.85 1076.34 3421.1 1030.54 3421.1 960.06C3421.1 765.09 2971.25 871.98 2971.25 576C2971.25 445.62 3092.23 355.18 3253.14 355.18C3414.05 355.18 3527.97 437.4 3551.46 560.73L3428.13 611.23C3411.68 527.84 3347.08 474.98 3253.13 474.98C3159.18 474.98 3109.83 512.56 3109.83 576C3109.83 741.6 3560.85 626.5 3560.85 957.72C3560.85 1101.01 3439.88 1196.14 3255.48 1196.14C3095.74 1196.14 2964.19 1090.44 2940.7 940.1H2940.72Z" fill="white"/>
+    <path d="M4088.24 890.77C4088.24 776.84 4016.59 696.97 3912.06 696.97C3807.53 696.97 3735.89 776.84 3735.89 890.77C3735.89 1004.7 3806.35 1084.56 3912.06 1084.56C4017.77 1084.56 4088.24 1004.69 4088.24 890.77ZM3606.69 890.77C3606.69 713.41 3733.54 585.39 3912.06 585.39C4090.58 585.39 4217.44 713.41 4217.44 890.77C4217.44 1068.13 4089.41 1196.14 3912.06 1196.14C3734.71 1196.14 3606.69 1068.13 3606.69 890.77Z" fill="white"/>
+    <path d="M4804.7 1186.74H4676.69V1088.08C4636.76 1151.5 4568.63 1196.13 4481.71 1196.13C4356.04 1196.13 4267.96 1112.74 4267.96 984.72V594.78H4395.98V955.36C4395.98 1029.35 4441.78 1081.03 4516.95 1081.03C4616.78 1081.03 4676.69 996.47 4676.69 854.35V594.78H4804.7V1186.74Z" fill="white"/>
+    <path d="M4866.97 594.78H4995V693.44C5034.93 630.01 5103.05 585.38 5189.97 585.38C5315.64 585.38 5403.73 668.77 5403.73 796.79V1186.73H5275.71V826.16C5275.71 752.16 5229.91 700.48 5154.74 700.48C5054.9 700.48 4995 785.05 4995 927.16V1186.73H4866.97V594.78Z" fill="white"/>
+    <path d="M5927.57 890.77C5927.57 773.32 5859.45 696.97 5756.09 696.97C5652.73 696.97 5584.61 773.32 5584.61 890.77C5584.61 1008.22 5652.73 1084.56 5756.09 1084.56C5859.45 1084.56 5927.57 1007.05 5927.57 890.77ZM5456.59 890.77C5456.59 712.23 5558.78 585.39 5737.3 585.39C5813.64 585.39 5882.94 619.45 5918.18 668.78V355.18H6046.2V1186.74H5918.18V1111.57C5890 1160.9 5818.34 1196.13 5739.66 1196.13C5558.78 1196.13 5456.6 1069.29 5456.6 890.76L5456.59 890.77Z" fill="white"/>
+    <path d="M6391.52 1196.13C6279.95 1196.13 6196.55 1135.06 6196.55 999.99V704.01H6093.19V594.78H6196.55V418.6H6324.57V594.78H6477.26V704.01H6324.57V992.94C6324.57 1051.67 6357.45 1082.2 6405.61 1082.2C6427.92 1082.2 6454.94 1078.68 6477.25 1068.11L6485.47 1182.03C6457.28 1191.43 6424.4 1196.12 6391.51 1196.12L6391.52 1196.13Z" fill="white"/>
+    <path d="M6835.46 705.19C6748.56 705.19 6672.23 782.7 6672.23 965.93V1186.74H6544.21V594.78H6672.23V707.53C6703.96 637.06 6781.44 585.38 6853.11 585.38C6875.41 585.38 6901.24 588.9 6918.89 595.95L6911.83 719.28C6890.71 709.89 6862.53 705.19 6835.45 705.19H6835.46Z" fill="white"/>
+    <path d="M7318.24 931.87V907.2L7205.51 920.12C7109.19 930.69 7059.82 965.93 7059.82 1017.6C7059.82 1064.58 7098.6 1097.47 7158.49 1097.47C7258.34 1097.47 7317.06 1028.17 7318.24 931.86V931.87ZM7443.92 817.94V1186.74H7318.24V1096.3C7284.17 1156.2 7211.33 1196.13 7132.66 1196.13C7015.22 1196.13 6934.13 1122.14 6934.13 1021.13C6934.13 904.85 7024.56 842.61 7206.61 823.82L7318.23 812.07V803.85C7318.23 731.02 7267.68 686.4 7190.2 686.4C7118.53 686.4 7068.05 728.68 7059.81 799.15L6944.72 778.01C6963.49 661.73 7064.51 585.39 7190.19 585.39C7340.52 585.39 7443.91 669.95 7443.91 817.94H7443.92Z" fill="white"/>
+    <path d="M7966.58 890.77C7966.58 773.32 7898.44 696.97 7795.06 696.97C7691.68 696.97 7623.61 773.32 7623.61 890.77C7623.61 1008.22 7691.75 1084.56 7795.06 1084.56C7898.37 1084.56 7966.58 1007.05 7966.58 890.77ZM7503.81 594.79H7631.84V669.96C7664.73 621.81 7734.05 585.4 7816.24 585.4C7991.22 585.4 8094.61 712.24 8094.61 890.78C8094.61 1069.32 7986.52 1196.15 7809.18 1196.15C7737.51 1196.15 7668.26 1165.62 7631.84 1118.64V1400.52H7503.81V594.78V594.79Z" fill="white"/>
+    <path d="M8122.32 424.05C8125.3 424.05 8128.14 423.95 8130.77 423.75C8133.4 423.56 8135.76 423.01 8137.83 422.1C8139.91 421.19 8141.57 419.8 8142.82 417.92C8144.07 416.05 8144.69 413.43 8144.69 410.06C8144.69 407.21 8144.14 404.94 8143.03 403.25C8141.92 401.57 8140.47 400.27 8138.74 399.37C8137.01 398.46 8135 397.84 8132.72 397.51C8130.43 397.19 8128.22 397.03 8126 397.03H8108.55V424.04H8122.33L8122.32 424.05ZM8128.14 386.36C8138.25 386.36 8145.73 388.37 8150.58 392.38C8155.43 396.4 8157.85 402.49 8157.85 410.65C8157.85 418.29 8155.7 423.9 8151.48 427.46C8147.19 431.02 8141.85 433.13 8135.55 433.78L8159.79 471.28H8145.66L8122.53 434.75H8108.54V471.28H8095.31V386.38H8128.13L8128.14 386.36Z" fill="white"/>
+    <path d="M8123.21 365.1C8088.1 365.1 8059.5 393.68 8059.5 428.81C8059.5 463.94 8088.1 492.52 8123.21 492.52C8158.32 492.52 8186.92 463.94 8186.92 428.81C8186.92 393.68 8158.32 365.1 8123.21 365.1ZM8123.21 503.59C8081.94 503.59 8048.43 470.04 8048.43 428.81C8048.43 387.58 8081.94 354.03 8123.21 354.03C8164.48 354.03 8198 387.58 8198 428.81C8198 470.04 8164.42 503.59 8123.21 503.59Z" fill="white"/>
+    </svg>
+    <div class="qt-header-title" id="qt-header-title">Order Confirmation</div>
+    <div class="qt-header-sub">Soundtrap for Education</div>
+    </div><!-- /.qt-header-left -->
+    <div class="qt-header-address" data-address="US">
+      <strong>Soundtrap US Inc.</strong>
+      150 N. Michigan Ave., Suite 1950<br>
+      Chicago, IL 60601
+    </div>
+    <div class="qt-header-address" data-address="intl" style="display:none;">
+      <strong>Soundtrap AB</strong>
+      Repslagargatan 17A<br>
+      118 46 Stockholm
+    </div>
+  </header>
+
+  <!-- ── Meta bar ───────────────────────────────────── -->
+  <div class="qt-meta-bar">
+    <div class="qt-meta-item">
+      <span class="qt-meta-label">Order Number</span>
+      <span class="qt-meta-value qt-quote-num">{{QuoteNumber}}</span>
+    </div>
+    <div class="qt-meta-item">
+      <span class="qt-meta-label">Order Date</span>
+      <span class="qt-meta-value">{{SubmissionDate}}</span>
+    </div>
+    <div class="qt-meta-item">
+      <span class="qt-meta-label">Currency</span>
+      <span class="qt-meta-value">{{Currency}}</span>
+    </div>
+    <div class="qt-meta-item qt-meta-item--center">
+      <span class="qt-meta-label">Order Type</span>
+      <span class="qt-meta-value" id="qt-meta-type"><span class="qt-type-badge" id="qt-type-badge">NEW</span></span>
+    </div>
+  </div>
+
+  <!-- ── Body ──────────────────────────────────────── -->
+  <div class="qt-body">
+
+    <!-- Parties: From / To -->
+    <section>
+      <div class="qt-parties">
+        <div class="qt-party">
+          <div class="qt-party-label">From — Sales Representative</div>
+          <div class="qt-party-name">{{SalesRepName}}</div>
+          <div class="qt-party-detail">
+            <a href="mailto:{{SalesRepEmail}}">{{SalesRepEmail}}</a><br>
+            Soundtrap for Education
+          </div>
+        </div>
+        <div class="qt-party">
+          <div class="qt-party-label">Prepared For</div>
+          <div class="qt-party-name">{{CustomerFirstLastName}}</div>
+          <div class="qt-party-detail">
+            {{CustomerRole}}<br>
+            {{SchoolName}}<br>
+            {{State}}{{StateComma}} {{Country}}<br>
+            <a href="mailto:{{CustomerEmail}}">{{CustomerEmail}}</a><br>
+            Soundtrap Account ID: <strong>{{SoundtrapAccountID}}</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="qt-divider">
+
+    <!-- ── QUOTE TYPE: NEW SUBSCRIPTION ─────────────────────── -->
+    <section class="qt-type-section" data-quote-type="NEW">
+      <div class="qt-section-title">Subscription Details</div>
+      <table class="qt-table qt-table--compact">
+        <thead>
+          <tr>
+            <th style="width:42%">Description</th>
+            <th>Plan</th>
+            <th>Seats</th>
+            <th>Sub. Length</th>
+            <th>Amount ({{Currency}})</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Soundtrap for Education<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">New subscription</span>
+            </td>
+            <td>{{SoundtrapPlan}}</td>
+            <td>{{NumberOfSeats}}</td>
+            <td>{{SubscriptionLength}}</td>
+            <td>{{SubscriptionCost}}</td>
+          </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="4">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="4">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">Total</td>
+            <td>{{GrandTotal}}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="qt-tax-note">{{TaxNote}}</p>
+    </section>
+
+    <!-- ── QUOTE TYPE: RENEWAL ──────────────────────────────────── -->
+    <section class="qt-type-section" data-quote-type="RENEWAL" style="display:none;">
+      <div class="qt-section-title">Renewal Details</div>
+
+      <!-- Before / After summary cards -->
+      <div class="qt-change-summary">
+        <div class="qt-change-card">
+          <div class="qt-change-card-label">Current Expiry</div>
+          <div class="qt-change-card-value">{{SubscriptionEndDate}}</div>
+          <div class="qt-change-card-sub">{{SoundtrapPlan}} · {{NumberOfSeats}} seats</div>
+        </div>
+        <div class="qt-change-arrow">→</div>
+        <div class="qt-change-card highlight">
+          <div class="qt-change-card-label">New Expiry After Renewal</div>
+          <div class="qt-change-card-value">{{RenewalEndDate}}</div>
+          <div class="qt-change-card-sub">+{{SubscriptionLength}}</div>
+        </div>
+      </div>
+
+      <table class="qt-table qt-table--compact">
+        <thead>
+          <tr>
+            <th style="width:30%">Description</th>
+            <th>Plan</th>
+            <th>Seats</th>
+            <th>Current Expiry</th>
+            <th>Sub. Length</th>
+            <th style="width:18%">Amount ({{Currency}})</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Soundtrap for Education — Renewal<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">Renewal of existing subscription</span>
+            </td>
+            <td>{{SoundtrapPlan}}</td>
+            <td>{{NumberOfSeats}}</td>
+            <td>{{SubscriptionEndDate}}</td>
+            <td>{{SubscriptionLength}}</td>
+            <td>{{SubscriptionCost}}</td>
+          </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="5">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="5">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5">Total</td>
+            <td>{{GrandTotal}}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="qt-tax-note">{{TaxNote}}</p>
+    </section>
+
+    <!-- ── QUOTE TYPE: ADD-ON ─────────────────────────────────── -->
+    <section class="qt-type-section" data-quote-type="ADD-ON" style="display:none;">
+      <div class="qt-section-title">Seat Add-On Details</div>
+
+      <!-- Before / After summary cards -->
+      <div class="qt-change-summary">
+        <div class="qt-change-card">
+          <div class="qt-change-card-label">Current Seats</div>
+          <div class="qt-change-card-value">{{CurrentSeats}}</div>
+          <div class="qt-change-card-sub">Active subscription</div>
+        </div>
+        <div class="qt-change-arrow">→</div>
+        <div class="qt-change-card highlight">
+          <div class="qt-change-card-label">Total Seats After Add-On</div>
+          <div class="qt-change-card-value">{{TotalSeatsAfterAddon}}</div>
+          <div class="qt-change-card-sub">+{{AdditionalSeats}} seats added</div>
+        </div>
+      </div>
+
+      <table class="qt-table qt-table--compact">
+        <thead>
+          <tr>
+            <th style="width:38%">Description</th>
+            <th>Cur. Seats</th>
+            <th>Add. Seats</th>
+            <th>Sub. Expires</th>
+            <th>Amount ({{Currency}})</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Soundtrap for Education — Seat Add-On<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">Added to your existing subscription</span>
+            </td>
+            <td>{{CurrentSeats}}</td>
+            <td><strong>+{{AdditionalSeats}}</strong></td>
+            <td>{{SubscriptionEndDate}}</td>
+            <td>{{SubscriptionCost}}</td>
+          </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="4">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="4">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">Total</td>
+            <td>{{GrandTotal}}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="qt-tax-note">{{TaxNote}}</p>
+    </section>
+
+    <!-- ── QUOTE TYPE: UPGRADE PLAN ──────────────────────────── -->
+    <section class="qt-type-section" data-quote-type="UPGRADE" style="display:none;">
+      <div class="qt-section-title">Plan Upgrade Details</div>
+
+      <!-- Before / After summary cards -->
+      <div class="qt-change-summary">
+        <div class="qt-change-card">
+          <div class="qt-change-card-label">Current Plan</div>
+          <div class="qt-change-card-value">{{CurrentPlan}}</div>
+          <div class="qt-change-card-sub">{{CurrentSeats}} seats</div>
+        </div>
+        <div class="qt-change-arrow">→</div>
+        <div class="qt-change-card highlight">
+          <div class="qt-change-card-label">Upgraded Plan</div>
+          <div class="qt-change-card-value">{{SoundtrapPlan}}</div>
+          <div class="qt-change-card-sub">{{NumberOfSeats}} seats</div>
+        </div>
+      </div>
+
+      <table class="qt-table qt-table--compact">
+        <thead>
+          <tr>
+            <th style="width:25%">Description</th>
+            <th>Cur. Plan</th>
+            <th>Cur. Seats</th>
+            <th>New Plan</th>
+            <th>New Seats</th>
+            <th>End Date</th>
+            <th style="width:18%">Amount ({{Currency}})</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Soundtrap for Education — Plan Upgrade<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">Subscription end date remains unchanged</span>
+            </td>
+            <td>{{CurrentPlan}}</td>
+            <td>{{CurrentSeats}}</td>
+            <td><strong>{{SoundtrapPlan}}</strong></td>
+            <td>{{NumberOfSeats}}</td>
+            <td>{{SubscriptionEndDate}}</td>
+            <td>{{SubscriptionCost}}</td>
+          </tr>
+          <tr data-maint-row="active" style="display:none;">
+            <td colspan="6">Maintenance Fee<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{NumberOfSchools}} schools</span>
+            </td>
+            <td>{{MaintenanceCost}}</td>
+          </tr>
+          <tr data-pd-row="active" style="display:none;">
+            <td colspan="6">Professional Development<br>
+              <span style="font-size:11px;color:rgba(22,22,22,0.5);">{{PdSession}}</span>
+            </td>
+            <td>{{PdCost}}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="6">Total</td>
+            <td>{{GrandTotal}}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="qt-tax-note">{{TaxNote}}</p>
+    </section>
+
+    <!-- Server-injected discount breakdown (empty when no discounts applied) -->
+    {{DiscountBlock}}
+
+    <hr class="qt-divider">
+
+    <!-- ── DYNAMIC: Entity Notice (changes per country/region) ── -->
+    <!--
+      REGION: US
+      Show when country === 'United States'
+    -->
+    <section id="qt-entity-us" class="qt-entity-region" data-region="US">
+      <div class="qt-entity-notice">
+        <div class="qt-entity-icon">🏢</div>
+        <p>
+          <strong>Vendor Registration:</strong> Soundtrap is now an independent entity and no longer part of Spotify.
+          Please ensure <strong>Soundtrap US Inc.</strong> is correctly registered in your systems before placing an order.
+        </p>
+      </div>
+    </section>
+
+    <!--
+      REGION: Canada
+      Show when country === 'Canada'
+    -->
+    <section id="qt-entity-canada" class="qt-entity-region" data-region="Canada" style="display:none;">
+      <div class="qt-entity-notice">
+        <div class="qt-entity-icon">🏢</div>
+        <p>
+          <strong>Vendor Registration:</strong> Soundtrap is now an independent entity and no longer part of Spotify.
+          Please ensure <strong>Soundtrap AB</strong> is correctly registered in your systems before placing an order.
+        </p>
+      </div>
+    </section>
+
+    <!--
+      REGION: Rest of World
+      Show for all other countries
+    -->
+    <section id="qt-entity-row" class="qt-entity-region" data-region="ROW" style="display:none;">
+      <div class="qt-entity-notice">
+        <div class="qt-entity-icon">🌏</div>
+        <p>
+          <strong>Vendor Registration:</strong> Soundtrap is now an independent entity and no longer part of Spotify.
+          Please ensure <strong>Soundtrap AB</strong> is correctly registered in your systems before placing an order.
+        </p>
+      </div>
+    </section>
+
+    <!--
+      REGION: Australia & New Zealand
+      Show when country === 'Australia' or 'New Zealand'
+    -->
+    <section id="qt-entity-anz" class="qt-entity-region" data-region="ANZ" style="display:none;">
+      <div class="qt-entity-notice">
+        <div class="qt-entity-icon">🌏</div>
+        <p>
+          <strong>Vendor Registration:</strong> Soundtrap is now an independent entity and no longer part of Spotify.
+          Please ensure <strong>Soundtrap AB</strong> is correctly registered in your systems before placing an order.<br><br>
+          <strong>Australia and New Zealand:</strong> We currently can't invoice schools in Australia or New Zealand directly. Please follow the instructions below to pay via credit card or a reseller.
+        </p>
+      </div>
+    </section>
+
+    <hr class="qt-divider">
+
+    <!-- ── DYNAMIC: Payment Methods (changes per country/region) ── -->
+    <section>
+      <div class="qt-section-title">Payment Methods</div>
+
+      <!--
+        REGION: US — Credit Card + Invoice/ACH/Wire/Check + Reseller
+      -->
+      <div class="qt-payment-grid two-col" id="qt-payment-us" data-region="US">
+        <div class="qt-payment-card primary">
+          <div class="qt-payment-card-title">
+            Credit Card or PayPal
+            <span class="qt-badge">Preferred</span>
+          </div>
+          <p>
+            Log into your Soundtrap education subscription and click <strong>Buy Now</strong>.
+            Accepts Visa, Mastercard, and PayPal. Payment receipt downloadable at Soundtrap / Subscription.
+          </p>
+        </div>
+        <div class="qt-payment-card">
+          <div class="qt-payment-card-title">Invoice — ACH, Wire Transfer, or Check</div>
+          <p>
+            Submit your request via <a href="https://soundtrap.me/order_form" target="_blank">soundtrap.me/order_form</a>.
+            You can include a PO if required by your school administration. Invoices are emailed within 7 business days (Net-30 terms).
+            Do not send payment in advance.<br><br>
+            Paper checks are only accepted at: Soundtrap US Inc., PO Box 18375, Palatine, IL 60055-8375.
+          </p>
+        </div>
+        <div class="qt-payment-card" style="grid-column: 1 / -1">
+          <div class="qt-payment-card-title">Reseller</div>
+          <p>
+            We partner with many US resellers. To pay through one, please contact your preferred reseller for a quote and to place your order.
+          </p>
+        </div>
+      </div>
+
+      <!--
+        REGION: Canada — Credit Card + Invoice/Wire Transfer + Reseller
+      -->
+      <div class="qt-payment-grid two-col" id="qt-payment-canada" data-region="Canada" style="display:none;">
+        <div class="qt-payment-card primary">
+          <div class="qt-payment-card-title">
+            Credit Card or PayPal
+            <span class="qt-badge">Preferred</span>
+          </div>
+          <p>
+            Log into your Soundtrap education subscription and click <strong>Buy Now</strong>.
+            Accepts Visa, Mastercard, and PayPal. Payment receipt downloadable at Soundtrap / Subscription.
+          </p>
+        </div>
+        <div class="qt-payment-card">
+          <div class="qt-payment-card-title">Invoice — Wire Transfer</div>
+          <p>
+            Submit your request via <a href="https://soundtrap.me/order_form" target="_blank">soundtrap.me/order_form</a>.
+            You can include a PO if required by your school administration. Invoices are emailed within 7 business days (Net-30 terms).
+            Do not send payment in advance.<br><br>
+            Make cheques payable to: Soundtrap AB. Mail cheques to: Soundtrap AB c/o Business Sweden, 2 Bloor St. W., Suite 2120, Toronto, ON M4W 3E2, Canada.
+          </p>
+        </div>
+        <div class="qt-payment-card" style="grid-column: 1 / -1">
+          <div class="qt-payment-card-title">Reseller</div>
+          <p>
+            We partner with many international resellers. To pay through one, please contact your preferred reseller for a quote and to place your order.
+          </p>
+        </div>
+      </div>
+
+      <!--
+        REGION: ROW — Credit Card + International Bank Transfer + Reseller
+      -->
+      <div class="qt-payment-grid two-col" id="qt-payment-row" data-region="ROW" style="display:none;">
+        <div class="qt-payment-card primary">
+          <div class="qt-payment-card-title">
+            Credit Card or PayPal
+            <span class="qt-badge">Preferred</span>
+          </div>
+          <p>
+            Log into your Soundtrap education subscription and click <strong>Buy Now</strong>.
+            Accepts Visa, Mastercard, and PayPal.
+          </p>
+        </div>
+        <div class="qt-payment-card">
+          <div class="qt-payment-card-title">Invoice — International Bank Transfer</div>
+          <p>
+            Submit your order via <a href="https://soundtrap.me/order_form" target="_blank">soundtrap.me/order_form</a>.
+            Paper checks are NOT accepted.
+          </p>
+        </div>
+        <div class="qt-payment-card" style="grid-column: 1 / -1">
+          <div class="qt-payment-card-title">Reseller</div>
+          <p>
+            We partner with many international resellers. To pay through one, please contact your preferred reseller for a quote and to place your order.
+          </p>
+        </div>
+      </div>
+
+      <!--
+        REGION: ANZ — Credit Card + Reseller
+      -->
+      <div class="qt-payment-grid two-col" id="qt-payment-anz" data-region="ANZ" style="display:none;">
+        <div class="qt-payment-card primary">
+          <div class="qt-payment-card-title">
+            Credit Card or PayPal
+            <span class="qt-badge">Preferred</span>
+          </div>
+          <p>
+            Log into your Soundtrap education subscription and click <strong>Buy Now</strong>.
+            Accepts Visa, Mastercard, and PayPal.
+          </p>
+        </div>
+        <div class="qt-payment-card">
+          <div class="qt-payment-card-title">Reseller</div>
+          <p>
+            We partner with many Australian and international resellers. To pay through one, please contact your preferred reseller for a quote and to place your order.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="qt-divider">
+
+    <!-- Important ordering notes -->
+    <section>
+      <div class="qt-section-title">Important Ordering Information</div>
+      <ul class="qt-info-list">
+        <li>This document is a <strong>order confirmation, not an invoice.</strong></li>
+        <li><strong>Terms of Use:</strong> <a href="https://www.soundtrap.com/legal/terms/edu/us" style="color:#6551FF;">soundtrap.com/legal/terms/edu/us</a></li>
+        <li>For questions, contact the sales representative listed on this order or reach out to <a href="mailto:orders@soundtrap.com" style="color:#6551FF;">orders@soundtrap.com</a>.</li>
+      </ul>
+    </section>
+
+  </div><!-- /.qt-body -->
+
+  <!-- ── Footer ────────────────────────────────────── -->
+  <footer class="qt-footer">
+    <div class="qt-footer-note">
+      Soundtrap for Education · soundtrap.com/edu<br>
+      Order #{{QuoteNumber}} · Issued {{SubmissionDate}}
+    </div>
+    <div class="qt-footer-contact">
+      Questions? <a href="mailto:orders@soundtrap.com">orders@soundtrap.com</a>
+    </div>
+  </footer>
+
+</div><!-- /.qt-wrap -->
+
+
+<!-- ══════════════════════════════════════════════════
+     DYNAMIC REGION SWITCHER
+     In production this logic runs server-side when the
+     quote is generated. This JS demo version lets you
+     preview all four regions in the browser.
+     ════════════════════════════════════════════════ -->
+<script>
+(function () {
+  /*
+   * REGION MAP — add countries here as needed.
+   * Keys are lowercase country names as submitted by the form.
+   */
+  var REGION_MAP = {
+    // US
+    'united states': 'US',
+
+    // Canada
+    'canada': 'Canada',
+
+    // Australia & New Zealand
+    'australia':   'ANZ',
+    'new zealand': 'ANZ',
+  };
+  // All other countries default to ROW
+
+  /* ── Currency — mirrors currencyForCountry() in the quote form ── */
+  var EUROZONE = ['Austria','Belgium','Croatia','Cyprus','Estonia','Finland','France',
+    'Germany','Greece','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta',
+    'Netherlands','Portugal','Slovakia','Slovenia','Spain'];
+
+  function currencyForCountry(country) {
+    var map = { 'United States':'USD','United Kingdom':'GBP',
+                'Sweden':'SEK','Norway':'NOK','Canada':'CAD','Australia':'AUD' };
+    if (map[country]) return map[country];
+    if (EUROZONE.indexOf(country) !== -1) return 'EUR';
+    return 'USD';
+  }
+
+  /* ── Tax note — one line per region ─────────────────────────── */
+  var TAX_NOTES = {
+    'US':     'Taxes — e.g., state sales tax — are not included in this order.',
+    'Canada': 'Applicable Canadian taxes (GST/HST/PST) are not included in this order.',
+    'ROW':    'Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this order.',
+    'ANZ':    'Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this order.',
+  };
+
+  /**
+   * Apply the correct region blocks, currency, and tax note.
+   * @param {string} country — raw country string from form submission
+   */
+  function applyRegion(country) {
+    var region = REGION_MAP[(country || '').toLowerCase()] || 'ROW';
+
+    // Entity notices
+    document.querySelectorAll('.qt-entity-region').forEach(function (el) {
+      el.style.display = (el.dataset.region === region) ? '' : 'none';
+    });
+
+    // Payment blocks
+    document.querySelectorAll('[id^="qt-payment-"]').forEach(function (el) {
+      el.style.display = (el.dataset.region === region) ? '' : 'none';
+    });
+
+    // Currency
+    var currency = currencyForCountry(country || '');
+    document.querySelectorAll('[data-placeholder="Currency"]').forEach(function (el) {
+      el.textContent = currency;
+    });
+
+    // Tax notes
+    var taxNote = TAX_NOTES[region] || TAX_NOTES['ROW'];
+    document.querySelectorAll('[data-placeholder="TaxNote"]').forEach(function (el) {
+      el.textContent = taxNote;
+    });
+
+    // Header address
+    document.querySelectorAll('.qt-header-address').forEach(function (el) {
+      el.style.display = (el.dataset.address === 'US') === (region === 'US') ? '' : 'none';
+    });
+
+    return region;
+  }
+
+  /*
+   * ── DEMO / PREVIEW mode ──────────────────────────────────────────
+   * When the quote is loaded without a ?country= param this adds a
+   * small floating region picker so you can preview all variants.
+   * Remove this block (and the picker HTML) in production.
+   */
+  /* ── Quote type titles ──────────────────────────────────────── */
+  var QUOTE_TYPE_LABELS = {
+    'NEW':     'Order Confirmation',
+    'RENEWAL': 'Order Confirmation',
+    'ADD-ON':  'Order Confirmation',
+    'UPGRADE': 'Order Confirmation',
+  };
+
+  var BADGE_CLASSES = {
+    'NEW':     '',
+    'RENEWAL': 'renewal',
+    'ADD-ON':  'addon',
+    'UPGRADE': 'upgrade',
+  };
+
+  var VALID_TYPES = ['NEW', 'RENEWAL', 'ADD-ON', 'UPGRADE'];
+
+  /**
+   * Apply the correct quote-type sections and update header/badge.
+   * @param {string} type — 'NEW' | 'RENEWAL' | 'ADD-ON' | 'UPGRADE'
+   */
+  function applyQuoteType(type) {
+    type = (type || 'NEW').toUpperCase();
+    if (VALID_TYPES.indexOf(type) === -1) type = 'NEW';
+
+    document.querySelectorAll('.qt-type-section').forEach(function (el) {
+      el.style.display = (el.dataset.quoteType === type) ? '' : 'none';
+    });
+
+    var titleEl = document.getElementById('qt-header-title');
+    if (titleEl) titleEl.textContent = QUOTE_TYPE_LABELS[type] || 'Order Confirmation';
+
+    var badgeEl = document.getElementById('qt-type-badge');
+    if (badgeEl) {
+      badgeEl.textContent  = type;
+      badgeEl.className    = 'qt-type-badge ' + (BADGE_CLASSES[type] || '');
+    }
+
+    return type;
+  }
+
+  var params     = new URLSearchParams(window.location.search);
+  var country    = params.get('country')    || 'United States';
+  var quoteType  = params.get('quoteType')  || 'NEW';
+
+  var region = applyRegion(country);
+  applyQuoteType(quoteType);
+
+  /* Preview picker — visible only when ?preview=1 is in the URL */
+  if (params.get('preview') === '1') {
+    var picker = document.createElement('div');
+    picker.className = 'qt-no-print';
+    picker.style.cssText = [
+      'position:fixed;bottom:24px;right:24px;z-index:9999',
+      'background:#16161B;border-radius:12px;padding:16px 18px',
+      'box-shadow:0 4px 24px rgba(0,0,0,0.4)',
+      'display:flex;flex-direction:column;gap:10px',
+      'font-family:Helvetica Neue,Helvetica,Arial,sans-serif;min-width:160px'
+    ].join(';');
+
+    /* Current active state (so buttons highlight correctly) */
+    var _curRegion = region;
+    var _curType   = quoteType.toUpperCase();
+
+    function btnStyle(active) {
+      return 'cursor:pointer;background:' + (active ? '#6551FF' : 'transparent') + ';' +
+        'color:#FDFDFE;border:1px solid ' + (active ? '#6551FF' : 'rgba(255,255,255,0.25)') + ';' +
+        'border-radius:6px;padding:6px 14px;' +
+        'font-size:12px;font-weight:600;text-align:center;width:100%;';
+    }
+
+    function sectionLabel(txt) {
+      return '<div style="font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;' +
+        'color:rgba(253,253,245,0.45);margin-bottom:2px;">' + txt + '</div>';
+    }
+
+    picker.innerHTML =
+      sectionLabel('Region') +
+      ['US','Canada','ROW','ANZ'].map(function(r){
+        return '<button id="qt-prev-region-' + r + '" onclick="(function(){' +
+          'document.querySelectorAll(\'.qt-entity-region\').forEach(function(e){' +
+            'e.style.display=e.dataset.region===\'' + r + '\'?\'\':\'none\';});' +
+          'document.querySelectorAll(\'[id^=qt-payment-]\').forEach(function(e){' +
+            'e.style.display=e.dataset.region===\'' + r + '\'?\'\':\'none\';});' +
+          'document.querySelectorAll(\'.qt-header-address\').forEach(function(e){' +
+            'e.style.display=(e.dataset.address===\'US\')===(\''+r+'\'===\'US\')?\'\':\'none\';});' +
+          '[\'' + ['US','Canada','ROW','ANZ'].join("','") + '\'].forEach(function(x){' +
+            'var b=document.getElementById(\'qt-prev-region-\'+x);' +
+            'if(b)b.style.background=x===\'' + r + '\'?\'#6551FF\':\'rgba(255,255,255,0.08)\';});' +
+          '})()" style="' + btnStyle(r === _curRegion) + '">' + r + '</button>';
+      }).join('') +
+      '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:4px 0;">' +
+      sectionLabel('Order Type') +
+      ['NEW','RENEWAL','ADD-ON','UPGRADE'].map(function(t){
+        return '<button id="qt-prev-type-' + t.replace('-','') + '" onclick="(function(){' +
+          'var labels={NEW:\'Order Confirmation\',RENEWAL:\'Order Confirmation\',\'ADD-ON\':\'Order Confirmation\',UPGRADE:\'Order Confirmation\'};' +
+          'var badges={NEW:\'\',RENEWAL:\'renewal\',\'ADD-ON\':\'addon\',UPGRADE:\'upgrade\'};' +
+          'document.querySelectorAll(\'.qt-type-section\').forEach(function(e){' +
+            'e.style.display=e.dataset.quoteType===\'' + t + '\'?\'\':\'none\';});' +
+          'var h=document.getElementById(\'qt-header-title\');if(h)h.textContent=labels[\'' + t + '\'];' +
+          'var b=document.getElementById(\'qt-type-badge\');' +
+            'if(b){b.textContent=\'' + t + '\';b.className=\'qt-type-badge \'+badges[\'' + t + '\'];}' +
+          '[\'' + ['NEW','RENEWAL','ADD-ON','UPGRADE'].join("','") + '\'].forEach(function(x){' +
+            'var b=document.getElementById(\'qt-prev-type-\'+x.replace(\'-\',\'\'));' +
+            'if(b)b.style.background=x===\'' + t + '\'?\'#6551FF\':\'rgba(255,255,255,0.08)\';});' +
+          '})()" style="' + btnStyle(t === _curType) + '">' + t + '</button>';
+      }).join('');
+
+    document.body.appendChild(picker);
+  }
+
+})();
+</script>
+
+</body>
+</html>

@@ -299,7 +299,7 @@ NEW, RENEWAL, ADD-ON, UPGRADE PLAN. Run As user must be admin to bypass this.
 | Email | `Email` |
 | Currency (derived from country) | `CurrencyIsoCode` |
 | City | `QuoteToCity` |
-| State | `QuoteToState` |
+| State | `QuoteToState` — sent as the **USPS 2-letter code** for US states (e.g. `CA`), converted by `stateAbbrev_()` from `config.usStateAbbrev`. Non-US/unmapped values sent as-is. The Sheet, emails, and template still show the full name. |
 | Country | `QuoteToCountry` |
 | NCES Number (12-digit school) | `NCES_School_Number__c` |
 | NCES District LEAID (7-digit) | `NCES_District_Number__c` |
