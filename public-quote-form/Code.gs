@@ -177,7 +177,6 @@ var SF_ALERT_EMAIL   = 'matteo@soundtrap.com';
 // actual account manager. Clear to '' in production.
 var REP_NOTIFICATION_OVERRIDE = 'matteo@soundtrap.com';
 
-
 // ════════════════════════════════════════════════════════════
 //  ENTRY POINTS
 // ════════════════════════════════════════════════════════════
@@ -316,7 +315,6 @@ function doGet(e) {
   return HtmlService.createHtmlOutput(page).setTitle('Quote ' + quoteNumber);
 }
 
-
 // ════════════════════════════════════════════════════════════
 //  PRINT PAGE
 // ════════════════════════════════════════════════════════════
@@ -345,7 +343,6 @@ function buildPrintPage_(quoteHtml, quoteNumber) {
     '<div id="quote-wrap">' + quoteHtml + '</div>' +
     '</body></html>';
 }
-
 
 // ════════════════════════════════════════════════════════════
 //  TEMPLATE-BASED PRINT PAGE
@@ -407,7 +404,6 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
 
   return html;
 }
-
 
 // ════════════════════════════════════════════════════════════
 //  QUOTE GENERATION
@@ -633,7 +629,6 @@ function sendDistrictRepNotification_(data, quoteNumber, timestamp) {
 
   h.push('</tr></table>');
 
-
   h.push('<p style="margin:0 0 16px;font-size:14px;line-height:1.65;color:rgba(22,22,22,0.85);">Please reach out to the prospect and provide them with a quote at your earliest convenience.</p>');
   h.push('<p style="margin:0 0 4px;font-size:14px;color:#16161B;">Thanks,</p>');
   h.push('<p style="margin:0 0 0;font-size:14px;font-weight:700;color:#16161B;">Matteo</p>');
@@ -719,6 +714,9 @@ function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
     '{{PdSession}}':             pdSession,
     '{{PdCost}}':                pdCost > 0 ? '+ ' + fmtCurrency_(pdCost, 'USD') : '',
     '{{GrandTotal}}':            grandTotal,
+    // Region content from config (single source of truth — see quoteContent)
+    '{{VendorRegistrationBlock}}': renderVendorRegTemplate_(region),
+    '{{PaymentMethodsBlock}}':     renderPaymentMethodsTemplate_(region),
   };
 }
 
@@ -769,6 +767,77 @@ function applyRegion_(html, region, currency) {
   );
 
   return html;
+}
+
+// ════════════════════════════════════════════════════════════
+//  REGION CONTENT — Vendor Registration + Payment Methods
+//  Single source of truth: config.json → quoteContent.
+//  Two renderers per block: *Template_ (CSS classes, for the web/PRINT/
+//  Salesforce template) and *Email_ (inline styles, Gmail-safe).
+//  Both read the SAME config strings so wording never drifts.
+// ════════════════════════════════════════════════════════════
+
+function quoteContentCfg_() {
+  return loadConfig_().quoteContent || { vendorRegistration: {}, paymentMethods: {} };
+}
+function vendorRegFor_(region) {
+  var v = quoteContentCfg_().vendorRegistration || {};
+  return v[region] || v['ROW'] || '';
+}
+function paymentMethodsFor_(region) {
+  var p = quoteContentCfg_().paymentMethods || {};
+  return p[region] || p['ROW'] || [];
+}
+
+/** Add brand-purple inline styling to any <a> tag that lacks an inline style (email only). */
+function styleEmailLinks_(html) {
+  return String(html || '').replace(/<a (?![^>]*style=)/gi, '<a style="color:#6551FF;" ');
+}
+
+/** Vendor Registration block — template (CSS-class) variant. */
+function renderVendorRegTemplate_(region) {
+  var icon = (region === 'US' || region === 'Canada') ? '🏢' : '🌏';
+  return '<section class="qt-entity-region">' +
+    '<div class="qt-entity-notice">' +
+    '<div class="qt-entity-icon">' + icon + '</div>' +
+    '<p><strong>Vendor Registration:</strong> ' + vendorRegFor_(region) + '</p>' +
+    '</div></section>';
+}
+
+/** Payment Methods block — template (CSS-class) variant. */
+function renderPaymentMethodsTemplate_(region) {
+  var cards = paymentMethodsFor_(region).map(function (m) {
+    var cls       = 'qt-payment-card' + (m.preferred ? ' primary' : '');
+    var styleAttr = m.fullWidth ? ' style="grid-column: 1 / -1"' : '';
+    var badge     = m.preferred ? ' <span class="qt-badge">Preferred</span>' : '';
+    return '<div class="' + cls + '"' + styleAttr + '>' +
+      '<div class="qt-payment-card-title">' + m.title + badge + '</div>' +
+      '<p>' + m.body + '</p></div>';
+  }).join('');
+  return '<div class="qt-payment-grid two-col">' + cards + '</div>';
+}
+
+/** Vendor Registration block — email (inline-style) variant. */
+function renderVendorRegEmail_(region) {
+  return '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+    '<td bgcolor="#F5F3FF" style="background-color:#F5F3FF;border-radius:6px;padding:14px 16px;font-size:12px;color:#333;line-height:1.6;">' +
+    '<strong>&#x1F3E2; Vendor Registration:</strong> ' + styleEmailLinks_(vendorRegFor_(region)) +
+    '</td></tr></table>';
+}
+
+/** Payment Methods block — email (inline-style) variant. Cards stack vertically for client robustness. */
+function renderPaymentMethodsEmail_(region) {
+  var rows = paymentMethodsFor_(region).map(function (m) {
+    var bg    = m.preferred ? '#EBE9FF' : '#F5F3FF';
+    var badge = m.preferred
+      ? ' <span style="background-color:#6551FF;color:#FDFDFE;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:0.5px;">PREFERRED</span>'
+      : '';
+    return '<tr><td bgcolor="' + bg + '" style="background-color:' + bg + ';border-radius:6px;padding:14px 16px;font-size:12px;color:#555;line-height:1.6;">' +
+      '<div style="font-size:12px;font-weight:700;color:#16161B;margin-bottom:6px;">' + m.title + badge + '</div>' +
+      styleEmailLinks_(m.body) +
+      '</td></tr><tr><td style="height:8px;font-size:0;line-height:0;">&nbsp;</td></tr>';
+  }).join('');
+  return '<table width="100%" cellpadding="0" cellspacing="0" border="0">' + rows + '</table>';
 }
 
 /**
@@ -840,7 +909,6 @@ function setDisplayOnDataAttr_(html, attrName, attrValue, visible) {
     }
   });
 }
-
 
 // ════════════════════════════════════════════════════════════
 //  PRICING
@@ -954,7 +1022,6 @@ function calcSubscriptionCost_(data, currency) {
 function calcPdCost_(pdSession) {
   return loadConfig_().pdPrices[pdSession] || 0;
 }
-
 
 // ════════════════════════════════════════════════════════════
 //  EMAIL
@@ -1146,26 +1213,19 @@ function buildFullQuoteEmail_(data, quoteNumber, timestamp, region, currency, qu
   h.push('<tr><td style="padding:0 36px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td height="1" bgcolor="#E5E5EA" style="background-color:#E5E5EA;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>');
 
   // ── Entity notice ────────────────────────────────────────────
+  // Content from config.quoteContent.vendorRegistration (same source as the template).
   h.push('<tr><td style="padding:20px 36px;">');
-  h.push('<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>');
-  h.push('<td bgcolor="#F5F3FF" style="background-color:#F5F3FF;border-radius:6px;padding:14px 16px;font-size:12px;color:#333;line-height:1.6;">');
-  h.push('<strong>&#x1F3E2; Vendor Registration:</strong> ');
-  if (region === 'US') {
-    h.push('Soundtrap is now an independent entity and no longer part of Spotify. Please ensure <strong>Soundtrap US Inc.</strong> is correctly registered in your systems. <strong>Paper checks are only accepted at: Soundtrap US Inc., PO Box 18375, Palatine, IL 60055-8375.</strong>');
-  } else if (region === 'Canada') {
-    h.push('Canadian orders are fulfilled by <strong>Soundtrap US Inc.</strong> Please ensure Soundtrap US Inc. is correctly registered in your systems before placing an order.');
-  } else {
-    h.push('International orders are fulfilled by <strong>Soundtrap AB</strong> (Sweden). Please contact your sales representative for region-specific invoicing and tax documentation.');
-  }
-  h.push('</td></tr></table></td></tr>');
+  h.push(renderVendorRegEmail_(region));
+  h.push('</td></tr>');
 
   // Divider
   h.push('<tr><td style="padding:0 36px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td height="1" bgcolor="#E5E5EA" style="background-color:#E5E5EA;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>');
 
   // ── Payment methods ──────────────────────────────────────────
+  // Content from config.quoteContent.paymentMethods (same source as the template).
   h.push('<tr><td style="padding:20px 36px;">');
   h.push('<div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#16161B;margin-bottom:14px;">Payment Methods</div>');
-  h.push(buildPaymentSection_(region));
+  h.push(renderPaymentMethodsEmail_(region));
   h.push('</td></tr>');
 
   // Divider
@@ -1349,35 +1409,6 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
   return h.join('');
 }
 
-/** Payment methods section — two-column card layout, region-specific. */
-function buildPaymentSection_(region) {
-  var preferred = '<td width="48%" bgcolor="#EBE9FF" style="background-color:#EBE9FF;border-radius:6px;padding:14px 16px;font-size:12px;color:#555;line-height:1.6;vertical-align:top;">' +
-    '<div style="font-size:12px;font-weight:700;color:#16161B;margin-bottom:6px;">Credit Card or PayPal ' +
-    '<span style="background-color:#6551FF;color:#FDFDFE;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:0.5px;">PREFERRED</span></div>' +
-    'Log into your Soundtrap education subscription and click <strong>Buy Now</strong>. Accepts Visa, Mastercard, and PayPal.' +
-    '</td>';
-
-  var invoiceTitle, invoiceBody;
-  if (region === 'US') {
-    invoiceTitle = 'Invoice \u2014 ACH, Wire Transfer, or Check';
-    invoiceBody  = '<strong>Not available for Classroom Plans.</strong> Submit via <a href="https://soundtrap.me/order_form" style="color:#6551FF;">soundtrap.me/order_form</a>. Include PO if required. Invoices emailed within 7 business days (Net-30).';
-  } else if (region === 'Canada') {
-    invoiceTitle = 'Invoice \u2014 Wire Transfer';
-    invoiceBody  = '<strong>Not available for Classroom Plans.</strong> Submit via <a href="https://soundtrap.me/order_form" style="color:#6551FF;">soundtrap.me/order_form</a>. Include PO if required. Invoices emailed within 7 business days (Net-30).';
-  } else {
-    invoiceTitle = 'Invoice \u2014 International Bank Transfer';
-    invoiceBody  = 'Submit via <a href="https://soundtrap.me/order_form" style="color:#6551FF;">soundtrap.me/order_form</a>. Contact your sales representative for bank details and applicable taxes.';
-  }
-
-  var invoice = '<td width="48%" bgcolor="#F5F3FF" style="background-color:#F5F3FF;border-radius:6px;padding:14px 16px;font-size:12px;color:#555;line-height:1.6;vertical-align:top;">' +
-    '<div style="font-size:12px;font-weight:700;color:#16161B;margin-bottom:6px;">' + invoiceTitle + '</div>' +
-    invoiceBody + '</td>';
-
-  return '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
-    preferred + '<td width="4%"></td>' + invoice +
-    '</tr></table>';
-}
-
 /**
  * Send a notification to the account manager / rep.
  * REP_NOTIFICATION_OVERRIDE redirects all notifications during testing.
@@ -1457,7 +1488,6 @@ function sendRepNotification_(data, quoteNumber) {
 
   GmailApp.sendEmail(toEmail, subject, lines.join('\n'));
 }
-
 
 // ════════════════════════════════════════════════════════════
 //  HELPERS
@@ -1907,7 +1937,6 @@ function generateQuoteNumber_() {
   return 'DIR-' + year + '-' + String(n).padStart(5, '0');
 }
 
-
 // ════════════════════════════════════════════════════════════
 //  ONE-TIME SETUP
 // ════════════════════════════════════════════════════════════
@@ -1948,7 +1977,6 @@ function initSheets() {
 
   SpreadsheetApp.getUi().alert('✅ Sheets created and ready.');
 }
-
 
 // ════════════════════════════════════════════════════════════
 //  DIAGNOSTIC — run manually from the Apps Script editor

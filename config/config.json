@@ -99,6 +99,37 @@
     "ROW":    "Taxes — e.g., VAT, GST, or other applicable taxes — are not included in this quote."
   },
 
+  "quoteContent": {
+    "_comment": "Region-specific quote content (Vendor Registration + Payment Methods). SINGLE SOURCE OF TRUTH for all three quote views: the web/PRINT template, the Salesforce quote URL (same template), and the customer email. Both renderers (template = CSS classes; email = inline styles) read these same strings, so wording can never drift. Regions: US, Canada, ROW, ANZ. HTML allowed in strings (e.g. <strong>, <br>, <a href>). Links may be plain <a href=...>; the email renderer adds brand-purple inline styling automatically.",
+    "vendorRegistration": {
+      "US":     "Soundtrap is now an independent entity and no longer part of Spotify. Please ensure <strong>Soundtrap US Inc.</strong> is correctly registered in your systems before placing an order.",
+      "Canada": "Soundtrap is now an independent entity and no longer part of Spotify. Please ensure <strong>Soundtrap AB</strong> is correctly registered in your systems before placing an order.",
+      "ROW":    "Soundtrap is now an independent entity and no longer part of Spotify. Please ensure <strong>Soundtrap AB</strong> is correctly registered in your systems before placing an order.",
+      "ANZ":    "Soundtrap is now an independent entity and no longer part of Spotify. Please ensure <strong>Soundtrap AB</strong> is correctly registered in your systems before placing an order.<br><br><strong>Australia and New Zealand:</strong> We currently can't invoice schools in Australia or New Zealand directly. Please follow the instructions below to pay via credit card or a reseller."
+    },
+    "paymentMethods": {
+      "US": [
+        { "title": "Credit Card or PayPal", "preferred": true, "body": "Log into your Soundtrap education subscription and click <strong>Buy Now</strong>. Accepts Visa, Mastercard, and PayPal. Payment receipt downloadable at Soundtrap / Subscription." },
+        { "title": "Invoice — ACH, Wire Transfer, or Check", "body": "Submit your request via <a href=\"https://soundtrap.me/order_form\">soundtrap.me/order_form</a>. You can include a PO if required by your school administration. Invoices are emailed within 7 business days (Net-30 terms). Do not send payment in advance.<br><br>Paper checks are only accepted at: Soundtrap US Inc., PO Box 18375, Palatine, IL 60055-8375." },
+        { "title": "Reseller", "fullWidth": true, "body": "We partner with many US resellers. To pay through one, please contact your preferred reseller for a quote and to place your order." }
+      ],
+      "Canada": [
+        { "title": "Credit Card or PayPal", "preferred": true, "body": "Log into your Soundtrap education subscription and click <strong>Buy Now</strong>. Accepts Visa, Mastercard, and PayPal. Payment receipt downloadable at Soundtrap / Subscription." },
+        { "title": "Invoice — Wire Transfer", "body": "Submit your request via <a href=\"https://soundtrap.me/order_form\">soundtrap.me/order_form</a>. You can include a PO if required by your school administration. Invoices are emailed within 7 business days (Net-30 terms). Do not send payment in advance.<br><br>Make cheques payable to: Soundtrap AB. Mail cheques to: Soundtrap AB c/o Business Sweden, 2 Bloor St. W., Suite 2120, Toronto, ON M4W 3E2, Canada." },
+        { "title": "Reseller", "fullWidth": true, "body": "We partner with many international resellers. To pay through one, please contact your preferred reseller for a quote and to place your order." }
+      ],
+      "ROW": [
+        { "title": "Credit Card or PayPal", "preferred": true, "body": "Log into your Soundtrap education subscription and click <strong>Buy Now</strong>. Accepts Visa, Mastercard, and PayPal." },
+        { "title": "Invoice — International Bank Transfer", "body": "Submit your order via <a href=\"https://soundtrap.me/order_form\">soundtrap.me/order_form</a>. Paper checks are NOT accepted." },
+        { "title": "Reseller", "fullWidth": true, "body": "We partner with many international resellers. To pay through one, please contact your preferred reseller for a quote and to place your order." }
+      ],
+      "ANZ": [
+        { "title": "Credit Card or PayPal", "preferred": true, "body": "Log into your Soundtrap education subscription and click <strong>Buy Now</strong>. Accepts Visa, Mastercard, and PayPal." },
+        { "title": "Reseller", "fullWidth": true, "body": "We partner with many Australian and international resellers. To pay through one, please contact your preferred reseller for a quote and to place your order." }
+      ]
+    }
+  },
+
   "upgradeMap": {
     "_comment": "Which plans a customer on a given plan can upgrade to.",
     "Legacy":    ["Classroom", "School", "District"],
