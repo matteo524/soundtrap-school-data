@@ -30,6 +30,13 @@
     schoolsBaseUrl:   'https://matteo524.github.io/soundtrap-school-data/schools/schools-',
     hubspotPortalId:  'YOUR_PORTAL_ID',         // e.g. '1234567'
     hubspotFormGuid:  'YOUR_FORM_GUID',         // e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    // Thank-you destinations after submit. Relative paths work on GitHub Pages
+    // (the .html files sit next to this one). On HubSpot, set these to the FULL
+    // URLs of your HubSpot thank-you pages, e.g.
+    //   thankYouUrl:         'https://www.soundtrap.com/edu/quote-thank-you',
+    //   thankYouDistrictUrl: 'https://www.soundtrap.com/edu/quote-thank-you-district',
+    thankYouUrl:          'thank-you.html',
+    thankYouDistrictUrl:  'thank-you-district.html',
   };
 </script>
 <!-- ──────────────────────────────────────────────────────────── -->
@@ -1388,6 +1395,8 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   var SCHOOLS_BASE_URL = CFG.schoolsBaseUrl  || '';
   var HS_PORTAL_ID     = CFG.hubspotPortalId || '';
   var HS_FORM_GUID     = CFG.hubspotFormGuid || '';
+  var THANKYOU_URL          = CFG.thankYouUrl         || 'thank-you.html';
+  var THANKYOU_DISTRICT_URL = CFG.thankYouDistrictUrl || 'thank-you-district.html';
 
   /* ── Shared config (fetched from config/config.json) ────────
      Populated by applyConfig(). All data variables below
@@ -3376,7 +3385,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     clearNces();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit Quote Request';
-    window.location.href = planVal.toLowerCase() === 'district' ? 'thank-you-district.html' : 'thank-you.html';
+    window.location.href = planVal.toLowerCase() === 'district' ? THANKYOU_DISTRICT_URL : THANKYOU_URL;
   });
 
   /* ── localStorage profile — save / restore ────────────────── */
