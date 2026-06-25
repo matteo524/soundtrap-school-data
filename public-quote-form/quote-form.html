@@ -1162,7 +1162,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
       <!-- ── QUOTE DETAILS ──────────────────────────────────── -->
       <div class="pqf-section" style="padding-top:40px;">
-        <div class="pqf-section-title">Quote Details</div>
+        <!-- "Quote Details" heading hidden per request; inputs below are still required. -->
         <div class="pqf-grid pqf-grid-2">
 
           <!-- Plan — HS internal name: plan -->
@@ -2057,12 +2057,19 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     return PD_PRICES_FORM[sel.value] || 0;
   }
 
+  // Set to true to show the live estimated-price box to customers on the public form.
+  // Currently hidden — pricing is confirmed in the official quote only.
+  var PRICE_PREVIEW_ENABLED = false;
+
   function updatePriceDisplay() {
     var priceWrap   = document.getElementById('pqf_price_wrap');
     var amountEl    = document.getElementById('pqf_price_amount');
     var breakdownEl = document.getElementById('pqf_price_breakdown');
     var labelEl     = document.querySelector('.pqf-price-label');
     if (!priceWrap || !amountEl) return;
+
+    // Price preview disabled on the public form — keep the box hidden and stop.
+    if (!PRICE_PREVIEW_ENABLED) { priceWrap.style.display = 'none'; return; }
 
     var quoteType  = document.getElementById('pqf_quote_type').value;
     var plan       = document.getElementById('pqf_plan').value;
