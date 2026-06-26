@@ -237,6 +237,47 @@
   line-height: 1;
 }
 
+/* ── Quote-type cards (humanized radio group; drives hidden select) ── */
+.pqf-qt-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+}
+@media (max-width: 640px) { .pqf-qt-cards { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 380px) { .pqf-qt-cards { grid-template-columns: 1fr; } }
+.pqf-qt-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1.5px solid #E2E0EC;
+  border-radius: 10px;
+  background: #FDFDFE;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color .12s, background .12s, box-shadow .12s;
+}
+.pqf-qt-card:hover { border-color: #B8A6FF; background: #FAF9FF; }
+.pqf-qt-card:focus-visible { outline: 2px solid #6551FF; outline-offset: 2px; }
+.pqf-qt-card[aria-checked="true"] {
+  border-color: #6551FF;
+  background: #F4F1FF;
+  box-shadow: 0 0 0 1px #6551FF inset;
+}
+.pqf-qt-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #16161B;
+}
+.pqf-qt-card-desc {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #5B5870;
+}
+
 /* ── Inputs & Selects ──────────────────────────────────────── */
 .pqf-input,
 .pqf-select {
@@ -805,11 +846,34 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       <div class="pqf-section">
         <div class="pqf-section-title">Quote Type</div>
         <div class="pqf-grid pqf-grid-2">
-          <div class="pqf-field" id="pqf_quote_type_field">
-            <label class="pqf-label" for="pqf_quote_type">
-              What kind of quote do you need? <span class="pqf-required">*</span>
+          <div class="pqf-field" id="pqf_quote_type_field" style="grid-column: 1 / -1;">
+            <label class="pqf-label">
+              I want a quote for: <span class="pqf-required">*</span>
             </label>
-            <div class="pqf-select-wrap">
+
+            <!-- Friendly cards drive the hidden <select> below. The select keeps the
+                 exact values (NEW / RENEWAL / ADD-ON / UPGRADE PLAN) used by the form
+                 logic + Salesforce — do NOT change the option values. -->
+            <div class="pqf-qt-cards" role="radiogroup" aria-label="What would you like to do?">
+              <button type="button" class="pqf-qt-card" data-qt="NEW" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">New subscription</span>
+                <span class="pqf-qt-card-desc">Buying Soundtrap for Education for the first time</span>
+              </button>
+              <button type="button" class="pqf-qt-card" data-qt="RENEWAL" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">Renewal</span>
+                <span class="pqf-qt-card-desc">Renew an existing subscription</span>
+              </button>
+              <button type="button" class="pqf-qt-card" data-qt="ADD-ON" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">Add seats</span>
+                <span class="pqf-qt-card-desc">Add more seats to a current subscription</span>
+              </button>
+              <button type="button" class="pqf-qt-card" data-qt="UPGRADE PLAN" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">Upgrade plan</span>
+                <span class="pqf-qt-card-desc">Move to a higher-tier plan</span>
+              </button>
+            </div>
+
+            <div class="pqf-select-wrap" style="display:none;">
               <select id="pqf_quote_type" name="quote_type" class="pqf-select" required>
                 <option value="">Select type…</option>
                 <option value="NEW">NEW</option>
@@ -818,7 +882,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
                 <option value="UPGRADE PLAN">UPGRADE PLAN</option>
               </select>
             </div>
-            <span class="pqf-hint" id="pqf_quote_type_hint">ADD-ON: add seats to your current plan.<br>UPGRADE PLAN: switch to a higher-tier plan.</span>
+            <span class="pqf-hint" id="pqf_quote_type_hint"></span>
           </div>
         </div>
       </div>
@@ -1166,7 +1230,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         <div class="pqf-grid pqf-grid-2">
 
           <!-- Plan — HS internal name: plan -->
-          <div class="pqf-field" id="pqf_plan_field">
+          <div class="pqf-field" id="pqf_plan_field" style="grid-column: 1 / -1;">
             <label class="pqf-label" for="pqf_plan">
               Plan <span class="pqf-required">*</span>
             </label>
@@ -2350,7 +2414,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     // gridColumn: seats full-width for normal flow; auto (1 col) for UPGRADE
     if (seatsField)   seatsField.style.gridColumn   = enable ? 'auto' : '1 / -1';
     if (schoolsField) schoolsField.style.gridColumn = enable ? '1 / -1' : 'auto';
-    if (qtField)      qtField.style.gridColumn      = enable ? '1 / -1' : '';
+    if (qtField)      qtField.style.gridColumn      = '1 / -1';  // cards always span full width
   }
 
   // ── Quote type → plan options + field visibility ─────────────
@@ -2436,6 +2500,28 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
   document.getElementById('pqf_quote_type').addEventListener('change', function () {
     applyQuoteTypeUI(this.value);
+    syncQuoteTypeCards(this.value);
+  });
+
+  // ── Quote-type cards → drive the hidden <select> ──────────────
+  // Cards are presentation only; the select keeps the canonical values
+  // (NEW / RENEWAL / ADD-ON / UPGRADE PLAN) that the form logic + Salesforce use.
+  function syncQuoteTypeCards(val) {
+    document.querySelectorAll('.pqf-qt-card').forEach(function (card) {
+      card.setAttribute('aria-checked', card.getAttribute('data-qt') === val ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('.pqf-qt-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var val = card.getAttribute('data-qt');
+      var sel = document.getElementById('pqf_quote_type');
+      if (sel.value === val) return;
+      sel.value = val;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));   // fires applyQuoteTypeUI + sync
+      // Clear any "please select" error once a choice is made.
+      var hint = document.getElementById('pqf_quote_type_hint');
+      if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
+    });
   });
 
   // ── Current Plan change → filter Desired Plan + update seats min ──
@@ -3557,6 +3643,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     loadIndex();
     toggleStateField(true); // show state by default; hidden dynamically for non-US
     applyQuoteTypeUI(document.getElementById('pqf_quote_type').value || '');
+    syncQuoteTypeCards(document.getElementById('pqf_quote_type').value || '');
     updatePdSection();
     initWelcomeBanner();
   });
