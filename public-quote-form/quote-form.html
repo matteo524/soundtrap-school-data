@@ -236,6 +236,12 @@
   font-size: 14px;
   line-height: 1;
 }
+.pqf-optional {
+  color: #8A8796;              /* muted — clearly secondary to required */
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: 4px;
+}
 
 /* ── Quote-type cards (humanized radio group; drives hidden select) ── */
 .pqf-qt-cards {
@@ -1096,7 +1102,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
             <!-- School Website — HS internal name: school_website (optional) -->
             <div class="pqf-field" style="grid-column: 1 / -1;">
               <label class="pqf-label" for="pqf_manual_website">
-                School Website
+                School Website <span class="pqf-optional">(optional)</span>
               </label>
               <input
                 id="pqf_manual_website"
@@ -1234,7 +1240,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
           <!-- Soundtrap Account ID — HS internal name: soundtrap_account_id -->
           <div class="pqf-field pqf-grid-2" style="grid-column: 1 / -1;">
             <label class="pqf-label" for="pqf_account_id">
-              Soundtrap Account ID
+              Soundtrap Account ID <span class="pqf-optional">(optional)</span>
             </label>
             <input
               id="pqf_account_id"
@@ -1266,7 +1272,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
       <!-- ── USE CASE ───────────────────────────────────────── -->
       <div class="pqf-field pqf-use-case-field" style="grid-column: 1 / -1; padding: 32px 40px 24px;">
-        <label class="pqf-label" for="pqf_use_case" style="font-size: 15px; font-weight: 600; color: #6551FF; letter-spacing: 0.1px; display: block;">How are you planning to use Soundtrap with your students?</label>
+        <label class="pqf-label" for="pqf_use_case" style="font-size: 15px; font-weight: 600; color: #6551FF; letter-spacing: 0.1px; display: block;">How are you planning to use Soundtrap with your students? <span class="pqf-optional">(optional)</span></label>
         <textarea id="pqf_use_case" name="pqf_use_case" class="pqf-textarea"
           rows="3" placeholder="This is optional, but feel free to share — we&apos;d love to hear!"></textarea>
       </div>
@@ -1432,7 +1438,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
             <div class="pqf-pd-title">Professional Development</div>
             <div class="pqf-pd-hint">Optional PD session for your team — available for US customers. The cost will be added to your quote total.</div>
             <div class="pqf-field" style="margin-top:8px; margin-bottom:0;">
-              <label class="pqf-label" for="pqf_pd_session">PD Session</label>
+              <label class="pqf-label" for="pqf_pd_session">PD Session <span class="pqf-optional">(optional)</span></label>
               <select id="pqf_pd_session" name="pqf_pd_session" class="pqf-select">
                 <option value="">No PD session</option>
                 <option value="1 hour Virtual PD for up to 50 teachers">Virtual PD – up to 50 teachers (1 hr) — $499</option>
@@ -1445,7 +1451,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
           <!-- Purchase Date — NEW only, optional -->
           <div class="pqf-field" id="pqf_purchase_date_field" style="display:none; grid-column: 1 / -1;">
-            <label class="pqf-label" for="pqf_purchase_date">Purchase Date</label>
+            <label class="pqf-label" for="pqf_purchase_date">Purchase Date <span class="pqf-optional">(optional)</span></label>
             <input
               id="pqf_purchase_date"
               name="purchase_date"
