@@ -870,53 +870,8 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         </div>
       </div>
 
-      <!-- ── QUOTE TYPE ────────────────────────────────────────── -->
-      <div class="pqf-section">
-        <div class="pqf-section-title">Quote Type</div>
-        <div class="pqf-grid pqf-grid-2">
-          <div class="pqf-field" id="pqf_quote_type_field" style="grid-column: 1 / -1;">
-            <label class="pqf-label">
-              I want a quote for: <span class="pqf-required">*</span>
-            </label>
-
-            <!-- Friendly cards drive the hidden <select> below. The select keeps the
-                 exact values (NEW / RENEWAL / ADD-ON / UPGRADE PLAN) used by the form
-                 logic + Salesforce — do NOT change the option values. -->
-            <div class="pqf-qt-cards" role="radiogroup" aria-label="What would you like to do?">
-              <button type="button" class="pqf-qt-card" data-qt="NEW" role="radio" aria-checked="false">
-                <span class="pqf-qt-card-title">New subscription</span>
-                <span class="pqf-qt-card-desc">Buying Soundtrap for Education for the first time</span>
-              </button>
-              <button type="button" class="pqf-qt-card" data-qt="RENEWAL" role="radio" aria-checked="false">
-                <span class="pqf-qt-card-title">Renewal</span>
-                <span class="pqf-qt-card-desc">Renew an existing subscription</span>
-              </button>
-              <button type="button" class="pqf-qt-card" data-qt="ADD-ON" role="radio" aria-checked="false">
-                <span class="pqf-qt-card-title">Add seats</span>
-                <span class="pqf-qt-card-desc">Add more seats to a current subscription</span>
-              </button>
-              <button type="button" class="pqf-qt-card" data-qt="UPGRADE PLAN" role="radio" aria-checked="false">
-                <span class="pqf-qt-card-title">Upgrade plan</span>
-                <span class="pqf-qt-card-desc">Move to a higher-tier plan</span>
-              </button>
-            </div>
-
-            <div class="pqf-select-wrap" style="display:none;">
-              <select id="pqf_quote_type" name="quote_type" class="pqf-select" required>
-                <option value="">Select type…</option>
-                <option value="NEW">NEW</option>
-                <option value="RENEWAL">RENEWAL</option>
-                <option value="ADD-ON">ADD-ON</option>
-                <option value="UPGRADE PLAN">UPGRADE PLAN</option>
-              </select>
-            </div>
-            <span class="pqf-hint" id="pqf_quote_type_hint"></span>
-          </div>
-        </div>
-      </div>
-
       <!-- ── SCHOOL DETAILS ──────────────────────────────────── -->
-      <div class="pqf-section" style="padding-top:40px;">
+      <div class="pqf-section">
         <div class="pqf-section-title">School Details</div>
 
         <div id="pqf_dropdown_grid" class="pqf-grid pqf-grid-1">
@@ -1157,6 +1112,51 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
           </div>
         </div><!-- /pqf_manual_panel -->
 
+      </div>
+
+      <!-- ── QUOTE TYPE ────────────────────────────────────────── -->
+      <div class="pqf-section">
+        <div class="pqf-section-title">Quote Type</div>
+        <div class="pqf-grid pqf-grid-2">
+          <div class="pqf-field" id="pqf_quote_type_field" style="grid-column: 1 / -1;">
+            <label class="pqf-label">
+              I want a quote for: <span class="pqf-required">*</span>
+            </label>
+
+            <!-- Friendly cards drive the hidden <select> below. The select keeps the
+                 exact values (NEW / RENEWAL / ADD-ON / UPGRADE PLAN) used by the form
+                 logic + Salesforce — do NOT change the option values. -->
+            <div class="pqf-qt-cards" role="radiogroup" aria-label="What would you like to do?">
+              <button type="button" class="pqf-qt-card" data-qt="NEW" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">New subscription</span>
+                <span class="pqf-qt-card-desc">Buying Soundtrap for Education for the first time</span>
+              </button>
+              <button type="button" class="pqf-qt-card" data-qt="RENEWAL" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">Renewal</span>
+                <span class="pqf-qt-card-desc">Renew an existing subscription</span>
+              </button>
+              <button type="button" class="pqf-qt-card" data-qt="ADD-ON" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">Add seats</span>
+                <span class="pqf-qt-card-desc">Add more seats to a current subscription</span>
+              </button>
+              <button type="button" class="pqf-qt-card" data-qt="UPGRADE PLAN" role="radio" aria-checked="false">
+                <span class="pqf-qt-card-title">Upgrade plan</span>
+                <span class="pqf-qt-card-desc">Move to a higher-tier plan</span>
+              </button>
+            </div>
+
+            <div class="pqf-select-wrap" style="display:none;">
+              <select id="pqf_quote_type" name="quote_type" class="pqf-select" required>
+                <option value="">Select type…</option>
+                <option value="NEW">NEW</option>
+                <option value="RENEWAL">RENEWAL</option>
+                <option value="ADD-ON">ADD-ON</option>
+                <option value="UPGRADE PLAN">UPGRADE PLAN</option>
+              </select>
+            </div>
+            <span class="pqf-hint" id="pqf_quote_type_hint"></span>
+          </div>
+        </div>
       </div>
 
       <!-- ── CONTACT INFORMATION ────────────────────────────── -->
