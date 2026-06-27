@@ -1604,6 +1604,13 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
     record.NCES_District_Number__c = nces7;
     var accountId = findAccountByNces_(auth, nces12);
     if (accountId) record.AccountId = accountId;
+  } else if (data.district_nces) {
+    // District-only selection (typeahead): no 12-digit school NCES, but the
+    // frontend derived the 7-digit district LEAID from a member school.
+    var leaid = String(data.district_nces).replace(/\s/g, '');
+    record.NCES_District_Number__c = leaid;
+    var districtAcct = findAccountByNces_(auth, leaid);  // falls through to district-number match
+    if (districtAcct) record.AccountId = districtAcct;
   }
 
   // ── Fee calculations ─────────────────────────────────────────
