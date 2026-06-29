@@ -243,16 +243,27 @@
   margin-left: 4px;
 }
 
-/* Secondary helper link under the Plan field (plan-comparison guide) */
+/* Helper link under the Plan field (plan-comparison guide) — pill style */
 .pqf-plan-help {
-  display: inline-block;
-  margin-top: 6px;
+  display: inline-flex;
+  align-self: flex-start;      /* hug content (parent .pqf-field is a flex column) */
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 12px;
   font-size: 13px;
-  font-weight: 500;
-  color: #6551FF;             /* Purple Rain — brand primary */
+  font-weight: 600;
+  color: #6551FF;                          /* Purple Rain — brand primary */
+  background: rgba(101, 81, 255, 0.08);    /* Purple Rain, 8% tint */
+  border: 1px solid rgba(101, 81, 255, 0.20);
+  border-radius: 999px;
   text-decoration: none;
+  transition: background 0.18s, border-color 0.18s;
 }
-.pqf-plan-help:hover { text-decoration: underline; }
+.pqf-plan-help:hover {
+  background: rgba(101, 81, 255, 0.14);
+  border-color: rgba(101, 81, 255, 0.35);
+}
 
 /* ── Quote-type cards (humanized radio group; drives hidden select) ── */
 .pqf-qt-cards {
@@ -1308,7 +1319,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
             </div>
             <span class="pqf-hint" id="pqf_plan_hint"></span>
             <a href="https://edu.soundtrap.com/which-soundtrap-plan-should-you-choose/"
-               target="_blank" rel="noopener" class="pqf-plan-help">Not sure which plan? Compare plans &rarr;</a>
+               target="_blank" rel="noopener" class="pqf-plan-help">&#128161; Not sure which plan? Compare plans &rarr;</a>
           </div>
 
           <!-- Number of Seats — HS internal name: number_of_seats -->
