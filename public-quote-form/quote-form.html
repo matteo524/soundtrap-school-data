@@ -1894,24 +1894,26 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         else                      stateWrapTMM.classList.remove('pqf-locked-wrap');
       }
     }
-    // City: lock if a cascade city was already selected
+    // City: lock + prefill only when a cascade city is already known. Otherwise leave it
+    // as a free, editable field — the typeahead "can't find" path never picks a city, so
+    // any prior lock must be actively cleared (no stale value should leak in or stay locked).
     var manualCityInput = document.getElementById('pqf_manual_city');
     var cascadeCity = sel.city.value;
-    if (on && cascadeCity) {
-      if (manualCityInput) {
+    if (manualCityInput) {
+      if (on && cascadeCity) {
         manualCityInput.value             = cascadeCity;
         manualCityInput.readOnly          = true;
         manualCityInput.style.color       = '#888';
         manualCityInput.style.background  = '#F4F4F5';
         manualCityInput.style.borderColor = '#E8E4FF';
         manualCityInput.style.cursor      = 'default';
+      } else {
+        manualCityInput.readOnly          = false;
+        manualCityInput.style.color       = '';
+        manualCityInput.style.background  = '';
+        manualCityInput.style.borderColor = '';
+        manualCityInput.style.cursor      = '';
       }
-    } else if (!on && manualCityInput) {
-      manualCityInput.readOnly          = false;
-      manualCityInput.style.color       = '';
-      manualCityInput.style.background  = '';
-      manualCityInput.style.borderColor = '';
-      manualCityInput.style.cursor      = '';
     }
     // Change back-button label
     if (manualBackBtn) {
@@ -3217,9 +3219,30 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       else if (e.key === 'Escape') { drop.style.display = 'none'; }
     });
 
-    // "Can't find it" → full manual entry (same path the cascade used)
+    // "My school isn't listed" → manual entry. Country + State are already known (the
+    // typeahead only appears after they're picked), so pre-fill + lock them and let the
+    // user free-type City / District / School. Clear any prior typeahead pick + manual
+    // location fields first so nothing stale leaks in or stays locked.
     var cf = document.getElementById('pqf_find_cantfind');
-    if (cf) cf.addEventListener('click', function () { toggleManualMode(true); });
+    if (cf) cf.addEventListener('click', function () {
+      clearFindSelection();
+      inp.value = '';
+      ['pqf_manual_city', 'pqf_manual_district', 'pqf_manual_school'].forEach(function (id) {
+        var el = document.getElementById(id); if (el) el.value = '';
+      });
+      var country = sel.country.value || 'United States';
+      var state   = sel.state.value;
+      var mc = document.getElementById('pqf_manual_country');
+      if (mc) mc.value = country;
+      updateDistrictLabel(country);
+      if (state) {
+        comboCommit('manual_state', state);   // sets both the input and hidden <select>
+        updateManualStateLabel(country);
+      }
+      toggleManualMode(true, true, state ? true : null);  // lock Country (+ State if known)
+      var cityEl = document.getElementById('pqf_manual_city');
+      if (cityEl) cityEl.focus();
+    });
   })();
 
   // Show/hide + reset the find field (called from country/state handlers).
