@@ -68,6 +68,10 @@ var COLUMNS = [
   // Salesforce sync
   'SF Status',
   'SF Record ID',
+  // School address (NCES-sourced, editable on the form) — appended at the end so
+  // existing Sheet columns keep their positions.
+  'School Address',
+  'School ZIP',
 ];
 
 // Maps incoming field names → column headers above
@@ -101,6 +105,8 @@ var FIELD_MAP = {
   school_website:         'School Website',
   pd_session:             'PD Session',
   purchase_date:          'Purchase Date',
+  school_address:         'School Address',
+  school_zip:             'School ZIP',
 };
 
 // ── Quote generation config ──────────────────────────────────

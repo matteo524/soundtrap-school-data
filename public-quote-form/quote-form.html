@@ -275,6 +275,16 @@
   border-color: rgba(101, 81, 255, 0.35);
 }
 
+/* School address block: street | city | zip */
+.pqf-addr-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 0.7fr;
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .pqf-addr-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Quote-type cards (humanized radio group; drives hidden select) ── */
 .pqf-qt-cards {
   display: grid;
@@ -959,6 +969,17 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
             <div id="pqf_find_cantfind_wrap" class="pqf-cant-find-wrap" style="display:none;">
               <button type="button" id="pqf_find_cantfind" class="pqf-cant-find">My school isn't listed / I can't find it</button>
             </div>
+          </div>
+
+          <!-- School address — auto-filled from NCES on selection; editable -->
+          <div class="pqf-field" id="pqf_school_addr_block" style="display:none; grid-column: 1 / -1;">
+            <label class="pqf-label">School address <span class="pqf-optional">(auto-filled — edit if it's not right)</span></label>
+            <div class="pqf-addr-grid">
+              <input type="text" id="pqf_addr_street" name="school_address" class="pqf-input" placeholder="Street address" autocomplete="off">
+              <input type="text" id="pqf_addr_city"   name="school_city"    class="pqf-input" placeholder="City" autocomplete="off">
+              <input type="text" id="pqf_addr_zip"    name="school_zip"     class="pqf-input" placeholder="ZIP" autocomplete="off">
+            </div>
+            <span class="pqf-hint" id="pqf_addr_hint">From NCES records — please correct it if anything looks off.</span>
           </div>
 
           <!-- City — HS internal name: city -->
@@ -3134,17 +3155,24 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         for (var i = 0; i < schools.length; i++) {
           if (schools[i].nces) { leaid = String(schools[i].nces).substring(0, 7); break; }
         }
+        // District-level address (from the per-state _districtAddr map)
+        var distAddr = (_stateSchools && _stateSchools._districtAddr &&
+                        _stateSchools._districtAddr[dDisplay.toLowerCase()]) || null;
         // District as its own selectable entry
         _findItems.push({
           label: dDisplay, sub: city + ' · whole district', badge: 'District',
-          type: 'district', district: dDisplay, city: city, name: '', nces: '', leaid: leaid
+          type: 'district', district: dDisplay, city: city, name: '', nces: '', leaid: leaid,
+          address: distAddr ? (distAddr.address || '') : '',
+          addrCity: distAddr ? (distAddr.city || '') : '',
+          zip: distAddr ? (distAddr.zip || '') : ''
         });
         // Schools within this district (from the prefetched state file, keyed lowercase)
         schools.forEach(function (s) {
           _findItems.push({
             label: s.name, sub: dDisplay + ', ' + city, badge: '',
             type: 'school', district: dDisplay, city: city, name: s.name,
-            nces: s.nces || '', leaid: (s.nces ? String(s.nces).substring(0, 7) : '')
+            nces: s.nces || '', leaid: (s.nces ? String(s.nces).substring(0, 7) : ''),
+            address: s.address || '', addrCity: s.city || '', zip: s.zip || ''
           });
         });
       });
@@ -3181,6 +3209,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     // District LEAID (7-digit) — lets the backend set NCES_District_Number__c even
     // for district-only picks (where there's no 12-digit school NCES).
     var dn = document.getElementById('pqf_district_nces'); if (dn) dn.value = item.leaid || '';
+    setSchoolAddr(item.address || '', item.addrCity || '', item.zip || '');  // prefill + reveal (editable)
     showEnrollment(item.district);   // fills enrollment + updateAccountManager()
     var inp = document.getElementById('pqf_find_input');
     if (inp) inp.value = (item.type === 'school' ? item.name : item.district);
@@ -3190,11 +3219,26 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     updatePdSection();
   }
 
+  // School address block — prefill (editable) + reveal / hide
+  function setSchoolAddr(street, city, zip) {
+    var s = document.getElementById('pqf_addr_street'); if (s) s.value = street || '';
+    var c = document.getElementById('pqf_addr_city');   if (c) c.value = city   || '';
+    var z = document.getElementById('pqf_addr_zip');    if (z) z.value = zip    || '';
+    var blk = document.getElementById('pqf_school_addr_block'); if (blk) blk.style.display = '';
+  }
+  function hideSchoolAddr() {
+    var blk = document.getElementById('pqf_school_addr_block'); if (blk) blk.style.display = 'none';
+    ['pqf_addr_street', 'pqf_addr_city', 'pqf_addr_zip'].forEach(function (id) {
+      var e = document.getElementById(id); if (e) e.value = '';
+    });
+  }
+
   function clearFindSelection() {
     setHiddenCarrier('city', '');
     setHiddenCarrier('district', '');
     setHiddenCarrier('school', '');
     var dn = document.getElementById('pqf_district_nces'); if (dn) dn.value = '';
+    hideSchoolAddr();
     clearNces();
     clearEnrollment();
   }
@@ -3291,6 +3335,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       var inp = document.getElementById('pqf_find_input');
       if (inp) { inp.value = ''; inp.disabled = true; }
       _findItems = [];
+      hideSchoolAddr();
     }
   }
 
@@ -3670,10 +3715,12 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       schoolFields = [
         { name: 'country',         value: sel.country.value  },
         { name: 'state',           value: sel.state.value    },
-        { name: 'city',            value: sel.city.value     },
+        { name: 'city',            value: (document.getElementById('pqf_addr_city').value.trim() || sel.city.value) },
         { name: 'school_district', value: sel.district.value },
         { name: 'school_name',     value: sel.school.value   },
         { name: 'nces_number',     value: document.getElementById('pqf_nces').value },
+        { name: 'school_address',  value: document.getElementById('pqf_addr_street').value.trim() },
+        { name: 'school_zip',      value: document.getElementById('pqf_addr_zip').value.trim()    },
         { name: 'manual_entry',    value: 'false' },
       ];
     }
