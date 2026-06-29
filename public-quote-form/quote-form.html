@@ -243,13 +243,22 @@
   margin-left: 4px;
 }
 
-/* Helper link under the Plan field (plan-comparison guide) — pill style */
+/* Plan field: half-width select + helper pill beside it on the right */
+.pqf-plan-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;             /* pill drops below the select on narrow screens */
+}
+.pqf-plan-row .pqf-select-wrap {
+  flex: 0 1 50%;              /* half width */
+  min-width: 200px;
+}
+/* Helper link beside the Plan field (plan-comparison guide) — pill style */
 .pqf-plan-help {
   display: inline-flex;
-  align-self: flex-start;      /* hug content (parent .pqf-field is a flex column) */
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
   padding: 7px 12px;
   font-size: 13px;
   font-weight: 600;
@@ -258,6 +267,7 @@
   border: 1px solid rgba(101, 81, 255, 0.20);
   border-radius: 999px;
   text-decoration: none;
+  white-space: nowrap;
   transition: background 0.18s, border-color 0.18s;
 }
 .pqf-plan-help:hover {
@@ -1309,17 +1319,19 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
             <label class="pqf-label" for="pqf_plan">
               Plan <span class="pqf-required">*</span>
             </label>
-            <div class="pqf-select-wrap">
-              <select id="pqf_plan" name="plan" class="pqf-select" required>
-                <option value="">Select plan…</option>
-                <option value="Classroom">Classroom</option>
-                <option value="School">School</option>
-                <option value="District">District</option>
-              </select>
+            <div class="pqf-plan-row">
+              <div class="pqf-select-wrap">
+                <select id="pqf_plan" name="plan" class="pqf-select" required>
+                  <option value="">Select plan…</option>
+                  <option value="Classroom">Classroom</option>
+                  <option value="School">School</option>
+                  <option value="District">District</option>
+                </select>
+              </div>
+              <a href="https://edu.soundtrap.com/which-soundtrap-plan-should-you-choose/"
+                 target="_blank" rel="noopener" class="pqf-plan-help">&#128161; Not sure which plan? Compare plans &rarr;</a>
             </div>
             <span class="pqf-hint" id="pqf_plan_hint"></span>
-            <a href="https://edu.soundtrap.com/which-soundtrap-plan-should-you-choose/"
-               target="_blank" rel="noopener" class="pqf-plan-help">&#128161; Not sure which plan? Compare plans &rarr;</a>
           </div>
 
           <!-- Number of Seats — HS internal name: number_of_seats -->
