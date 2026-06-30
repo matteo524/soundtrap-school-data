@@ -250,7 +250,8 @@
   gap: 12px;
   flex-wrap: wrap;             /* pill drops below the select on narrow screens */
 }
-.pqf-plan-row .pqf-select-wrap {
+.pqf-plan-row .pqf-select-wrap,
+.pqf-plan-row > .pqf-select {
   flex: 0 1 50%;              /* half width */
   min-width: 200px;
 }
@@ -1493,16 +1494,22 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
           <!-- Professional Development — US only -->
           <div id="pqf_pd_section" style="display:none; grid-column: 1 / -1;">
             <div class="pqf-pd-title">Professional Development</div>
-            <div class="pqf-pd-hint">Optional PD session for your team — available for US customers. The cost will be added to your quote total.</div>
+            <div class="pqf-pd-hint">Empower, Create, Inspire: Add Soundtrap for Education Professional Learning to your price quote</div>
             <div class="pqf-field" style="margin-top:8px; margin-bottom:0;">
               <label class="pqf-label" for="pqf_pd_session">PD Session <span class="pqf-optional">(optional)</span></label>
-              <select id="pqf_pd_session" name="pqf_pd_session" class="pqf-select">
-                <option value="">No PD session</option>
-                <option value="1 hour Virtual PD for up to 50 teachers">Virtual PD – up to 50 teachers (1 hr) — $499</option>
-                <option value="1 hour Virtual PD for more than 50 teachers">Virtual PD – 50+ teachers (1 hr) — $599</option>
-                <option value="In Person PD for 3 hours">In-Person PD – 3 hrs — $3,499</option>
-                <option value="In Person PD for 6 hours">In-Person PD – 6 hrs — $4,499</option>
-              </select>
+              <div class="pqf-plan-row">
+                <div class="pqf-select-wrap">
+                  <select id="pqf_pd_session" name="pqf_pd_session" class="pqf-select">
+                    <option value="">No PD session</option>
+                    <option value="1 hour Virtual PD for up to 50 teachers">Virtual PD – up to 50 teachers (1 hr) — $499</option>
+                    <option value="1 hour Virtual PD for more than 50 teachers">Virtual PD – 50+ teachers (1 hr) — $599</option>
+                    <option value="In Person PD for 3 hours">In-Person PD – 3 hrs — $3,499</option>
+                    <option value="In Person PD for 6 hours">In-Person PD – 6 hrs — $4,499</option>
+                  </select>
+                </div>
+                <a href="https://canva.link/h3l1rnkz3b9vw0q"
+                   target="_blank" rel="noopener" class="pqf-plan-help">&#128161; Learn more about Professional Learning &rarr;</a>
+              </div>
             </div>
           </div>
 
