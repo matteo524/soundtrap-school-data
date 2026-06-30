@@ -378,6 +378,11 @@ function buildTemplateQuote_(data, quoteNumber, timestamp, region, currency, quo
   var hasPd = !!((data.pd_session || '').trim());
   html = setDisplayOnDataAttr_(html, 'data-pd-row', 'active', hasPd);
 
+  // Complimentary 3-hour PD line — districts with over 1000 students (NCES enrollment).
+  // Shown on the PRINT/web quote view only; not in the customer/rep emails or Salesforce.
+  var enrollment = parseInt(String(data.district_enrollment || '').replace(/[^0-9]/g, ''), 10) || 0;
+  html = setDisplayOnDataAttr_(html, 'data-comp-pd-row', 'active', enrollment > 1000);
+
   // Strip client-side preview JS — page is fully server-rendered
   html = stripPreviewScript_(html);
 
