@@ -3800,16 +3800,10 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
     var scriptPayload = buildScriptPayload();
 
-    // Always call Apps Script (fire-and-forget)
-    if (API_URL) {
-      fetch(API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify(scriptPayload),
-      }).catch(function () { /* non-blocking */ });
-    }
+    // Capture plan value before form.reset() wipes it — needed for the redirect
+    var planVal = document.getElementById('pqf_plan') ? document.getElementById('pqf_plan').value : '';
 
-    // Call HubSpot if configured (fire-and-forget — doesn't gate success)
+    // HubSpot is secondary CRM logging — fire-and-forget, never gates success.
     if (hsConfigured) {
       var endpoint =
         'https://api.hsforms.com/submissions/v3/integration/submit/' +
@@ -3821,24 +3815,68 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       }).catch(function () { /* non-blocking */ });
     }
 
-    // Capture plan value before form.reset() wipes it — needed for the redirect below
-    var planVal = document.getElementById('pqf_plan') ? document.getElementById('pqf_plan').value : '';
+    function restoreSubmitBtn() {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Quote Request';
+    }
 
-    // Show success immediately after firing both calls
-    saveQuoteProfile();
-    form.reset();
-    toggleStateField(true);
-    resetSelect('state', 'Select a country first');
-    resetSelect('city', 'Select a state first');
-    resetSelect('district', 'Select a city first');
-    resetSelect('school', 'Select a district first');
-    toggleManualMode(false);
-    if (schoolManualMode) toggleSchoolOnlyMode(false);
-    document.getElementById('pqf_manual_state_field').style.display = 'none';
-    clearNces();
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Quote Request';
-    window.location.href = planVal.toLowerCase() === 'district' ? THANKYOU_DISTRICT_URL : THANKYOU_URL;
+    // Fail loudly: keep the user on the form (don't lose their input) and show why.
+    function showSubmitError(msg) {
+      restoreSubmitBtn();
+      errorBanner.textContent = msg;
+      errorBanner.classList.add('pqf-visible');
+      errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Success: save profile, reset the form, and redirect to the thank-you page.
+    function onSubmitSuccess() {
+      saveQuoteProfile();
+      form.reset();
+      toggleStateField(true);
+      resetSelect('state', 'Select a country first');
+      resetSelect('city', 'Select a state first');
+      resetSelect('district', 'Select a city first');
+      resetSelect('school', 'Select a district first');
+      toggleManualMode(false);
+      if (schoolManualMode) toggleSchoolOnlyMode(false);
+      document.getElementById('pqf_manual_state_field').style.display = 'none';
+      clearNces();
+      restoreSubmitBtn();
+      window.location.href = planVal.toLowerCase() === 'district' ? THANKYOU_DISTRICT_URL : THANKYOU_URL;
+    }
+
+    if (!API_URL) {
+      showSubmitError('Something went wrong submitting your request. Please try again, or email orders@soundtrap.com.');
+      return;
+    }
+
+    // Apps Script is the source of truth (Sheet row + emails + Salesforce) — it GATES success.
+    // Apps Script web apps return no CORS headers, so we POST with mode:'no-cors' and treat the
+    // opaque resolve as "the request reached the server". A rejection means the POST never went
+    // through — offline, DNS failure, or a browser extension blocking it (the silent-failure case
+    // that used to still show a thank-you page). A hung request times out and also fails.
+    var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timedOut = false;
+    var timer = setTimeout(function () {
+      timedOut = true;
+      if (controller) controller.abort();
+    }, 15000);
+
+    fetch(API_URL, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(scriptPayload),
+      signal:  controller ? controller.signal : undefined,
+    }).then(function () {
+      clearTimeout(timer);
+      onSubmitSuccess();
+    }).catch(function () {
+      clearTimeout(timer);
+      showSubmitError(timedOut
+        ? 'This is taking longer than expected — please check your connection and try again. If it keeps happening, email orders@soundtrap.com.'
+        : 'We couldn’t submit your request. Please check your connection or disable any ad/script blockers, then try again — or email orders@soundtrap.com.');
+    });
   });
 
   /* ── localStorage profile — save / restore ────────────────── */
