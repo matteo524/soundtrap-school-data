@@ -1324,6 +1324,13 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
   pdSession  = pdSession  || '';
   pdCost     = pdCost     || 0;
   grandTotal = grandTotal || cost;
+  // Complimentary 3-hour PD for districts with over 1000 students (NCES enrollment).
+  var compPd = (parseInt(String(data.district_enrollment || '').replace(/[^0-9]/g, ''), 10) || 0) > 1000;
+  function compPdRow_(span, tdL, tdRt) {
+    return '<tr><td colspan="' + span + '" ' + tdL + '>Complimentary Introductory Professional Development' +
+      '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">3 hours &mdash; included at no charge</span></td>' +
+      '<td ' + tdRt + '>' + fmtCurrency_(0, 'USD') + '</td></tr>';
+  }
   var thStyle = 'bgcolor="#16161B" style="background-color:#16161B;color:#FDFDFE;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:10px 12px;text-align:left;"';
   var thR     = 'bgcolor="#16161B" style="background-color:#16161B;color:#FDFDFE;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:10px 12px;text-align:right;"';
   var tdStyle = 'style="font-size:13px;color:#16161B;padding:10px 12px;border-bottom:1px solid #F0F0F0;"';
@@ -1359,6 +1366,7 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
       h.push('<tr><td colspan="' + span + '" ' + tdStyle + '>Professional Development<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
       h.push('<td ' + tdR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
     }
+    if (compPd) h.push(compPdRow_(span, tdStyle, tdR));
     h.push('</tbody>');
     h.push('<tfoot><tr><td colspan="' + span + '" ' + tfL + '>Total</td><td ' + tfR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
 
@@ -1381,6 +1389,7 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
       h.push('<tr><td colspan="4" ' + tdStyle + '>Professional Development<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
       h.push('<td ' + tdR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
     }
+    if (compPd) h.push(compPdRow_(4, tdStyle, tdR));
     h.push('</tbody>');
     h.push('<tfoot><tr><td colspan="4" ' + tfL + '>Total</td><td ' + tfR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
 
@@ -1412,6 +1421,7 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
       h.push('<tr><td colspan="6" ' + tdU + '>Professional Development<br><span style="font-size:9px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSession) + '</span></td>');
       h.push('<td ' + tdUR + '>+ ' + fmtCurrency_(pdCost, 'USD') + '</td></tr>');
     }
+    if (compPd) h.push(compPdRow_(6, tdU, tdUR));
     h.push('</tbody>');
     h.push('<tfoot><tr><td colspan="6" ' + tfL + '>Total</td><td ' + tfUR + '>' + escapeHtml_(grandTotal) + '</td></tr></tfoot>');
   }
