@@ -561,29 +561,31 @@ function buildPlaceholderMap_(data, quoteNumber, timestamp, region, currency) {
                       ? fmtCurrency_(grandTotalValue, currency)
                       : subCostObj.formatted;
 
-  // Build the discount block HTML (empty string when no discounts applied)
-  var discountBlockHtml = '';
-  if (hasDiscount) {
-    discountBlockHtml = buildDiscountBlockForTemplate_({
-      currency:        currency,
-      subStd:          subCostObj.value || 0,
-      subNet:          subNet,
-      subDiscType:     subDiscType,
-      subDiscVal:      subDiscVal,
-      maintStd:        maintCost,
-      maintNet:        maintNet,
-      maintDiscType:   maintDiscType,
-      maintDiscVal:    maintDiscVal,
-      pdStd:           pdCost,
-      pdNet:           pdNet,
-      pdDiscType:      pdDiscType,
-      pdDiscVal:       pdDiscVal,
-      pdSessionDisplay:pdSessionDisplay,
-      schoolsNum:      schoolsNum,
-      totalStd:        totalStd,
-      totalNet:        totalNet,
-    });
-  }
+  // Complimentary Introductory PD line — shown when district enrollment > 1000
+  var compPd = (parseInt(String(data.district_enrollment || '').replace(/[^0-9]/g, ''), 10) || 0) > 1000;
+
+  // Build the discount block HTML — ALWAYS rendered (matches the customer email).
+  // row() renders a plain list price + "—" discount when no discount is applied.
+  var discountBlockHtml = buildDiscountBlockForTemplate_({
+    currency:        currency,
+    subStd:          subCostObj.value || 0,
+    subNet:          subNet,
+    subDiscType:     subDiscType,
+    subDiscVal:      subDiscVal,
+    maintStd:        maintCost,
+    maintNet:        maintNet,
+    maintDiscType:   maintDiscType,
+    maintDiscVal:    maintDiscVal,
+    pdStd:           pdCost,
+    pdNet:           pdNet,
+    pdDiscType:      pdDiscType,
+    pdDiscVal:       pdDiscVal,
+    pdSessionDisplay:pdSessionDisplay,
+    schoolsNum:      schoolsNum,
+    compPd:          compPd,
+    totalStd:        totalStd,
+    totalNet:        totalNet,
+  });
 
   return {
     '{{QuoteNumber}}':           quoteNumber,
@@ -661,6 +663,17 @@ function buildDiscountBlockForTemplate_(d) {
     var pdLabel = 'Professional Development' +
       '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(d.pdSessionDisplay) + '</span>';
     rows.push(row(pdLabel, d.pdStd, d.pdNet, d.pdDiscType, d.pdDiscVal));
+  }
+  if (d.compPd) {
+    rows.push(
+      '<tr>' +
+      '<td style="padding:10px 12px;font-size:13px;color:#16161B;">Complimentary Introductory Professional Development' +
+      '<br><span style="font-size:11px;color:rgba(22,22,22,0.5);">3 hours — included at no charge</span></td>' +
+      '<td style="padding:10px 12px;text-align:right;font-size:13px;">' + fmtCurrency_(0, d.currency) + '</td>' +
+      '<td style="padding:10px 12px;text-align:right;color:rgba(22,22,22,0.4);">—</td>' +
+      '<td style="padding:10px 12px;text-align:right;font-weight:700;color:#16161B;font-size:13px;">' + fmtCurrency_(0, d.currency) + '</td>' +
+      '</tr>'
+    );
   }
 
   var totalDiscAmt = d.totalStd - d.totalNet;
@@ -1406,6 +1419,13 @@ function buildSubscriptionTable_(data, quoteType, plan, seats, months, cost, end
     var pdLabelHtml = 'Professional Development<br>' +
       '<span style="font-size:11px;color:rgba(22,22,22,0.5);">' + escapeHtml_(pdSessionDisplay) + '</span>';
     h.push(discRow(pdLabelHtml, di.pdStd, di.pdStd - di.pdNet, di.pdNet, di.pdType, di.pdVal, true));
+  }
+  // Complimentary Introductory PD row — shown when district enrollment > 1000.
+  var compPd = (parseInt(String(data.district_enrollment || '').replace(/[^0-9]/g, ''), 10) || 0) > 1000;
+  if (compPd) {
+    var compLabelHtml = 'Complimentary Introductory Professional Development<br>' +
+      '<span style="font-size:11px;color:rgba(22,22,22,0.5);">3 hours — included at no charge</span>';
+    h.push(discRow(compLabelHtml, 0, 0, 0, '', 0, true));
   }
 
   h.push('</tbody>');
