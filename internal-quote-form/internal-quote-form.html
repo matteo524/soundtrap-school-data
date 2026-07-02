@@ -791,6 +791,52 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   font-style: italic;
 }
 
+/* Optional-field marker (muted, secondary to required) */
+.pqf-optional {
+  color: #8A8796;
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* School address block: street | city | zip */
+.pqf-addr-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 0.7fr;
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .pqf-addr-grid { grid-template-columns: 1fr; }
+}
+
+/* When typeahead mode is on, hide the old City→District→School cascade
+   fields (kept in the DOM as data carriers). !important overrides the
+   inline display the cascade handlers set. */
+.pqf-typeahead-mode #pqf_city_field,
+.pqf-typeahead-mode #pqf_district_field,
+.pqf-typeahead-mode #pqf_school_field,
+.pqf-typeahead-mode #pqf_enrollment_field,
+.pqf-typeahead-mode #pqf_nces_field { display: none !important; }
+.pqf-find-item-sub {
+  display: block;
+  font-size: 12px;
+  color: #6B6880;
+  margin-top: 2px;
+}
+.pqf-find-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #4437CC;
+  background: #E8E4FF;
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .pqf-manual-back::before {
   content: '';   /* arrow is set dynamically in JS */
 }
@@ -1061,6 +1107,36 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
               <span class="pqf-spinner"></span>
             </div>
             <span class="pqf-hint" id="pqf_state_hint"></span>
+          </div>
+
+          <!-- School/District typeahead (US) — drives the hidden city/district/school
+               carriers below. Shown only in typeahead mode once a US state is picked. -->
+          <div class="pqf-field" id="pqf_find_field" style="display:none;">
+            <label class="pqf-label" for="pqf_find_input">
+              Your school or district <span class="pqf-required">*</span>
+            </label>
+            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_find_wrap">
+              <input type="text" id="pqf_find_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a state first" disabled>
+              <div class="pqf-combo-drop" id="pqf_find_drop"></div>
+              <span class="pqf-spinner"></span>
+            </div>
+            <span class="pqf-hint" id="pqf_find_hint">Start typing your school or district name, then pick it from the list.</span>
+            <!-- 7-digit district LEAID (derived from a member school), for district-only picks -->
+            <input type="hidden" id="pqf_district_nces" name="district_nces" value="">
+            <div id="pqf_find_cantfind_wrap" class="pqf-cant-find-wrap" style="display:none;">
+              <button type="button" id="pqf_find_cantfind" class="pqf-cant-find">My school isn't listed / I can't find it</button>
+            </div>
+          </div>
+
+          <!-- School address — auto-filled from NCES on selection; editable -->
+          <div class="pqf-field" id="pqf_school_addr_block" style="display:none; grid-column: 1 / -1;">
+            <label class="pqf-label">School address <span class="pqf-optional">(auto-filled — edit if it's not right)</span></label>
+            <div class="pqf-addr-grid">
+              <input type="text" id="pqf_addr_street" name="school_address" class="pqf-input" placeholder="Street address" autocomplete="off">
+              <input type="text" id="pqf_addr_city"   name="school_city"    class="pqf-input" placeholder="City" autocomplete="off">
+              <input type="text" id="pqf_addr_zip"    name="school_zip"     class="pqf-input" placeholder="ZIP" autocomplete="off">
+            </div>
+            <span class="pqf-hint" id="pqf_addr_hint">From NCES records — please correct it if anything looks off.</span>
           </div>
 
           <!-- City — HS internal name: city -->
@@ -1755,6 +1831,11 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   /* ── Manual-entry mode state ──────────────────────────────── */
   var manualMode       = false;
   var schoolManualMode = false; // school-only mode: district locked from cascade, only school typed
+
+  // Set false to revert to the classic City→District→School cascade (the cascade
+  // markup + logic are kept intact underneath; this only swaps the US input UX).
+  var USE_SCHOOL_TYPEAHEAD = true;
+  var _findItems = [];  // [{label, sub, type:'school'|'district', district, city, name, nces}]
 
   /* ── Index cache (loaded once on page init) ────────────────── */
   var _index = null;  // { countries, states, stateData }
@@ -3285,6 +3366,213 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     return s;
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     STATE-SCOPED SCHOOL/DISTRICT TYPEAHEAD  (USE_SCHOOL_TYPEAHEAD)
+     One search box replaces the City→District→School dropdowns for US.
+     It drives the SAME hidden carriers (sel.city/district/school + nces +
+     enrollment), so the payload + Salesforce mapping are unchanged.
+     ══════════════════════════════════════════════════════════════ */
+
+  // Build the searchable list (schools + districts) for the loaded US state.
+  function buildFindIndex(country, state) {
+    _findItems = [];
+    if (!_index || !_index.stateData) return;
+    var sdKey = country.toLowerCase() + '|' + state.toLowerCase();
+    var sd = _index.stateData[sdKey] || {};
+    var districtsByCity = sd.districts || {};   // { city: [DistrictDisplayName, …] }
+
+    Object.keys(districtsByCity).forEach(function (city) {
+      (districtsByCity[city] || []).forEach(function (dDisplay) {
+        var schools = (_stateSchools && _stateSchools[dDisplay.toLowerCase()]) || [];
+        // District LEAID (7-digit) = first 7 of any member school's 12-digit NCES.
+        var leaid = '';
+        for (var i = 0; i < schools.length; i++) {
+          if (schools[i].nces) { leaid = String(schools[i].nces).substring(0, 7); break; }
+        }
+        // District-level address (from the per-state _districtAddr map)
+        var distAddr = (_stateSchools && _stateSchools._districtAddr &&
+                        _stateSchools._districtAddr[dDisplay.toLowerCase()]) || null;
+        // District as its own selectable entry
+        _findItems.push({
+          label: dDisplay, sub: city + ' · whole district', badge: 'District',
+          type: 'district', district: dDisplay, city: city, name: '', nces: '', leaid: leaid,
+          address: distAddr ? (distAddr.address || '') : '',
+          addrCity: distAddr ? (distAddr.city || '') : '',
+          zip: distAddr ? (distAddr.zip || '') : ''
+        });
+        // Schools within this district (from the prefetched state file, keyed lowercase)
+        schools.forEach(function (s) {
+          _findItems.push({
+            label: s.name, sub: dDisplay + ', ' + city, badge: '',
+            type: 'school', district: dDisplay, city: city, name: s.name,
+            nces: s.nces || '', leaid: (s.nces ? String(s.nces).substring(0, 7) : ''),
+            address: s.address || '', addrCity: s.city || '', zip: s.zip || ''
+          });
+        });
+      });
+    });
+
+    var inp = document.getElementById('pqf_find_input');
+    if (inp) {
+      inp.disabled = _findItems.length === 0;
+      inp.placeholder = _findItems.length ? 'Start typing your school or district…' : 'No data for this state';
+    }
+  }
+
+  // Set a hidden cascade <select> WITHOUT dispatching change (avoids the
+  // cascade chain-reset). Mirrors the combobox commit's single-option approach.
+  function setHiddenCarrier(key, value, nces) {
+    var s = sel[key];
+    if (!s) return;
+    if (!value) { s.innerHTML = '<option value=""></option>'; s.value = ''; return; }
+    var esc = String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    s.innerHTML = '<option value="' + esc + '" data-nces="' + (nces || '') + '" selected>' + esc + '</option>';
+    s.value = value;
+  }
+
+  function findCommit(item) {
+    setHiddenCarrier('city', item.city);
+    setHiddenCarrier('district', item.district);
+    if (item.type === 'school') {
+      setHiddenCarrier('school', item.name, item.nces);
+      var nc = document.getElementById('pqf_nces'); if (nc) nc.value = item.nces || '';
+    } else {
+      setHiddenCarrier('school', '');   // district-only → no specific school
+      var nc2 = document.getElementById('pqf_nces'); if (nc2) nc2.value = '';
+    }
+    // District LEAID (7-digit) — lets the backend set NCES_District_Number__c even
+    // for district-only picks (where there's no 12-digit school NCES).
+    var dn = document.getElementById('pqf_district_nces'); if (dn) dn.value = item.leaid || '';
+    setSchoolAddr(item.address || '', item.addrCity || '', item.zip || '');  // prefill + reveal (editable)
+    showEnrollment(item.district);   // fills enrollment + updateAccountManager()
+    var inp = document.getElementById('pqf_find_input');
+    if (inp) inp.value = (item.type === 'school' ? item.name : item.district);
+    var hint = document.getElementById('pqf_find_hint');
+    if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
+    updatePriceDisplay();
+    updatePdSection();
+  }
+
+  // School address block — prefill (editable) + reveal / hide
+  function setSchoolAddr(street, city, zip) {
+    var s = document.getElementById('pqf_addr_street'); if (s) s.value = street || '';
+    var c = document.getElementById('pqf_addr_city');   if (c) c.value = city   || '';
+    var z = document.getElementById('pqf_addr_zip');    if (z) z.value = zip    || '';
+    var blk = document.getElementById('pqf_school_addr_block'); if (blk) blk.style.display = '';
+  }
+  function hideSchoolAddr() {
+    var blk = document.getElementById('pqf_school_addr_block'); if (blk) blk.style.display = 'none';
+    ['pqf_addr_street', 'pqf_addr_city', 'pqf_addr_zip'].forEach(function (id) {
+      var e = document.getElementById(id); if (e) e.value = '';
+    });
+  }
+
+  function clearFindSelection() {
+    setHiddenCarrier('city', '');
+    setHiddenCarrier('district', '');
+    setHiddenCarrier('school', '');
+    var dn = document.getElementById('pqf_district_nces'); if (dn) dn.value = '';
+    hideSchoolAddr();
+    clearNces();
+    clearEnrollment();
+  }
+
+  // Self-contained typeahead wired to #pqf_find_input / #pqf_find_drop.
+  (function initFindTypeahead() {
+    var inp  = document.getElementById('pqf_find_input');
+    var drop = document.getElementById('pqf_find_drop');
+    if (!inp || !drop) return;
+    var active = -1;
+    var MAX = 50;  // cap rendered rows for performance
+
+    function render(q) {
+      drop.innerHTML = ''; active = -1;
+      var lq = (q || '').toLowerCase().trim();
+      if (!lq) { drop.style.display = 'none'; return; }
+      var matched = _findItems.filter(function (it) { return it.label.toLowerCase().indexOf(lq) >= 0; });
+      if (!matched.length) {
+        var m = document.createElement('div'); m.className = 'pqf-combo-empty'; m.textContent = 'No matches';
+        drop.appendChild(m); drop.style.display = 'block'; return;
+      }
+      matched.slice(0, MAX).forEach(function (item) {
+        var div = document.createElement('div');
+        div.className = 'pqf-combo-item';
+        div.innerHTML = '<span>' + item.label.replace(/</g,'&lt;') +
+          (item.badge ? '<span class="pqf-find-badge">' + item.badge + '</span>' : '') + '</span>' +
+          (item.sub ? '<span class="pqf-find-item-sub">' + item.sub.replace(/</g,'&lt;') + '</span>' : '');
+        div.addEventListener('mousedown', function (e) { e.preventDefault(); findCommit(item); drop.style.display = 'none'; });
+        drop.appendChild(div);
+      });
+      if (matched.length > MAX) {
+        var more = document.createElement('div'); more.className = 'pqf-combo-empty';
+        more.textContent = 'Keep typing to narrow ' + matched.length + ' results…';
+        drop.appendChild(more);
+      }
+      drop.style.display = 'block';
+    }
+    function move(dir) {
+      var els = drop.querySelectorAll('.pqf-combo-item');
+      if (!els.length) return;
+      active = Math.max(0, Math.min(els.length - 1, active + dir));
+      Array.prototype.forEach.call(els, function (el, i) {
+        el.classList.toggle('pqf-combo-active', i === active);
+        if (i === active) el.scrollIntoView({ block: 'nearest' });
+      });
+    }
+    inp.addEventListener('input', function () {
+      // typing invalidates a prior pick until they choose again
+      if (sel.district.value) clearFindSelection();
+      render(inp.value);
+    });
+    inp.addEventListener('focus', function () { render(inp.value); });
+    inp.addEventListener('blur', function () { setTimeout(function () { drop.style.display = 'none'; }, 200); });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (drop.style.display === 'none') render(inp.value); move(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+      else if (e.key === 'Enter') { e.preventDefault(); var a = drop.querySelector('.pqf-combo-active') || drop.querySelector('.pqf-combo-item'); if (a) a.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); }
+      else if (e.key === 'Escape') { drop.style.display = 'none'; }
+    });
+
+    // "My school isn't listed" → manual entry. Country + State are already known (the
+    // typeahead only appears after they're picked), so pre-fill + lock them and let the
+    // user free-type City / District / School. Clear any prior typeahead pick + manual
+    // location fields first so nothing stale leaks in or stays locked.
+    var cf = document.getElementById('pqf_find_cantfind');
+    if (cf) cf.addEventListener('click', function () {
+      clearFindSelection();
+      inp.value = '';
+      ['pqf_manual_city', 'pqf_manual_district', 'pqf_manual_school'].forEach(function (id) {
+        var el = document.getElementById(id); if (el) el.value = '';
+      });
+      var country = sel.country.value || 'United States';
+      var state   = sel.state.value;
+      var mc = document.getElementById('pqf_manual_country');
+      if (mc) mc.value = country;
+      updateDistrictLabel(country);
+      if (state) {
+        comboCommit('manual_state', state);   // sets both the input and hidden <select>
+        updateManualStateLabel(country);
+      }
+      toggleManualMode(true, true, state ? true : null);  // lock Country (+ State if known)
+      var cityEl = document.getElementById('pqf_manual_city');
+      if (cityEl) cityEl.focus();
+    });
+  })();
+
+  // Show/hide + reset the find field (called from country/state handlers).
+  function showFindField(on) {
+    var f = document.getElementById('pqf_find_field');
+    if (f) f.style.display = on ? '' : 'none';
+    var cw = document.getElementById('pqf_find_cantfind_wrap');
+    if (cw) cw.style.display = on ? '' : 'none';
+    if (!on) {
+      var inp = document.getElementById('pqf_find_input');
+      if (inp) { inp.value = ''; inp.disabled = true; }
+      _findItems = [];
+      hideSchoolAddr();
+    }
+  }
+
   /* Silently prefetch all schools for the selected state/country from GitHub.
      Called when state (or non-US country) is selected — one level ahead of schools.
      By the time the user reaches the district dropdown, schools are already in memory. */
@@ -3345,6 +3633,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     resetSelect('school', 'Select a district first');
     clearNces();
     clearEnrollment();
+    if (USE_SCHOOL_TYPEAHEAD) showFindField(false);  // hidden until a US state is picked
 
     if (!country) { toggleStateField(false); return; }
 
@@ -3419,6 +3708,19 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
     // Start fetching all schools for this state silently in the background.
     prefetchStateSchools(country, state);
+
+    // Typeahead mode: reveal the find box and build its index once schools load.
+    if (USE_SCHOOL_TYPEAHEAD) {
+      clearFindSelection();
+      showFindField(true);
+      var inpF = document.getElementById('pqf_find_input');
+      if (inpF) { inpF.disabled = true; inpF.placeholder = 'Loading schools…'; }
+      if (_stateSchools) {
+        buildFindIndex(country, state);
+      } else if (_stateSchoolsPromise) {
+        _stateSchoolsPromise.then(function () { buildFindIndex(country, state); });
+      }
+    }
   });
 
   /* City → District — instant, from index */
@@ -3587,6 +3889,18 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         if (urlErr) ok = false;
       }
 
+    } else if (USE_SCHOOL_TYPEAHEAD) {
+      // ── Typeahead mode: country + state + a find selection ──
+      // A pick always sets district (+ city); school is optional (district-only allowed).
+      ['country', 'state'].forEach(function (key) {
+        var err = validators[key](sel[key].value);
+        setHint(key, err, !!err);
+        if (err) ok = false;
+      });
+      var findHint = document.getElementById('pqf_find_hint');
+      var findErr  = sel.district.value ? '' : 'Please select your school or district from the list.';
+      if (findHint) { findHint.textContent = findErr || 'Start typing your school or district name, then pick it from the list.'; findHint.className = 'pqf-hint' + (findErr ? ' pqf-error' : ''); }
+      if (findErr) ok = false;
     } else {
       // ── Validate cascading selects ───────────────────────
       ['country', 'state', 'city', 'district', 'school'].forEach(function (key) {
@@ -3635,10 +3949,13 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       schoolFields = [
         { name: 'country',         value: sel.country.value  },
         { name: 'state',           value: sel.state.value    },
-        { name: 'city',            value: sel.city.value     },
+        { name: 'city',            value: (document.getElementById('pqf_addr_city') && document.getElementById('pqf_addr_city').value.trim()) || sel.city.value },
         { name: 'school_district', value: sel.district.value },
         { name: 'school_name',     value: sel.school.value   },
-        { name: 'nces_number',     value: document.getElementById('pqf_nces').value },        { name: 'manual_entry',    value: 'false' },
+        { name: 'nces_number',     value: document.getElementById('pqf_nces').value },
+        { name: 'school_address',  value: (document.getElementById('pqf_addr_street') || {value:''}).value.trim() },
+        { name: 'school_zip',      value: (document.getElementById('pqf_addr_zip')    || {value:''}).value.trim() },
+        { name: 'manual_entry',    value: 'false' },
       ];
     }
 
@@ -3658,6 +3975,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       { name: 'number_of_schools',     value: document.getElementById('pqf_schools').value            },
       { name: 'subscription_length',   value: document.getElementById('pqf_months').value             },
       { name: 'district_enrollment',   value: document.getElementById('pqf_enrollment').value         },
+      { name: 'district_nces',         value: (document.getElementById('pqf_district_nces') || {value:''}).value },
       { name: 'use_case',              value: document.getElementById('pqf_use_case').value.trim()    },
       { name: 'pd_session',            value: (document.getElementById('pqf_pd_session') || {value:''}).value },
       { name: 'purchase_date',         value: document.getElementById('pqf_purchase_date').value             },
@@ -3968,6 +4286,11 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   function setupAfterConfigLoad() {
     if (combos.country)      combos.country.setOptions(WORLD_COUNTRIES, false, 'Select a country…');
     if (combos.manual_state) combos.manual_state.setOptions(US_STATES,  false, 'Select a state…');
+    // Typeahead mode: CSS class hides the classic City→District→School cascade fields.
+    if (USE_SCHOOL_TYPEAHEAD) {
+      var dg = document.getElementById('pqf_dropdown_grid');
+      if (dg) dg.classList.add('pqf-typeahead-mode');
+    }
   }
 
   /* ── Init ─────────────────────────────────────────────────── */

@@ -75,6 +75,10 @@ var COLUMNS = [
   // Salesforce sync
   'SF Status',
   'SF Record ID',
+  // School address (NCES-sourced, editable on the form) — appended at the end so
+  // existing Sheet columns keep their positions.
+  'School Address',
+  'School ZIP',
 ];
 
 // Maps incoming field names → column headers above
@@ -105,6 +109,8 @@ var FIELD_MAP = {
   account_manager:        'Account Manager',
   account_manager_email:  'Account Manager Email',
   use_case:               'Use Case',
+  school_address:         'School Address',
+  school_zip:             'School ZIP',
   school_website:         'School Website',
   pd_session:             'PD Session',
   purchase_date:          'Purchase Date',
@@ -1547,6 +1553,13 @@ function createSalesforceQuote_(data, quoteNumber, timestamp) {
     record.NCES_District_Number__c = nces7;
     var accountId = findAccountByNces_(auth, nces12);
     if (accountId) record.AccountId = accountId;
+  } else if (data.district_nces) {
+    // District-only selection (typeahead): no 12-digit school NCES, but the
+    // frontend derived the 7-digit district LEAID from a member school.
+    var leaid = String(data.district_nces).replace(/\s/g, '');
+    record.NCES_District_Number__c = leaid;
+    var districtAcct = findAccountByNces_(auth, leaid);  // falls through to district-number match
+    if (districtAcct) record.AccountId = districtAcct;
   }
 
   // ── Fee calculations ─────────────────────────────────────────

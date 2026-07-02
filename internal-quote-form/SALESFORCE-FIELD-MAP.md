@@ -55,7 +55,8 @@ Last verified: 2026-05-26.
 | `DEPLOYMENT_URL + ?q=<quoteNumber>` | `Quote_Link__c` | deployment URL set |
 | NCES (12-digit) | `NCES_School_Number__c` | nces present |
 | NCES district (7-digit LEAID = first 7 of NCES) | `NCES_District_Number__c` | nces present |
-| Account matched by NCES lookup (`findAccountByNces_`) | `AccountId` | lookup hits |
+| `district_nces` (7-digit LEAID, derived frontend from a member school — district-only typeahead picks) | `NCES_District_Number__c` | no school nces, district_nces present |
+| Account matched by NCES lookup (`findAccountByNces_`) | `AccountId` | lookup hits (school NCES or district LEAID) |
 | Subscription Fee — list (calculated) | `Subscription_Fee__c` | > 0 |
 | Maintenance Fee — list (calculated) | `District_Maintenance_Fee__c` | > 0 |
 | PD Fee — list (calculated) | `PD_Fee__c` | > 0 |
