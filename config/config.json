@@ -138,7 +138,7 @@
   },
 
   "territory": {
-    "_comment": "Sales territory + rep routing logic. statePod maps US states to regional PODs (used for accounts with 3,000+ students). podRep maps each POD/territory to its rep. usNamed lists US districts that route to a dedicated named-accounts rep regardless of POD. rowNamedDomains lists email domains for non-US named accounts.",
+    "_comment": "Sales territory + rep routing logic. statePod maps US states to regional PODs (used for accounts with 3,000+ students). podRep maps each POD/territory to its rep. usNamed lists US districts that route to a dedicated named-accounts rep regardless of POD. rowNamedDomains lists email domains for non-US named accounts (currently empty — ROW Named Accounts pod cancelled, all ROW routes to the ROW pod).",
 
     "statePod": {
       "alaska": "Northwest", "california": "Northwest", "idaho": "Northwest", "montana": "Northwest",
@@ -165,13 +165,14 @@
       "Southwest":          { "name": "Maria Opirhory",      "email": "maria@soundtrap.com" },
       "Central":            { "name": "Chloe Taylor",        "email": "chloe@soundtrap.com" },
       "Northeast":          { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
-      "Southeast":          { "name": "Tina Shah",           "email": "tina@soundtrap.com" },
+      "Southeast":          { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
       "Canada":             { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
       "UK":                 { "name": "Michael Beardsley",   "email": "michael@soundtrap.com" },
       "ROW":                { "name": "Jennifer Meehleis",   "email": "jennifer@soundtrap.com" },
-      "US Named Accounts":  { "name": "Leandro Otero",       "email": "leandro@soundtrap.com" },
-      "ROW Named Accounts": { "name": "Angelica Johansson",  "email": "angelicaj@soundtrap.com" }
+      "US Named Accounts":  { "name": "Leandro Otero",       "email": "leandro@soundtrap.com" }
     },
+    "_southeastNote": "TEMPORARY: Chad Reisfelt is covering Southeast while the seat is vacant (Tina Shah left). Original owner was { name: 'Tina Shah', email: 'tina@soundtrap.com' } — restore when the pod is re-staffed.",
+    "_rowNamedNote": "ROW Named Accounts pod cancelled — all ROW quotes now route to Jennifer (ROW pod). rowNamedDomains is intentionally left as an empty array (not removed) because the deployed frontend calls rowNamedDomains.indexOf(...) and would throw if the key were missing. Previous named-accounts rep was Angelica Johansson (angelicaj@soundtrap.com).",
 
     "usNamed": [
       "los angeles unified", "san francisco unified",
@@ -187,19 +188,7 @@
     ],
     "_usNamedNote": "NYC is matched via prefix ('new york city geographic district') in code, not by exact name.",
 
-    "rowNamedDomains": [
-      "solvesborg.se", "simrishamn.se", "educacio.ad", "govern.ad", "goteborg.se",
-      "engelska.se", "ale.se", "kunskapsskolan.se", "bollebygd.se",
-      "trondheim.kommune.no", "kalmar.se", "dodea.edu", "marks.se", "ecolint.ch",
-      "stavanger.kommune.no", "stpeters.vic.edu.au", "stenungsund.se",
-      "sola.kommune.no", "varberg.se", "larvik.kommune.no", "askoy.kommune.no",
-      "vastervik.se", "fredrikstad.kommune.no", "kungalv.se",
-      "pacifichills.nsw.edu.au", "alingsas.se", "stmonicas.vic.edu.au",
-      "makemusicmatter.org", "sandnes.kommune.no", "hudiksvall.se", "mlc.vic.edu.au",
-      "angelholm.se", "boras.se", "ullensaker.kommune.no", "orebro.se",
-      "watmaeducation.com", "edu.laroverken.se", "edu.nordicinternational.se",
-      "edu.kronobergskola.se", "krono.se", "bs.ch"
-    ]
+    "rowNamedDomains": []
   },
 
   "usStateAbbrev": {
