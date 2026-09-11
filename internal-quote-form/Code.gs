@@ -183,7 +183,10 @@ function loadConfig_() {
 //   Project Settings → Script Properties → Add:
 //     SF_CLIENT_ID     = your Consumer Key
 //     SF_CLIENT_SECRET = your Consumer Secret
-var SF_INSTANCE_URL  = 'https://soundtrap.my.salesforce.com';
+// Org endpoint. Override per environment via the SF_INSTANCE_URL Script Property
+// (e.g. https://soundtrap--full.sandbox.my.salesforce.com for the Full sandbox);
+// falls back to production when the property is unset.
+var SF_INSTANCE_URL  = PropertiesService.getScriptProperties().getProperty('SF_INSTANCE_URL') || 'https://soundtrap.my.salesforce.com';
 var SF_API_VERSION   = 'v59.0';
 // Email to notify on Salesforce sync failure.
 var SF_ALERT_EMAIL   = 'matteo@soundtrap.com';
