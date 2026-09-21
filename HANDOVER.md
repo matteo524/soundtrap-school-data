@@ -39,9 +39,16 @@ controlled entirely by **Script Properties** (no code edit needed to switch):
 - **To revert to production:** copy the `_PROD` values into `SF_CLIENT_ID` / `SF_CLIENT_SECRET`,
   and set `SF_INSTANCE_URL` back to the prod URL (or delete it to use the built-in prod fallback).
   Do this in **both** Apps Script projects (public + internal). No code change/redeploy needed.
-- Sandbox External Client App `Quote_Form_Integration` was deployed via SF CLI; Client Credentials
-  run-as user = `matteoo@spotify.com.full` (**must be an active System Administrator** or inserts
-  fail the `New_Type_Values_Restricted` validation).
+- Sandbox External Client App: the CLI-deployed copy **never registered its Client Credentials
+  run-as binding server-side** (token endpoint returned `invalid_grant / "no client credentials
+  user enabled"` despite correct metadata). Fix: the app was **recreated by hand in the sandbox
+  UI** (External Client App Manager → New) — a UI-created ECA binds the run-as user reliably where
+  a metadata-deployed one does not. The CLI-deployed app was deleted. Client Credentials run-as
+  user = `matteoo@spotify.com.full` (**must be an active System Administrator** or inserts fail the
+  `New_Type_Values_Restricted` validation).
+  - ⚠️ The UI-created app has its **own** consumer key/secret (different from prod). These are the
+    values now in the sandbox `SF_CLIENT_ID` / `SF_CLIENT_SECRET` Script Properties. Do NOT expect
+    them to match the prod key parked under `_PROD`.
 - The `SF_INSTANCE_URL`-as-Script-Property change shipped in commit `4cff419` — this **must be
   pasted + redeployed** into both Apps Script projects for the switch to work.
 
