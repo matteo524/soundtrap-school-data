@@ -98,7 +98,9 @@ function computeTerritory(country, state, district, email) {
   var pod;
 
   if (country === 'United States') {
-    if (districtLc && (TERRITORY.usNamed.indexOf(districtLc) !== -1 ||
+    if (districtLc && TERRITORY.usNamed2 && TERRITORY.usNamed2.indexOf(districtLc) !== -1) {
+      pod = 'US Named Accounts 2';
+    } else if (districtLc && (TERRITORY.usNamed.indexOf(districtLc) !== -1 ||
         districtLc.indexOf('new york city geographic district') === 0)) {
       pod = 'US Named Accounts';
     } else {

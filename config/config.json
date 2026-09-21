@@ -164,29 +164,41 @@
       "Northwest":          { "name": "Brittany Follet",     "email": "brittany@soundtrap.com" },
       "Southwest":          { "name": "Maria Opirhory",      "email": "maria@soundtrap.com" },
       "Central":            { "name": "Chloe Taylor",        "email": "chloe@soundtrap.com" },
-      "Northeast":          { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
-      "Southeast":          { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
+      "Northeast":          { "name": "Michael Pink",        "email": "michael.pink@soundtrap.com" },
+      "Southeast":          { "name": "Lance Herrin",        "email": "lance@soundtrap.com" },
       "Canada":             { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
       "UK":                 { "name": "Michael Beardsley",   "email": "michael@soundtrap.com" },
       "ROW":                { "name": "Jennifer Meehleis",   "email": "jennifer@soundtrap.com" },
-      "US Named Accounts":  { "name": "Leandro Otero",       "email": "leandro@soundtrap.com" }
+      "US Named Accounts":  { "name": "Chad Reisfelt",       "email": "chad@soundtrap.com" },
+      "US Named Accounts 2":{ "name": "Justin Polk",         "email": "justin@soundtrap.com" }
     },
-    "_southeastNote": "TEMPORARY: Chad Reisfelt is covering Southeast while the seat is vacant (Tina Shah left). Original owner was { name: 'Tina Shah', email: 'tina@soundtrap.com' } — restore when the pod is re-staffed.",
+    "_southeastNote": "Southeast is owned by Lance Herrin (lance@soundtrap.com) as of 2026-09-21. History: originally Tina Shah (tina@soundtrap.com); temporarily covered by Chad Reisfelt after she left.",
+    "_northeastNote": "Northeast reassigned to Michael Pink (michael.pink@soundtrap.com) as of 2026-09-21. Previous rep was Chad Reisfelt.",
+    "_usNamedNote2": "TEMPORARY (2026-09-21): 'US Named Accounts' is covered by Chad Reisfelt (was Leandro Otero) — restore Leandro when re-staffed. 'US Named Accounts 2' is a TEMPORARY pod for Justin Polk holding the specific districts in usNamed2 (see that key). These districts were pulled OUT of usNamed so they route to Justin, not Chad.",
     "_rowNamedNote": "ROW Named Accounts pod cancelled — all ROW quotes now route to Jennifer (ROW pod). rowNamedDomains is intentionally left as an empty array (not removed) because the deployed frontend calls rowNamedDomains.indexOf(...) and would throw if the key were missing. Previous named-accounts rep was Angelica Johansson (angelicaj@soundtrap.com).",
 
     "usNamed": [
-      "los angeles unified", "san francisco unified",
-      "jefferson county school district no. r-1", "district of columbia public schools",
       "polk", "broward", "duval", "miami-dade", "orange", "hillsborough",
       "palm beach", "hawaii department of education",
       "chicago public schools dist 299", "montgomery county public schools",
       "baltimore county public schools", "prince george's county public schools",
-      "lincoln public schools", "clark county",
+      "lincoln public schools",
       "wake county schools", "charlotte-mecklenburg schools", "philadelphia city sd",
       "puerto rico department of education", "memphis-shelby county schools",
       "dallas isd", "houston isd", "fairfax county public schools"
     ],
-    "_usNamedNote": "NYC is matched via prefix ('new york city geographic district') in code, not by exact name.",
+    "_usNamedNote": "NYC is matched via prefix ('new york city geographic district') in code, not by exact name. Districts moved to usNamed2 (Justin Polk) as of 2026-09-21: los angeles unified, san francisco unified, jefferson county school district no. r-1, district of columbia public schools, clark county.",
+
+    "usNamed2": [
+      "baltimore city public schools",
+      "val verde unified",
+      "los angeles unified",
+      "jefferson county school district no. r-1",
+      "clark county",
+      "san francisco unified",
+      "district of columbia public schools"
+    ],
+    "_usNamed2Note": "TEMPORARY pod 'US Named Accounts 2' → Justin Polk. Checked BEFORE usNamed in the routing code, so these districts win over usNamed. District names are exact NCES cascade keys. Salesforce EDU account IDs (reference only, not used for routing): Baltimore City PS=299239, Val Verde USD=35462, LAUSD=219578, Jefferson County R-1=195825, Clark County=413050, San Francisco USD Dept. of Tech=505853, DC Public Schools Music Dept=297162.",
 
     "rowNamedDomains": []
   },
