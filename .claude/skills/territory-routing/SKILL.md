@@ -60,6 +60,9 @@ Under `territory` in `config.json`:
   route to the `US Named Accounts` POD regardless of state.
 - `usNamed2`, … — additional named lists routing to their own POD (added when a subset
   needs a different rep). Checked **before** `usNamed`.
+- `usNamed2AccountIds` — Soundtrap EDU account IDs (strings) of the `usNamed2` districts. The forms
+  ignore it; the weekly Renewal Opps report uses it to assign those accounts to `US Named Accounts 2`.
+  **Whenever `usNamed2` changes, update this list too** (resolve IDs in Salesforce/BigQuery).
 - `rowNamedDomains` — email domains for non-US named accounts → `ROW Named Accounts` POD.
 - Keys prefixed `_` (e.g. `_southeastNote`) are **comments** — use them to record history
   and the reason for temporary states so a change is reversible.

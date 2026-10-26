@@ -198,7 +198,9 @@
       "san francisco unified",
       "district of columbia public schools"
     ],
-    "_usNamed2Note": "TEMPORARY pod 'US Named Accounts 2' → Justin Polk. Checked BEFORE usNamed in the routing code, so these districts win over usNamed. District names are exact NCES cascade keys. Salesforce EDU account IDs (reference only, not used for routing): Baltimore City PS=299239, Val Verde USD=35462, LAUSD=219578, Jefferson County R-1=195825, Clark County=413050, San Francisco USD Dept. of Tech=505853, DC Public Schools Music Dept=297162.",
+    "_usNamed2Note": "TEMPORARY pod 'US Named Accounts 2' → Justin Polk. Checked BEFORE usNamed in the routing code, so these districts win over usNamed. District names are exact NCES cascade keys. Soundtrap EDU account IDs for the same districts are in usNamed2AccountIds (keep the two lists in sync).",
+    "usNamed2AccountIds": ["299239", "35462", "219578", "195825", "413050", "505853", "297162"],
+    "_usNamed2AccountIdsNote": "Soundtrap EDU account IDs (Educational_Account_Id__c / edu_account_metrics.account_id) of the usNamed2 districts, as strings. NOT read by the forms (they route by district name). Read by the weekly Renewal Opps report builder to put these accounts in 'US Named Accounts 2' (Justin Polk). Baltimore City PS=299239, Val Verde USD=35462, LAUSD=219578, Jefferson County R-1=195825, Clark County=413050, San Francisco USD Dept. of Tech=505853, DC Public Schools Music Dept=297162. Added 2026-10-26.",
 
     "rowNamedDomains": []
   },
