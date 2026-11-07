@@ -1,12 +1,18 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy &amp; Legal Documents | Soundtrap for Education</title>
 <!--
   ╔══════════════════════════════════════════════════════════════════╗
-  ║  LEGAL & AGREEMENT REQUEST FORM                                  ║
+  ║  PRIVACY & LEGAL DOCUMENTS FORM (v2, Nov 2026)                   ║
+  ║                                                                  ║
+  ║  Flow: location → what you need → school/district → purchase →   ║
+  ║  documents → your details. See legal-form/CLAUDE.md.             ║
   ║                                                                  ║
   ║  SETUP (before publishing):                                      ║
-  ║  1. Deploy LegalCode.gs as a Web App (Execute as: Me,           ║
-  ║     Who has access: Anyone).                                     ║
-  ║  2. Paste the deployment URL into LF_CONFIG.appsScriptUrl.      ║
+  ║  1. Deploy LegalCode.gs (v2) as a NEW Web App deployment         ║
+  ║     (Execute as: Me, Who has access: Anyone).                    ║
+  ║  2. Paste that deployment URL into LF_CONFIG.appsScriptUrl.      ║
+  ║     The v1 backend rejects v2 payloads and vice versa.           ║
   ╚══════════════════════════════════════════════════════════════════╝
 -->
 
@@ -18,7 +24,10 @@
 <!-- ── CONFIGURATION ────────────────────────────────────────── -->
 <script>
   var LF_CONFIG = {
-    appsScriptUrl: 'https://script.google.com/macros/s/AKfycbz0g1wftYKU3FW0OHfm5lq8hdXxsS-wycCED-v2i7xkQlZow2xF0_oKn73q4285T5zT/exec',
+    // TODO before merging: paste the URL of the NEW v2 Apps Script deployment.
+    // v1 URL (old backend, do not use with this form):
+    // https://script.google.com/macros/s/AKfycbz0g1wftYKU3FW0OHfm5lq8hdXxsS-wycCED-v2i7xkQlZow2xF0_oKn73q4285T5zT/exec
+    appsScriptUrl: 'PASTE_V2_DEPLOYMENT_URL_HERE',
     indexUrl:      'https://matteo524.github.io/soundtrap-school-data/schools/index.json',
     schoolsBaseUrl:'https://matteo524.github.io/soundtrap-school-data/schools/schools-',
   };
@@ -685,6 +694,125 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   transition: color 0.15s;
 }
 .lf-file-remove:hover { color: #B40748; }
+
+/* ══ v2 additions (Nov 2026 restructure) ═══════════════════════ */
+
+/* Two-up radio grid (purchase stage) */
+.lf-radio-group.lf-radio-group-2 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 700px) { .lf-radio-group.lf-radio-group-2 { grid-template-columns: 1fr; } }
+
+/* "What do you need?" cards */
+.lf-need-grid { display: flex; flex-direction: column; gap: 10px; }
+.lf-need-card { padding: 16px 18px; }
+.lf-need-card .lf-check-content strong { font-size: 14px; }
+.lf-need-card .lf-check-content span.lf-need-desc { font-size: 12.5px; line-height: 1.45; }
+.lf-need-meta {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11.5px !important;
+  font-weight: 600;
+  color: #271B7A !important;
+}
+.lf-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #B8FF36;            /* Electric — expressive moment */
+  color: #161616;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+
+/* Explainer ("Not sure which one you need?") */
+.lf-explainer { margin-top: 16px; font-size: 13px; color: rgba(22,22,22,0.75); }
+.lf-explainer summary {
+  cursor: pointer;
+  color: #6551F2;
+  font-weight: 600;
+  list-style: none;
+}
+.lf-explainer summary::-webkit-details-marker { display: none; }
+.lf-explainer summary::before { content: '\25B8\00a0'; }
+.lf-explainer[open] summary::before { content: '\25BE\00a0'; }
+.lf-explainer dl { margin-top: 10px; display: grid; gap: 10px; }
+.lf-explainer dt { font-weight: 700; color: #161616; }
+.lf-explainer dd { margin: 2px 0 0; line-height: 1.45; }
+
+/* Info callouts */
+.lf-callout {
+  background: #F0EEFF;
+  border-left: 3px solid #6551F2;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #271B7A;
+  margin-bottom: 16px;
+}
+.lf-callout ol { margin: 6px 0 0 18px; }
+.lf-callout li { margin-top: 4px; }
+.lf-callout a { color: #6551F2; font-weight: 600; }
+
+/* Plain text link-button ("I can't find my district") */
+.lf-link-btn {
+  background: none; border: none; padding: 0;
+  font: inherit; font-size: 13px; font-weight: 600;
+  color: #6551F2; cursor: pointer;
+  margin-top: 8px;
+}
+.lf-link-btn:hover { text-decoration: underline; }
+
+/* Inline checkbox ("Same as me") */
+.lf-inline-check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 16px; cursor: pointer; }
+.lf-inline-check input { width: 16px; height: 16px; accent-color: #6551F2; }
+
+/* "What happens next" */
+.lf-next {
+  background: #F4F4F5;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.lf-next-title {
+  font-family: 'Bebas Neue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 20px; letter-spacing: 0.02em; color: #161616; margin-bottom: 8px;
+}
+.lf-next ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.lf-next li { position: relative; padding-left: 22px; font-size: 13.5px; line-height: 1.5; }
+.lf-next li::before {
+  content: ''; position: absolute; left: 4px; top: 7px;
+  width: 8px; height: 8px; border-radius: 50%; background: #6551F2;
+}
+.lf-next li strong { color: #271B7A; }
+
+/* Success panel (replaces the form after submit) */
+.lf-success-panel { padding: 40px; }
+.lf-success-panel h2 {
+  font-family: 'Bebas Neue', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 32px; font-weight: 400; color: #161616; margin-bottom: 8px;
+}
+.lf-success-panel p { font-size: 14px; color: rgba(22,22,22,0.75); margin-bottom: 20px; }
+.lf-success-panel .lf-next { margin-bottom: 24px; }
+.lf-secondary-btn {
+  background: none; border: 1.5px solid #6551F2; color: #6551F2;
+  border-radius: 8px; padding: 10px 18px; font: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer;
+}
+.lf-secondary-btn:hover { background: #F0EEFF; }
+@media (max-width: 520px) { .lf-success-panel { padding: 28px 24px; } }
+
+/* School/district typeahead results (same look as the quote forms) */
+.lf-find-sub { display: block; font-size: 12px; color: #6B6880; margin-top: 2px; }
+.lf-find-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 3px;
+  background: #E8E4FF; color: #4437CC;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; vertical-align: middle;
+}
+
+.lf-hidden { display: none !important; }
 </style>
 
 <div class="pqf-wrap">
@@ -708,25 +836,23 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         <path d="M8122.32 424.05C8125.3 424.05 8128.14 423.95 8130.77 423.75C8133.4 423.56 8135.76 423.01 8137.83 422.1C8139.91 421.19 8141.57 419.8 8142.82 417.92C8144.07 416.05 8144.69 413.43 8144.69 410.06C8144.69 407.21 8144.14 404.94 8143.03 403.25C8141.92 401.57 8140.47 400.27 8138.74 399.37C8137.01 398.46 8135 397.84 8132.72 397.51C8130.43 397.19 8128.22 397.03 8126 397.03H8108.55V424.04H8122.33L8122.32 424.05ZM8128.14 386.36C8138.25 386.36 8145.73 388.37 8150.58 392.38C8155.43 396.4 8157.85 402.49 8157.85 410.65C8157.85 418.29 8155.7 423.9 8151.48 427.46C8147.19 431.02 8141.85 433.13 8135.55 433.78L8159.79 471.28H8145.66L8122.53 434.75H8108.54V471.28H8095.31V386.38H8128.13L8128.14 386.36Z" fill="white"/>
         <path d="M8123.21 365.1C8088.1 365.1 8059.5 393.68 8059.5 428.81C8059.5 463.94 8088.1 492.52 8123.21 492.52C8158.32 492.52 8186.92 463.94 8186.92 428.81C8186.92 393.68 8158.32 365.1 8123.21 365.1ZM8123.21 503.59C8081.94 503.59 8048.43 470.04 8048.43 428.81C8048.43 387.58 8081.94 354.03 8123.21 354.03C8164.48 354.03 8198 387.58 8198 428.81C8198 470.04 8164.42 503.59 8123.21 503.59Z" fill="white"/>
       </svg>
-      <h1>Legal &amp; Agreement Request</h1>
-      <p>Submit a DPA, NDPA, Exhibit E, Pub-Avtal, or VPAT request for Soundtrap for Education.</p>
+      <h1>Privacy &amp; Legal Documents</h1>
+      <p>Get Soundtrap&rsquo;s accessibility report (VPAT) and standard data privacy agreements, return a signed agreement, or send us your own documents to review.</p>
     </div>
 
     <form id="lfForm" novalidate>
 
       <!-- ── Intro ──────────────────────────────────────────── -->
       <div class="pqf-intro">
-        <p class="pqf-intro-note">You can use this form to initiate a review of legal and privacy documents related to your Soundtrap contract.</p>
-        <p class="pqf-intro-note">Before you begin, gather any local forms, agreements or other documents that require review on hand to upload below.</p>
-        <p class="pqf-intro-note">Please note that you will also need to have placed your order with Soundtrap before completing this form, unless you require legal review before placing an order.</p>
-        <p class="pqf-intro-note">For any other questions about completing this form, email <a href="mailto:contracts@soundtrap.com" class="pqf-intro-link">contracts@soundtrap.com</a>.</p>
+        <p class="pqf-intro-note">Tell us where your school or district is and we&rsquo;ll show you the right documents. Most requests take about two minutes.</p>
+        <p class="pqf-intro-note">Questions? Email <a href="mailto:contracts@soundtrap.com" class="pqf-intro-link">contracts@soundtrap.com</a>.</p>
       </div>
 
       <!-- ── WELCOME BACK BANNER ──────────────────────────────── -->
       <div id="pqf_welcome_back" style="display:none;">
         <div class="pqf-welcome-inner">
           <div class="pqf-welcome-text">
-            Welcome back, <strong id="pqf_welcome_name"></strong><span id="pqf_welcome_school"></span>. Want to pre-fill your saved details?
+            Welcome back, <strong id="pqf_welcome_name"></strong>. Want to pre-fill your contact details?
           </div>
           <div class="pqf-welcome-actions">
             <button type="button" id="pqf_welcome_use" class="pqf-welcome-btn-primary">Yes, pre-fill</button>
@@ -735,526 +861,336 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
         </div>
       </div>
 
-      <!-- ── REQUEST TYPE ──────────────────────────────────────── -->
-      <div class="pqf-section">
-        <div class="pqf-section-title">What best describes your situation?</div>
-        <div class="lf-radio-group" id="lf_request_type_group" role="radiogroup" aria-label="Request type">
-          <label class="lf-radio-pill">
-            <input type="radio" name="request_type" value="Purchase" id="lf_rt_purchase">
-            <span class="lf-radio-dot"></span>
-            <span class="lf-radio-text">
-              <strong>New subscription</strong>
-              <span>I'm purchasing Soundtrap for the first time and I need to initiate a legal review</span>
-            </span>
-          </label>
-          <label class="lf-radio-pill">
-            <input type="radio" name="request_type" value="Renewal" id="lf_rt_renewal">
-            <span class="lf-radio-dot"></span>
-            <span class="lf-radio-text">
-              <strong>Renewal</strong>
-              <span>I'm renewing an existing subscription and I need to initiate a legal review</span>
-            </span>
-          </label>
-          <label class="lf-radio-pill">
-            <input type="radio" name="request_type" value="Legal review" id="lf_rt_legal">
-            <span class="lf-radio-dot"></span>
-            <span class="lf-radio-text">
-              <strong>Existing customer</strong>
-              <span>I need documents reviewed for a current agreement</span>
-            </span>
-          </label>
-        </div>
-        <span class="pqf-hint pqf-error" id="lf_request_type_hint" style="display:none;margin-top:8px;"></span>
-
-        <!-- VPAT checkbox — always visible, independent of situation -->
-        <div style="margin-top:16px;">
-          <label class="lf-check-row" id="lf_vpat_row">
-            <input type="checkbox" id="lf_vpat" name="vpat_requested" value="Yes">
-            <span class="lf-check-box"></span>
-            <span class="lf-radio-text">
-              <strong>I also need a VPAT</strong>
-              <span>Accessibility report for Soundtrap for Education</span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- ── SCHOOL LOCATION ─────────────────────────────────── -->
-      <div class="pqf-section" style="padding-top:40px;">
-        <div class="pqf-section-title">School Location</div>
-        <div id="pqf_dropdown_grid" class="pqf-grid pqf-grid-1">
-
-          <!-- Country — HS internal name: country -->
+      <!-- ══ 1. LOCATION ═════════════════════════════════════════ -->
+      <div class="pqf-section" id="lf_location_section">
+        <div class="pqf-section-title">1. Where is your school or district?</div>
+        <div class="pqf-grid pqf-grid-2">
           <div class="pqf-field">
-            <label class="pqf-label" for="pqf_country_input">
-              Country <span class="pqf-required">*</span>
-            </label>
+            <label class="pqf-label" for="pqf_country_input">Country <span class="pqf-required">*</span></label>
             <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_country_wrap">
-              <input type="text" id="pqf_country_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a country…">
+              <input type="text" id="pqf_country_input" class="pqf-combo-input" autocomplete="off" placeholder="Loading countries…" disabled>
               <div class="pqf-combo-drop" id="pqf_country_drop"></div>
-              <select id="pqf_country" name="country" style="display:none;" aria-hidden="true" required><option value=""></option></select>
+              <select id="pqf_country" name="country" style="display:none;" aria-hidden="true"><option value=""></option></select>
               <span class="pqf-spinner"></span>
             </div>
             <span class="pqf-hint" id="pqf_country_hint"></span>
           </div>
-
-          <!-- State — HS internal name: state -->
-          <div class="pqf-field" id="pqf_state_field">
-            <label class="pqf-label" for="pqf_state" id="pqf_state_label">
-              State <span class="pqf-required">*</span>
-            </label>
+          <div class="pqf-field" id="pqf_state_field" style="display:none;">
+            <label class="pqf-label" for="pqf_state_input"><span id="pqf_state_label_text">State</span> <span class="pqf-required">*</span></label>
             <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_state_wrap">
-              <input type="text" id="pqf_state_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a country first" disabled>
+              <input type="text" id="pqf_state_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a state…" disabled>
               <div class="pqf-combo-drop" id="pqf_state_drop"></div>
-              <select id="pqf_state" name="state" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
+              <select id="pqf_state" name="state" style="display:none;" aria-hidden="true"><option value=""></option></select>
               <span class="pqf-spinner"></span>
             </div>
             <span class="pqf-hint" id="pqf_state_hint"></span>
           </div>
-
-          <!-- City — HS internal name: city -->
-          <div class="pqf-field">
-            <label class="pqf-label" for="pqf_city">
-              City <span class="pqf-required">*</span>
-            </label>
-            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_city_wrap">
-              <input type="text" id="pqf_city_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a state first" disabled>
-              <div class="pqf-combo-drop" id="pqf_city_drop"></div>
-              <select id="pqf_city" name="city" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
-              <span class="pqf-spinner"></span>
-            </div>
-            <span class="pqf-hint" id="pqf_city_hint"></span>
-          </div>
-
-          <!-- School District — HS internal name: school_district -->
-          <div class="pqf-field">
-            <label class="pqf-label" for="pqf_district">
-              School District <span class="pqf-required">*</span>
-            </label>
-            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_district_wrap">
-              <input type="text" id="pqf_district_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a city first" disabled>
-              <div class="pqf-combo-drop" id="pqf_district_drop"></div>
-              <select id="pqf_district" name="school_district" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
-              <span class="pqf-spinner"></span>
-            </div>
-            <span class="pqf-hint" id="pqf_district_hint"></span>
-            <div id="pqf_cant_find_district_wrap" class="pqf-cant-find-wrap" style="display:none;">
-              <button type="button" id="pqf_cant_find" class="pqf-cant-find">I can't find my district</button>
-            </div>
-          </div>
-
-          <!-- District Enrollment — auto-filled from NCES data, read-only -->
-          <div class="pqf-field" id="pqf_enrollment_field">
-            <label class="pqf-label" for="pqf_enrollment">District Enrollment</label>
-            <input
-              id="pqf_enrollment"
-              name="district_enrollment"
-              type="text"
-              class="pqf-input"
-              readonly
-              tabindex="-1"
-            />
-            <span class="pqf-hint">Total student enrollment from NCES data (2022–23). Informational only.</span>
-          </div>
-
-          <!-- School — HS internal name: school_name -->
-          <div class="pqf-field">
-            <label class="pqf-label" for="pqf_school">
-              School <span class="pqf-required">*</span>
-            </label>
-            <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_school_wrap">
-              <input type="text" id="pqf_school_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a district first" disabled>
-              <div class="pqf-combo-drop" id="pqf_school_drop"></div>
-              <select id="pqf_school" name="school_name" style="display:none;" aria-hidden="true" required disabled><option value=""></option></select>
-              <span class="pqf-spinner"></span>
-            </div>
-            <span class="pqf-hint" id="pqf_school_hint"></span>
-            <div id="pqf_cant_find_wrap" class="pqf-cant-find-wrap" style="display:none;">
-              <span class="pqf-hint" id="pqf_cant_find_school_hint" style="margin-right:8px;"></span>
-              <button type="button" id="pqf_cant_find_school" class="pqf-cant-find">I can't find my school</button>
-            </div>
-          </div>
-
-          <!-- NCES Number — HS internal name: nces_number (auto-filled, read-only) -->
-          <div class="pqf-field" id="pqf_nces_field">
-            <label class="pqf-label" for="pqf_nces">
-              NCES Number
-            </label>
-            <input
-              id="pqf_nces"
-              name="nces_number"
-              type="text"
-              class="pqf-input"
-              placeholder="Auto-filled when a school is selected"
-              readonly
-              tabindex="-1"
-            />
-            <span class="pqf-hint" id="pqf_nces_hint">Automatically populated based on your school selection.</span>
-          </div>
-
-          <!-- Sales Rep — computed live from territory logic, for testing -->
-          <div class="pqf-field" id="pqf_rep_field" style="grid-column: 1 / -1;">
-            <label class="pqf-label">Sales Rep <span style="font-weight:400;color:#888;font-size:0.85em;">(auto-assigned · testing only)</span></label>
-            <input id="pqf_rep_display" type="text" class="pqf-input" readonly tabindex="-1"
-              placeholder="Select a country and district to compute rep" />
-            <span class="pqf-hint" id="pqf_rep_hint"></span>
-          </div>
-
-        </div><!-- /pqf_dropdown_grid -->
-
-        <!-- ── Manual entry panel (hidden by default) ──────── -->
-        <div id="pqf_manual_panel" class="pqf-manual-panel" style="display:none;">
-
-          <div class="pqf-manual-header">
-            <span class="pqf-manual-title">Enter your school details manually</span>
-            <button type="button" id="pqf_manual_back" class="pqf-manual-back">
-              Back to search
-            </button>
-          </div>
-
-          <div class="pqf-grid pqf-grid-2">
-
-            <!-- Manual Country — HS internal name: country -->
-            <div class="pqf-field" id="pqf_manual_country_field" style="grid-column: 1 / -1;">
-              <label class="pqf-label" for="pqf_manual_country">
-                Country <span class="pqf-required">*</span>
-              </label>
-              <input
-                id="pqf_manual_country"
-                name="manual_country"
-                type="text"
-                class="pqf-input"
-                placeholder="e.g. United States"
-                autocomplete="country-name"
-              />
-              <span class="pqf-hint" id="pqf_manual_country_hint"></span>
-            </div>
-
-            <!-- Manual State — HS internal name: state (US only) -->
-            <div class="pqf-field" id="pqf_manual_state_field" style="display:none; grid-column: 1 / -1;">
-              <label class="pqf-label" for="pqf_manual_state_input" id="pqf_manual_state_label">
-                State <span class="pqf-required">*</span>
-              </label>
-              <div class="pqf-select-wrap pqf-combo-wrap" id="pqf_manual_state_wrap">
-                <input type="text" id="pqf_manual_state_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a state…">
-                <div class="pqf-combo-drop" id="pqf_manual_state_drop"></div>
-                <select id="pqf_manual_state" name="manual_state" style="display:none;" aria-hidden="true"><option value=""></option></select>
-              </div>
-              <span class="pqf-hint" id="pqf_manual_state_hint"></span>
-            </div>
-
-            <!-- Manual City — HS internal name: city -->
-            <div class="pqf-field" id="pqf_manual_city_field">
-              <label class="pqf-label" for="pqf_manual_city">
-                City <span class="pqf-required">*</span>
-              </label>
-              <input
-                id="pqf_manual_city"
-                name="manual_city"
-                type="text"
-                class="pqf-input"
-                placeholder="e.g. Los Angeles"
-                autocomplete="address-level2"
-              />
-              <span class="pqf-hint" id="pqf_manual_city_hint"></span>
-            </div>
-
-            <!-- Manual School District — HS internal name: school_district -->
-            <div class="pqf-field" id="pqf_manual_district_field">
-              <label class="pqf-label" for="pqf_manual_district" id="pqf_manual_district_label">
-                School District <span class="pqf-required">*</span>
-              </label>
-              <input
-                id="pqf_manual_district"
-                name="manual_school_district"
-                type="text"
-                class="pqf-input"
-                placeholder="e.g. Los Angeles Unified"
-              />
-              <span class="pqf-hint" id="pqf_manual_district_hint"></span>
-            </div>
-
-            <!-- Manual School Name — HS internal name: school_name -->
-            <div class="pqf-field" style="grid-column: 1 / -1;">
-              <label class="pqf-label" for="pqf_manual_school">
-                School Name <span class="pqf-required">*</span>
-              </label>
-              <input
-                id="pqf_manual_school"
-                name="manual_school_name"
-                type="text"
-                class="pqf-input"
-                placeholder="e.g. Lincoln High School"
-              />
-              <span class="pqf-hint" id="pqf_manual_school_hint"></span>
-            </div>
-
-            <!-- School Website — HS internal name: school_website (optional) -->
-            <div class="pqf-field" style="grid-column: 1 / -1;">
-              <label class="pqf-label" for="pqf_manual_website">
-                School Website
-              </label>
-              <input
-                id="pqf_manual_website"
-                name="school_website"
-                type="url"
-                class="pqf-input"
-                placeholder="https://www.schoolname.edu"
-                autocomplete="url"
-              />
-              <span class="pqf-hint" id="pqf_manual_website_hint">Optional — helps us verify your school.</span>
-            </div>
-
-          </div>
-        </div><!-- /pqf_manual_panel -->
-
-      </div>
-
-      <!-- ── ORDER DETAILS (Purchase / Renewal only) ─────────── -->
-      <div id="lf_order_section" class="pqf-section" style="display:none; padding-top:40px;">
-        <div class="pqf-section-title">Order Details</div>
-        <div class="pqf-grid pqf-grid-2">
-
-          <div class="pqf-field" style="grid-column: 1 / -1;">
-            <label class="pqf-label">Has an order already been placed? <span class="pqf-required">*</span></label>
-            <div style="display:flex; gap:10px; margin-top:4px;">
-              <label class="lf-radio-pill" style="flex:1;">
-                <input type="radio" name="order_placed" value="Yes" id="lf_order_yes">
-                <span class="lf-radio-dot"></span>
-                <span class="lf-radio-text"><strong>Yes</strong></span>
-              </label>
-              <label class="lf-radio-pill" style="flex:1;">
-                <input type="radio" name="order_placed" value="No" id="lf_order_no">
-                <span class="lf-radio-dot"></span>
-                <span class="lf-radio-text"><strong>No</strong></span>
-              </label>
-              <label class="lf-radio-pill" style="flex:2;">
-                <input type="radio" name="order_placed" value="Legal review before order" id="lf_order_legal_first">
-                <span class="lf-radio-dot"></span>
-                <span class="lf-radio-text"><strong>We need legal review of these documents before we can place an order</strong></span>
-              </label>
-            </div>
-            <span class="pqf-hint pqf-error" id="lf_order_placed_hint" style="display:none;"></span>
-          </div>
-
-          <div class="pqf-field" style="grid-column: 1 / -1;">
-            <label class="pqf-label" for="lf_seats">New, Renewal or Current Seats <span class="pqf-required">*</span></label>
-            <input id="lf_seats" name="seats" type="number" class="pqf-input" placeholder="Number (Integer)" min="1" step="1" />
-            <span class="pqf-hint" id="lf_seats_hint">Approximately how many Soundtrap seats do you intend to purchase/renew or you currently have on your subscription?</span>
-          </div>
-
-          <div class="pqf-field">
-            <label class="pqf-label" for="lf_order_method">Is this purchase going through a reseller or direct?</label>
-            <div class="pqf-select-wrap">
-              <select id="lf_order_method" name="order_method" class="pqf-select">
-                <option value="">— Select —</option>
-                <option value="Direct">Direct</option>
-                <option value="Reseller">Reseller</option>
-              </select>
-            </div>
-            <span class="pqf-hint">(If you don't know, skip this question!) If reseller, please let us know which one in the next field.</span>
-            <span class="pqf-hint pqf-error" id="lf_order_method_hint" style="display:none;"></span>
-          </div>
-
-          <div class="pqf-field" id="lf_reseller_name_field" style="display:none;">
-            <label class="pqf-label" for="lf_reseller_name">Reseller Name <span class="pqf-required">*</span></label>
-            <input id="lf_reseller_name" name="reseller_name" type="text" class="pqf-input" placeholder="e.g. Follett, Scholastic" />
-            <span class="pqf-hint pqf-error" id="lf_reseller_name_hint" style="display:none;"></span>
-          </div>
-
         </div>
       </div>
 
-      <!-- ── SPEED-UP OPTIONS (not VPAT; sub-options based on location) ── -->
-      <div id="lf_speedup_section" class="pqf-section" style="display:none; padding-top:40px;">
-        <div class="pqf-section-title">To speed-up the review process, we can offer the following options:</div>
-        <div class="lf-speedup-grid">
+      <!-- ══ 2. WHAT DO YOU NEED? ════════════════════════════════ -->
+      <div class="pqf-section lf-hidden" id="lf_needs_section" style="padding-top:40px;">
+        <div class="pqf-section-title">2. What do you need?</div>
+        <p class="pqf-intro-note" style="margin-bottom:16px;">Select everything that applies.</p>
 
-          <div id="lf_ndpa_row" class="pqf-field" style="display:none;">
-            <label class="pqf-label" for="lf_ndpa">Review the standard NDPA <span class="pqf-required">*</span></label>
-            <div class="pqf-select-wrap">
-              <select id="lf_ndpa" name="ndpa" class="pqf-select">
-                <option value="">— Select —</option>
-                <option value="Yes">Yes, email me a copy of the standard NDPA</option>
-                <option value="No">No, we need Soundtrap to review the attached documentation</option>
-              </select>
-            </div>
-            <span class="pqf-hint" style="margin-top:8px;">The National Data Privacy Agreement (NDPA) is a standardized contract, created by the Student Data Privacy Consortium (SDPC) to streamline compliance with student data privacy laws (FERPA, COPPA) across U.S. school districts and EdTech vendors.</span>
-            <span class="pqf-hint" style="margin-top:6px;"><strong>If you'd like, you can sign the NDPA and email it to <a href="mailto:contracts@soundtrap.com" class="pqf-intro-link">contracts@soundtrap.com</a></strong></span>
-            <span class="pqf-hint pqf-error" id="lf_ndpa_hint" style="display:none;"></span>
-          </div>
+        <div class="lf-need-grid" id="lf_need_grid">
 
-          <div id="lf_exhibit_e_row" class="pqf-field" style="display:none;">
-            <label class="pqf-label" for="lf_exhibit_e">Use an existing Exhibit E <span class="pqf-required">*</span></label>
-            <div class="pqf-select-wrap">
-              <select id="lf_exhibit_e" name="exhibit_e" class="pqf-select">
-                <option value="">— Select —</option>
-                <option value="Yes">Yes, I want to use an existing Exhibit E</option>
-                <option value="No">No, we need Soundtrap to review the attached documentation</option>
-              </select>
-            </div>
-            <span class="pqf-hint" style="margin-top:8px;">Use an existing Exhibit E to join an existing master NDPA or state-level agreement that Soundtrap has already signed with another district or consortium.<br>You'll find all the available agreements sorted by State at <a href="https://airtable.com/appTOZr2BCJNwtPfL/shrleIotBEk966u2zd" class="pqf-intro-link" target="_blank" rel="noopener">https://airtable.com/appTOZr2BCJNwtPfL/shrleIotBEk966u2zd</a></span>
-            <span class="pqf-hint" style="margin-top:6px;"><strong>If you'd like, you can sign an Exhibit E from one of the already approved agreements and send it to <a href="mailto:contracts@soundtrap.com" class="pqf-intro-link">contracts@soundtrap.com</a></strong></span>
-            <span class="pqf-hint pqf-error" id="lf_exhibit_e_hint" style="display:none;"></span>
-          </div>
-
-          <div id="lf_pub_avtal_row" class="pqf-field" style="display:none;">
-            <label class="pqf-label" for="lf_pub_avtal">Sign the standard Pub-Avtal <span class="pqf-required">*</span></label>
-            <div class="pqf-select-wrap">
-              <select id="lf_pub_avtal" name="pub_avtal" class="pqf-select">
-                <option value="">— Select —</option>
-                <option value="Yes">Yes, email me a copy of the standard Pub-Avtal</option>
-                <option value="No">No, we need Soundtrap to review the attached documentation</option>
-              </select>
-            </div>
-            <span class="pqf-hint" style="margin-top:8px;">The Soundtrap Pub-Avtal is a standardized Data Privacy Agreement already used by many Swedish schools and municipalities.</span>
-            <span class="pqf-hint" style="margin-top:6px;"><strong>If you'd like, you can review and sign the Pub-Avtal and email it to <a href="mailto:contracts@soundtrap.com" class="pqf-intro-link">contracts@soundtrap.com</a></strong></span>
-            <span class="pqf-hint pqf-error" id="lf_pub_avtal_hint" style="display:none;"></span>
-          </div>
-
-          <div id="lf_dpa_row" class="pqf-field" style="display:none;">
-            <label class="pqf-label" for="lf_dpa">Sign the standard DPA <span class="pqf-required">*</span></label>
-            <div class="pqf-select-wrap">
-              <select id="lf_dpa" name="dpa" class="pqf-select">
-                <option value="">— Select —</option>
-                <option value="Yes">Yes, email me a copy of the standard DPA</option>
-                <option value="No">No, we need Soundtrap to review the attached documentation</option>
-              </select>
-            </div>
-            <span class="pqf-hint" style="margin-top:8px;">The Soundtrap DPA is a standardized Data Privacy Agreement already used by many schools and municipalities in Europe, Norway and United Kingdom.</span>
-            <span class="pqf-hint" style="margin-top:6px;"><strong>If you'd like, you can review and sign the DPA and email it to <a href="mailto:contracts@soundtrap.com" class="pqf-intro-link">contracts@soundtrap.com</a></strong></span>
-            <span class="pqf-hint pqf-error" id="lf_dpa_hint" style="display:none;"></span>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ── REQUEST SUMMARY (all except VPAT) ────────────────── -->
-      <div id="lf_summary_section" class="pqf-section" style="display:none; padding-top:40px;">
-        <div class="pqf-section-title">Request Summary</div>
-        <div class="pqf-field">
-          <label class="pqf-label" for="lf_summary">
-            Please describe your request <span class="pqf-required">*</span>
+          <label class="lf-check-row lf-need-card" id="lf_need_exhibit_e_card">
+            <input type="checkbox" name="need" value="exhibitE" id="lf_need_exhibit_e">
+            <span class="lf-check-box"></span>
+            <span class="lf-check-content">
+              <strong><span id="lf_exhibit_e_title">Join your state&rsquo;s existing agreement (Exhibit E)</span><span class="lf-badge">Fastest</span></strong>
+              <span class="lf-need-desc" id="lf_exhibit_e_desc"></span>
+              <span class="lf-need-meta">Countersigned within 5 business days</span>
+            </span>
           </label>
-          <textarea id="lf_summary" name="summary" class="pqf-textarea" rows="4"
-            placeholder="Include any relevant agreement names, references, deadlines, or context…"></textarea>
-          <span class="pqf-hint pqf-error" id="lf_summary_hint" style="display:none;"></span>
+
+          <label class="lf-check-row lf-need-card">
+            <input type="checkbox" name="need" value="standard" id="lf_need_standard">
+            <span class="lf-check-box"></span>
+            <span class="lf-check-content">
+              <strong id="lf_standard_title">A copy of our standard agreement</strong>
+              <span class="lf-need-desc" id="lf_standard_desc"></span>
+              <span class="lf-need-meta">Emailed to you right away</span>
+            </span>
+          </label>
+
+          <label class="lf-check-row lf-need-card">
+            <input type="checkbox" name="need" value="signed" id="lf_need_signed">
+            <span class="lf-check-box"></span>
+            <span class="lf-check-content">
+              <strong>Return a signed agreement</strong>
+              <span class="lf-need-desc" id="lf_signed_desc">Already signed our standard agreement? Upload it and we&rsquo;ll countersign it.</span>
+              <span class="lf-need-meta">Countersigned within 5 business days</span>
+            </span>
+          </label>
+
+          <label class="lf-check-row lf-need-card">
+            <input type="checkbox" name="need" value="review" id="lf_need_review">
+            <span class="lf-check-box"></span>
+            <span class="lf-check-content">
+              <strong>Review of our own agreement or documents</strong>
+              <span class="lf-need-desc">Your district&rsquo;s own data privacy agreement, contract, privacy questionnaire or other documents, for Soundtrap to review and sign.</span>
+              <span class="lf-need-meta">At least 2 weeks &middot; longer for several or complex documents</span>
+            </span>
+          </label>
+
+          <label class="lf-check-row lf-need-card">
+            <input type="checkbox" name="need" value="vpat" id="lf_need_vpat">
+            <span class="lf-check-box"></span>
+            <span class="lf-check-content">
+              <strong>Our accessibility report (VPAT)</strong>
+              <span class="lf-need-desc">How Soundtrap for Education meets accessibility standards (WCAG / Section 508).</span>
+              <span class="lf-need-meta">Emailed to you right away</span>
+            </span>
+          </label>
+
+        </div>
+        <span class="pqf-hint pqf-error" id="lf_needs_hint" style="display:none;margin-top:8px;"></span>
+
+        <details class="lf-explainer">
+          <summary>Not sure which one you need?</summary>
+          <dl>
+            <div id="lf_explain_exhibit_e"><dt>Exhibit E</dt><dd>Many US states have a statewide student data privacy agreement that Soundtrap has already signed. Your district signs a short Exhibit E to join it, so there&rsquo;s nothing new to negotiate. This is usually the fastest route.</dd></div>
+            <div id="lf_explain_ndpa"><dt>NDPA (National Data Privacy Agreement)</dt><dd>The standard student data privacy agreement from the Student Data Privacy Consortium (SDPC), used by US school districts to meet FERPA, COPPA and state privacy laws.</dd></div>
+            <div id="lf_explain_pub"><dt>PUB-avtal</dt><dd>Soundtrap&rsquo;s personuppgiftsbiträdesavtal (data processing agreement), already used by many Swedish schools and municipalities.</dd></div>
+            <div id="lf_explain_dpa"><dt>DPA (Data Processing Agreement)</dt><dd>Soundtrap&rsquo;s standard agreement on how we process personal data on your behalf, already used by schools and municipalities around the world.</dd></div>
+            <div><dt>Your own documents</dt><dd>If your district requires its own agreement, contract terms or privacy questionnaire, upload it and our contracts team will review it.</dd></div>
+            <div><dt>VPAT (Voluntary Product Accessibility Template)</dt><dd>A report on how Soundtrap meets accessibility standards. Often requested by procurement or IT teams.</dd></div>
+          </dl>
+        </details>
+      </div>
+
+      <!-- ══ 3. SCHOOL / DISTRICT ════════════════════════════════ -->
+      <div class="pqf-section lf-hidden" id="lf_org_section" style="padding-top:40px;">
+        <div class="pqf-section-title" id="lf_org_title">3. Your school or district</div>
+
+        <!-- US: one state-scoped school/district typeahead -->
+        <div id="lf_us_cascade">
+          <div class="pqf-field">
+            <label class="pqf-label" for="lf_find_input">School or district <span class="pqf-required">*</span></label>
+            <div class="pqf-select-wrap pqf-combo-wrap" id="lf_find_wrap">
+              <input type="text" id="lf_find_input" class="pqf-combo-input" autocomplete="off" placeholder="Select a state first" disabled>
+              <div class="pqf-combo-drop" id="lf_find_drop"></div>
+              <span class="pqf-spinner"></span>
+            </div>
+            <span class="pqf-hint" id="lf_find_hint">Start typing the name of your school or district, then pick it from the list. Choose the district for a district-wide agreement.</span>
+          </div>
+          <button type="button" class="lf-link-btn" id="lf_cant_find">I can&rsquo;t find my district or school</button>
+        </div>
+
+        <!-- US manual entry -->
+        <div id="lf_us_manual" class="pqf-manual-panel" style="display:none;">
+          <div class="pqf-manual-header">
+            <span class="pqf-manual-title">Enter your district details</span>
+            <button type="button" id="lf_manual_back" class="pqf-manual-back">Back to search</button>
+          </div>
+          <div class="pqf-grid pqf-grid-2">
+            <div class="pqf-field">
+              <label class="pqf-label" for="lf_m_city">City <span class="pqf-required">*</span></label>
+              <input id="lf_m_city" type="text" class="pqf-input" placeholder="e.g. Los Angeles" autocomplete="address-level2">
+              <span class="pqf-hint" id="lf_m_city_hint"></span>
+            </div>
+            <div class="pqf-field">
+              <label class="pqf-label" for="lf_m_district">School district <span class="pqf-required">*</span></label>
+              <input id="lf_m_district" type="text" class="pqf-input" placeholder="e.g. Los Angeles Unified">
+              <span class="pqf-hint" id="lf_m_district_hint"></span>
+            </div>
+            <div class="pqf-field" style="grid-column: 1 / -1;">
+              <label class="pqf-label" for="lf_m_school">School <span style="font-weight:400;color:rgba(22,22,22,0.5);">(optional)</span></label>
+              <input id="lf_m_school" type="text" class="pqf-input" placeholder="e.g. Lincoln High School">
+            </div>
+          </div>
+        </div>
+
+        <!-- Outside the US -->
+        <div id="lf_intl_org" style="display:none;">
+          <div class="pqf-grid pqf-grid-2">
+            <div class="pqf-field" style="grid-column: 1 / -1;">
+              <label class="pqf-label" for="lf_org"><span id="lf_org_label">School or organization</span> <span class="pqf-required">*</span></label>
+              <input id="lf_org" type="text" class="pqf-input" placeholder="">
+              <span class="pqf-hint" id="lf_org_hint">The organization that will sign the agreement.</span>
+            </div>
+            <div class="pqf-field">
+              <label class="pqf-label" for="lf_intl_city">City <span class="pqf-required">*</span></label>
+              <input id="lf_intl_city" type="text" class="pqf-input" autocomplete="address-level2">
+              <span class="pqf-hint" id="lf_intl_city_hint"></span>
+            </div>
+            <div class="pqf-field">
+              <label class="pqf-label" for="lf_intl_school">School <span style="font-weight:400;color:rgba(22,22,22,0.5);">(optional, if different)</span></label>
+              <input id="lf_intl_school" type="text" class="pqf-input">
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- ── CONTACT INFORMATION ────────────────────────────── -->
-      <div class="pqf-section" style="padding-top:40px;">
-        <div class="pqf-section-title">Contact Information</div>
-        <div class="pqf-grid pqf-grid-2">
+      <!-- ══ 4. PURCHASE ═════════════════════════════════════════ -->
+      <div class="pqf-section lf-hidden" id="lf_purchase_section" style="padding-top:40px;">
+        <div class="pqf-section-title" id="lf_purchase_title">4. Where are you in the purchasing process?</div>
+        <div class="lf-radio-group lf-radio-group-2" role="radiogroup" aria-label="Purchase stage">
+          <label class="lf-radio-pill">
+            <input type="radio" name="purchase_stage" value="Not purchased yet">
+            <span class="lf-radio-dot"></span>
+            <span class="lf-radio-text"><strong>We haven&rsquo;t purchased yet</strong><span>We need this sorted before we can order</span></span>
+          </label>
+          <label class="lf-radio-pill">
+            <input type="radio" name="purchase_stage" value="Order placed">
+            <span class="lf-radio-dot"></span>
+            <span class="lf-radio-text"><strong>We&rsquo;ve placed an order</strong><span>Or we&rsquo;re about to</span></span>
+          </label>
+          <label class="lf-radio-pill">
+            <input type="radio" name="purchase_stage" value="Renewal">
+            <span class="lf-radio-dot"></span>
+            <span class="lf-radio-text"><strong>We&rsquo;re renewing</strong><span>Our current subscription is ending</span></span>
+          </label>
+          <label class="lf-radio-pill">
+            <input type="radio" name="purchase_stage" value="Current customer">
+            <span class="lf-radio-dot"></span>
+            <span class="lf-radio-text"><strong>We&rsquo;re a current customer</strong><span>Mid-subscription, no purchase planned</span></span>
+          </label>
+        </div>
+        <span class="pqf-hint pqf-error" id="lf_purchase_hint" style="display:none;margin-top:8px;"></span>
 
+        <div class="pqf-grid pqf-grid-2" style="margin-top:20px;">
           <div class="pqf-field">
-            <label class="pqf-label" for="pqf_firstname">First Name <span class="pqf-required">*</span></label>
-            <input id="pqf_firstname" name="firstname" type="text" class="pqf-input"
-              placeholder="Jane" autocomplete="given-name" required />
-            <span class="pqf-hint" id="pqf_firstname_hint"></span>
+            <label class="pqf-label" for="lf_seats">Number of seats <span style="font-weight:400;color:rgba(22,22,22,0.5);">(optional)</span></label>
+            <input id="lf_seats" type="number" class="pqf-input" placeholder="Approximate number" min="1" step="1">
           </div>
-
           <div class="pqf-field">
-            <label class="pqf-label" for="pqf_lastname">Last Name <span class="pqf-required">*</span></label>
-            <input id="pqf_lastname" name="lastname" type="text" class="pqf-input"
-              placeholder="Smith" autocomplete="family-name" required />
-            <span class="pqf-hint" id="pqf_lastname_hint"></span>
-          </div>
-
-          <div class="pqf-field" style="grid-column: 1 / -1;">
-            <label class="pqf-label" for="pqf_email">Email Address <span class="pqf-required">*</span></label>
-            <input id="pqf_email" name="email" type="email" class="pqf-input"
-              placeholder="jane.smith@district.edu" autocomplete="email" required />
-            <span class="pqf-hint" id="pqf_email_hint"></span>
-          </div>
-
-          <div class="pqf-field" style="grid-column: 1 / -1;">
-            <label class="pqf-label" for="lf_role">Your Role <span class="pqf-required">*</span></label>
+            <label class="pqf-label" for="lf_order_method">How are you buying? <span style="font-weight:400;color:rgba(22,22,22,0.5);">(optional)</span></label>
             <div class="pqf-select-wrap">
-              <select id="lf_role" name="role" class="pqf-select" required>
-                <option value="">Select your role…</option>
-                <option value="Legal Representative">Legal Representative</option>
-                <option value="District Administrator">District Administrator</option>
-                <option value="Technology Administrator">Technology Administrator</option>
-                <option value="Purchasing Administrator">Purchasing Administrator</option>
-                <option value="Other">Other</option>
+              <select id="lf_order_method" class="pqf-select">
+                <option value="">Not sure</option>
+                <option value="Direct">Directly from Soundtrap</option>
+                <option value="Reseller">Through a reseller</option>
               </select>
             </div>
-            <span class="pqf-hint pqf-error" id="lf_role_hint" style="display:none;"></span>
           </div>
-
-          <div class="pqf-field" id="lf_role_other_field" style="display:none; grid-column: 1 / -1;">
-            <label class="pqf-label" for="lf_role_other">Please specify your role <span class="pqf-required">*</span></label>
-            <input id="lf_role_other" name="role_other" type="text" class="pqf-input" placeholder="e.g. Privacy Officer" />
-            <span class="pqf-hint pqf-error" id="lf_role_other_hint" style="display:none;"></span>
+          <div class="pqf-field lf-hidden" id="lf_reseller_name_field" style="grid-column: 1 / -1;">
+            <label class="pqf-label" for="lf_reseller_name">Reseller name <span style="font-weight:400;color:rgba(22,22,22,0.5);">(optional)</span></label>
+            <input id="lf_reseller_name" type="text" class="pqf-input" placeholder="e.g. MusicFirst, TD SYNNEX">
           </div>
-
         </div>
       </div>
 
-      <!-- ── DATA / SECURITY BREACH CONTACT ────────────────── -->
-      <div class="pqf-section" style="padding-top:40px;">
-        <div class="pqf-section-title">Data &amp; Security Breach Contact</div>
-        <p class="pqf-intro-note" style="margin-bottom:16px;">Required for DPA and data privacy agreements. This person will be notified in the event of a data breach.</p>
-        <div class="pqf-grid pqf-grid-2">
+      <!-- ══ 5. DOCUMENTS ════════════════════════════════════════ -->
+      <div class="pqf-section lf-hidden" id="lf_docs_section" style="padding-top:40px;">
+        <div class="pqf-section-title" id="lf_docs_title">5. Your documents</div>
 
+        <div class="lf-callout lf-hidden" id="lf_exhibit_e_callout">
+          <strong>How to join the <span class="lf-state-name">state</span> agreement</strong>
+          <ol>
+            <li>Find the <span class="lf-state-name">state</span> agreement in our <a href="https://airtable.com/appTOZr2BCJNwtPfL/shrleIotBEk966u2zd" target="_blank" rel="noopener">list of signed agreements by state</a>.</li>
+            <li>Complete and sign its Exhibit E.</li>
+            <li>Upload the signed Exhibit E below. If you sign it through the SDPC Resource Registry, it reaches us automatically and you don&rsquo;t need to upload it.</li>
+          </ol>
+        </div>
+
+        <div class="lf-callout lf-hidden" id="lf_signed_callout">
+          Upload the agreement signed by your organization. We&rsquo;ll countersign it and email you the fully signed copy within 5 business days.
+        </div>
+
+        <div id="lf_review_fields" class="lf-hidden" style="display:grid; gap:20px; margin-bottom:20px;">
           <div class="pqf-field">
-            <label class="pqf-label" for="lf_breach_name">Contact Name <span class="pqf-required">*</span></label>
-            <input id="lf_breach_name" name="breach_contact_name" type="text" class="pqf-input"
-              placeholder="Jane Smith" />
-            <span class="pqf-hint pqf-error" id="lf_breach_name_hint" style="display:none;"></span>
+            <label class="pqf-label" for="lf_summary">What would you like us to review? <span class="pqf-required">*</span></label>
+            <textarea id="lf_summary" class="pqf-textarea" rows="4" placeholder="E.g. our district&rsquo;s data privacy agreement and vendor contract. Include any deadlines or context that will help us."></textarea>
+            <span class="pqf-hint pqf-error" id="lf_summary_hint" style="display:none;"></span>
           </div>
-
           <div class="pqf-field">
-            <label class="pqf-label" for="lf_breach_email">Contact Email <span class="pqf-required">*</span></label>
-            <input id="lf_breach_email" name="breach_contact_email" type="email" class="pqf-input"
-              placeholder="privacy@district.edu" />
-            <span class="pqf-hint pqf-error" id="lf_breach_email_hint" style="display:none;"></span>
+            <label class="pqf-label" for="lf_needed_by">Do you have a deadline? <span style="font-weight:400;color:rgba(22,22,22,0.5);">(optional)</span></label>
+            <input id="lf_needed_by" type="date" class="pqf-input" style="max-width:240px;">
+            <span class="pqf-hint">Reviews take at least 2 weeks, and longer for several or complex documents. We&rsquo;ll tell you if we can&rsquo;t meet your date.</span>
           </div>
-
         </div>
-      </div>
 
-      <!-- ── PURCHASE DATE (Purchase only) ─────────────────── -->
-      <div id="lf_purchase_date_section" class="pqf-section" style="display:none; padding-top:40px;">
-        <div class="pqf-section-title">Purchase Date</div>
         <div class="pqf-field">
-          <label class="pqf-label" for="lf_purchase_date">Purchase Date</label>
-          <input id="lf_purchase_date" name="purchase_date" type="date" class="pqf-input" style="max-width:240px;" />
-          <span class="pqf-hint">When was or will the purchase be made?</span>
-        </div>
-      </div>
-
-      <!-- ── DOCUMENT UPLOAD (all except VPAT) ─────────────── -->
-      <div id="lf_upload_section" class="pqf-section" style="display:none; padding-top:40px;">
-        <div class="pqf-section-title">Documents</div>
-        <div class="pqf-field">
-          <label class="pqf-label">Attach Documents</label>
+          <label class="pqf-label"><span id="lf_upload_label">Upload documents</span> <span class="pqf-required" id="lf_upload_required">*</span></label>
           <div class="lf-upload-zone" id="lf_upload_zone">
-            <input type="file" id="lf_files" multiple
-              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.xls,.xlsx">
+            <input type="file" id="lf_files" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.xls,.xlsx">
             <div class="lf-upload-icon">📎</div>
             <div class="lf-upload-label">Click to upload or drag &amp; drop</div>
-            <div class="lf-upload-hint">PDF, Word, Excel, images — max 10 MB per file</div>
+            <div class="lf-upload-hint">PDF, Word, Excel or images, max 10 MB per file</div>
           </div>
           <div class="lf-file-list" id="lf_file_list"></div>
           <span class="pqf-hint pqf-error" id="lf_files_hint" style="display:none;"></span>
         </div>
       </div>
 
-      <!-- ── SUBMIT ─────────────────────────────────────────── -->
-      <div class="pqf-footer">
-        <div id="lf_success" class="pqf-banner pqf-success">
-          Your request has been submitted. Your assigned representative will be in touch shortly.
+      <!-- ══ 6. CONTACT ══════════════════════════════════════════ -->
+      <div class="pqf-section lf-hidden" id="lf_contact_section" style="padding-top:40px;">
+        <div class="pqf-section-title" id="lf_contact_title">6. Your details</div>
+        <div class="pqf-grid pqf-grid-2">
+          <div class="pqf-field">
+            <label class="pqf-label" for="pqf_firstname">First name <span class="pqf-required">*</span></label>
+            <input id="pqf_firstname" type="text" class="pqf-input" placeholder="Jane" autocomplete="given-name">
+            <span class="pqf-hint" id="pqf_firstname_hint"></span>
+          </div>
+          <div class="pqf-field">
+            <label class="pqf-label" for="pqf_lastname">Last name <span class="pqf-required">*</span></label>
+            <input id="pqf_lastname" type="text" class="pqf-input" placeholder="Smith" autocomplete="family-name">
+            <span class="pqf-hint" id="pqf_lastname_hint"></span>
+          </div>
+          <div class="pqf-field" style="grid-column: 1 / -1;">
+            <label class="pqf-label" for="pqf_email">Work email <span class="pqf-required">*</span></label>
+            <input id="pqf_email" type="email" class="pqf-input" placeholder="jane.smith@district.edu" autocomplete="email">
+            <span class="pqf-hint" id="pqf_email_hint">We&rsquo;ll send the documents here.</span>
+          </div>
+          <div class="pqf-field lf-hidden" id="lf_vpat_org_field" style="grid-column: 1 / -1;">
+            <label class="pqf-label" for="lf_vpat_org">School or organization <span style="font-weight:400;color:rgba(22,22,22,0.5);">(optional)</span></label>
+            <input id="lf_vpat_org" type="text" class="pqf-input" autocomplete="organization">
+          </div>
+          <div class="pqf-field" style="grid-column: 1 / -1;">
+            <label class="pqf-label" for="lf_role">Your role <span class="pqf-required">*</span></label>
+            <div class="pqf-select-wrap">
+              <select id="lf_role" class="pqf-select">
+                <option value="">Select your role…</option>
+                <option value="Legal Representative">Legal / privacy</option>
+                <option value="District Administrator">District administrator</option>
+                <option value="Technology Administrator">Technology / IT</option>
+                <option value="Purchasing Administrator">Purchasing / procurement</option>
+                <option value="Teacher">Teacher</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <span class="pqf-hint pqf-error" id="lf_role_hint" style="display:none;"></span>
+          </div>
+          <div class="pqf-field lf-hidden" id="lf_role_other_field" style="grid-column: 1 / -1;">
+            <label class="pqf-label" for="lf_role_other">Please specify your role <span class="pqf-required">*</span></label>
+            <input id="lf_role_other" type="text" class="pqf-input" placeholder="e.g. Privacy Officer">
+            <span class="pqf-hint pqf-error" id="lf_role_other_hint" style="display:none;"></span>
+          </div>
+        </div>
+
+        <!-- Breach contact (agreements only) -->
+        <div id="lf_breach_block" class="lf-hidden" style="margin-top:32px;">
+          <div class="pqf-label" style="font-size:14px;margin-bottom:4px;">Data breach contact <span class="pqf-required">*</span></div>
+          <p class="pqf-intro-note" style="margin-bottom:12px;">Data privacy agreements name the person we notify in the unlikely event of a data breach.</p>
+          <label class="lf-inline-check"><input type="checkbox" id="lf_breach_same"> Same as me</label>
+          <div class="pqf-grid pqf-grid-2" id="lf_breach_fields">
+            <div class="pqf-field">
+              <label class="pqf-label" for="lf_breach_name">Contact name <span class="pqf-required">*</span></label>
+              <input id="lf_breach_name" type="text" class="pqf-input" placeholder="Jane Smith">
+              <span class="pqf-hint pqf-error" id="lf_breach_name_hint" style="display:none;"></span>
+            </div>
+            <div class="pqf-field">
+              <label class="pqf-label" for="lf_breach_email">Contact email <span class="pqf-required">*</span></label>
+              <input id="lf_breach_email" type="email" class="pqf-input" placeholder="privacy@district.edu">
+              <span class="pqf-hint pqf-error" id="lf_breach_email_hint" style="display:none;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ WHAT HAPPENS NEXT + SUBMIT ═════════════════════════ -->
+      <div class="pqf-footer lf-hidden" id="lf_footer">
+        <div class="lf-next" style="margin-bottom:24px;">
+          <div class="lf-next-title">What happens next</div>
+          <ul id="lf_next_list"></ul>
         </div>
         <div id="lf_error_banner" class="pqf-banner pqf-error-banner">
-          Something went wrong. Please try again or email <a href="mailto:legal@soundtrap.com">legal@soundtrap.com</a>.
+          Something went wrong. Please try again or email <a href="mailto:contracts@soundtrap.com">contracts@soundtrap.com</a>.
         </div>
-
-        <button type="submit" id="lf_submit" class="pqf-submit">
-          Submit Request
-        </button>
-
+        <button type="submit" id="lf_submit" class="pqf-submit">Submit request</button>
         <p class="pqf-privacy">
           By submitting this form you agree to the Soundtrap&nbsp;Privacy Policy.
           Your information will not be shared with third parties.
@@ -1262,6 +1198,18 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       </div>
 
     </form>
+
+    <!-- ══ SUCCESS PANEL ═════════════════════════════════════════ -->
+    <div class="lf-success-panel" id="lf_success_panel" style="display:none;">
+      <h2>Thank you, <span id="lf_success_name"></span>!</h2>
+      <p>We&rsquo;ve received your request and sent a confirmation to <strong id="lf_success_email"></strong>.</p>
+      <div class="lf-next">
+        <div class="lf-next-title">What happens next</div>
+        <ul id="lf_success_next"></ul>
+      </div>
+      <button type="button" class="lf-secondary-btn" id="lf_new_request">Submit another request</button>
+    </div>
+
   </div>
 </div>
 
@@ -1275,17 +1223,13 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   var INDEX_URL        = CFG.indexUrl       || '';
   var SCHOOLS_BASE_URL = CFG.schoolsBaseUrl || '';
   var CONFIG_URL       = CFG.configUrl      || 'https://matteo524.github.io/soundtrap-school-data/config/config.json';
+  var CONTACT_EMAIL    = 'contracts@soundtrap.com';
 
-  /* ── Shared config (fetched from config/config.json) ────────
-     Populated by applyConfig(). All data variables below start
-     as null/[] until config loads — init waits on loadConfig(). */
-  var SHARED_CONFIG       = null;
+  /* ── Shared config (config/config.json) ───────────────────── */
   var CONFIG_CACHE_KEY    = 'lf_shared_config_v1';
-  var CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;  // 5 minutes
+  var CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;
 
-  var TERRITORY        = null;
   var EXHIBIT_E_STATES = [];
-  var DPA_COUNTRIES    = [];
   var WORLD_COUNTRIES  = [];
   var US_STATES        = [];
   var CA_PROVINCES     = [];
@@ -1293,26 +1237,16 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 
   function loadConfig(callback) {
     var cached = readCachedConfig();
-    if (cached.data && cached.fresh) {
-      applyConfig(cached.data);
-      callback(null);
-      return;
-    }
+    if (cached.data && cached.fresh) { applyConfig(cached.data); callback(null); return; }
     fetch(CONFIG_URL, { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
-        try {
-          localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({ data: data, fetchedAt: Date.now() }));
-        } catch (e) { /* localStorage may be unavailable */ }
+        try { localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({ data: data, fetchedAt: Date.now() })); } catch (e) {}
         applyConfig(data);
         callback(null);
       })
       .catch(function (err) {
-        if (cached.data) {
-          applyConfig(cached.data);
-          callback(null);
-          return;
-        }
+        if (cached.data) { applyConfig(cached.data); callback(null); return; }
         callback(err);
       });
   }
@@ -1321,1509 +1255,711 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     try {
       var raw = localStorage.getItem(CONFIG_CACHE_KEY);
       if (!raw) return { data: null, fresh: false };
-      var wrapper = JSON.parse(raw);
-      var age = Date.now() - (wrapper.fetchedAt || 0);
-      return { data: wrapper.data || null, fresh: age < CONFIG_CACHE_TTL_MS };
+      var w = JSON.parse(raw);
+      return { data: w.data || null, fresh: (Date.now() - (w.fetchedAt || 0)) < CONFIG_CACHE_TTL_MS };
     } catch (e) { return { data: null, fresh: false }; }
   }
 
   function applyConfig(c) {
-    SHARED_CONFIG    = c;
-    TERRITORY        = c.territory;
     EXHIBIT_E_STATES = (c.legal && c.legal.exhibitEStates) || [];
-    DPA_COUNTRIES    = (c.legal && c.legal.dpaCountries)   || [];
     WORLD_COUNTRIES  = (c.lists && c.lists.worldCountries) || [];
     US_STATES        = (c.lists && c.lists.usStates)       || [];
     CA_PROVINCES     = (c.lists && c.lists.caProvinces)    || [];
     AU_STATES        = (c.lists && c.lists.auStates)       || [];
   }
 
-  /* ── Uploaded files array ─────────────────────────────────── */
+  /* ── State ────────────────────────────────────────────────── */
   var uploadedFiles = [];
+  var usManual      = false;        // "I can't find my district" panel open
+  var _index        = null;         // NCES index { states, stateData }
+  var _stateSchools = null, _stateSchoolsPromise = null, _stateSchoolsKey = '';
+  var _lastSubmitted = null;
 
-  /* ── Manual-entry mode state ──────────────────────────────── */
-  var manualMode       = false;
-  var schoolManualMode = false; // school-only mode: district locked from cascade, only school typed
-
-  /* ── Index cache (loaded once on page init) ────────────────── */
-  var _index = null;  // { countries, states, stateData }
-
-  /* ── Per-state school prefetch ─────────────────────────────── */
-  var _stateSchools        = null;   // { district_lc: [{name, nces}] } for current state
-  var _stateSchoolsPromise = null;   // in-flight fetch promise
-  var _stateSchoolsKey     = '';     // slug of the currently loaded/loading state
-
-  /* ── District enrollment (populated from _enrollment key in state JSON) ── */
-  var _districtEnrollment  = {};    // { "district name lc": enrollment_int }
-
-  /* ── Territory assignment data ─────────────────────────────
-     TERRITORY is populated by applyConfig() from config.json. */
-
-  function computeTerritory() {
-    if (!TERRITORY) return { pod: '', rep: '', email: '' };
-    var country    = sel.country.value;
-    var state      = (sel.state.value || '').toLowerCase();
-    var districtRaw = manualMode
-      ? document.getElementById('pqf_manual_school').value.trim()
-      : sel.district.value;
-    var districtLc = districtRaw.toLowerCase();
-    var emailRaw   = (document.getElementById('pqf_email').value || '').trim().toLowerCase();
-    var emailDomain = emailRaw.indexOf('@') !== -1 ? emailRaw.split('@')[1] : '';
-    var enrollInput = document.getElementById('pqf_enrollment');
-    var enrollVal   = enrollInput ? parseInt((enrollInput.value || '').replace(/,/g, ''), 10) : NaN;
-
-    var pod, rep;
-
-    if (country === 'United States') {
-      // 1a. US Named Accounts 2 (temporary pod) — specific districts to a dedicated rep; checked first
-      if (districtLc && TERRITORY.usNamed2 && TERRITORY.usNamed2.indexOf(districtLc) !== -1) {
-        pod = 'US Named Accounts 2';
-      // 1b. US Named Accounts — by district name (or any NYC geographic sub-district)
-      } else if (districtLc && (TERRITORY.usNamed.indexOf(districtLc) !== -1 ||
-          districtLc.indexOf('new york city geographic district') === 0)) {
-        pod = 'US Named Accounts';
-      } else {
-        // 2. Regional POD by state — no enrollment threshold for legal requests
-        pod = TERRITORY.statePod[state] || '';
-      }
-    } else if (country === 'Canada') {
-      pod = 'Canada';
-    } else if (country === 'United Kingdom') {
-      pod = 'UK';
-    } else if (country) {
-      // ROW Named Accounts — by email domain
-      if (emailDomain && TERRITORY.rowNamedDomains.indexOf(emailDomain) !== -1) {
-        pod = 'ROW Named Accounts';
-      } else {
-        pod = 'ROW';
-      }
-    } else {
-      pod = '';
-    }
-
-    var repData = pod ? (TERRITORY.podRep[pod] || {}) : {};
-    return { pod: pod, rep: repData.name || '', email: repData.email || '' };
+  /* ── Small helpers ────────────────────────────────────────── */
+  function $(id) { return document.getElementById(id); }
+  function val(id) { var el = $(id); return el ? (el.value || '').trim() : ''; }
+  function show(id, on) { var el = $(id); if (el) el.classList.toggle('lf-hidden', !on); }
+  function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+  function isEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
 
-  function updateAccountManager() {
-    var repEl  = document.getElementById('pqf_rep_display');
-    var hintEl = document.getElementById('pqf_rep_hint');
-    if (!repEl) return;
-    var t = computeTerritory();
-    if (t && t.rep) {
-      repEl.value = t.rep + ' <' + t.email + '>  [' + t.pod + ']';
-      if (hintEl) hintEl.textContent = '';
+  /** Show/clear an error under a field. Hints with default text keep it when cleared. */
+  function fieldErr(id, msg) {
+    var h = $(id);
+    if (!h) return;
+    if (h.getAttribute('data-default') === null) h.setAttribute('data-default', h.classList.contains('pqf-error') ? '' : h.textContent);
+    if (msg) {
+      h.textContent = msg;
+      h.className = 'pqf-hint pqf-error';
+      h.style.display = '';
     } else {
-      repEl.value = '';
-      if (hintEl) hintEl.textContent = 'Rep will be assigned once country and district are selected.';
+      var d = h.getAttribute('data-default') || '';
+      h.textContent = d;
+      h.className = 'pqf-hint' + (d ? '' : ' pqf-error');
+      h.style.display = d ? '' : 'none';
     }
   }
 
-  /* ── DOM refs ─────────────────────────────────────────────── */
-  var form          = document.getElementById('lfForm');
-  var submitBtn     = document.getElementById('lf_submit');
-  var successBanner = document.getElementById('lf_success');
-  var errorBanner   = document.getElementById('lf_error_banner');
-
+  /* ── Combobox (unchanged from v1) ─────────────────────────── */
   var sel = {
-    country:  document.getElementById('pqf_country'),
-    state:    document.getElementById('pqf_state'),
-    city:     document.getElementById('pqf_city'),
-    district: document.getElementById('pqf_district'),
-    school:   document.getElementById('pqf_school'),
+    country:  $('pqf_country'),
+    state:    $('pqf_state'),
   };
-
-  /* ── Combobox registry & factory ─────────────────────────── */
   var combos = {};
 
   function makeCombobox(key) {
-    var inputEl   = document.getElementById('pqf_' + key + '_input');
-    var dropEl    = document.getElementById('pqf_' + key + '_drop');
-    var hiddenSel = sel[key] || document.getElementById('pqf_' + key);
-
-    var _items  = [];
-    var _isObj  = false; // true for school (items are {name,nces})
-    var _active = -1;
-
-    function lbl(item) { return _isObj ? item.name : item; }
-    function nc(item)  { return _isObj ? (item.nces || '') : ''; }
+    var inputEl = $('pqf_' + key + '_input'), dropEl = $('pqf_' + key + '_drop'), hiddenSel = sel[key];
+    var _items = [], _isObj = false, _active = -1;
+    function lbl(it) { return _isObj ? it.name : it; }
+    function nc(it)  { return _isObj ? (it.nces || '') : ''; }
 
     function renderDrop(q) {
-      dropEl.innerHTML = '';
-      _active = -1;
+      dropEl.innerHTML = ''; _active = -1;
       var lq = (q || '').toLowerCase().trim();
-      var matched = lq
-        ? _items.filter(function(it) { return lbl(it).toLowerCase().indexOf(lq) >= 0; })
-        : _items;
-
+      var matched = lq ? _items.filter(function (it) { return lbl(it).toLowerCase().indexOf(lq) >= 0; }) : _items;
       if (!matched.length) {
         if (lq && _items.length) {
-          var msg = document.createElement('div');
-          msg.className = 'pqf-combo-empty';
-          msg.textContent = 'No matches';
-          dropEl.appendChild(msg);
-          dropEl.style.display = 'block';
-        } else {
-          dropEl.style.display = 'none';
-        }
+          var m = document.createElement('div'); m.className = 'pqf-combo-empty'; m.textContent = 'No matches';
+          dropEl.appendChild(m); dropEl.style.display = 'block';
+        } else dropEl.style.display = 'none';
         return;
       }
-
-      matched.forEach(function(item) {
-        var div = document.createElement('div');
-        div.className = 'pqf-combo-item';
-        div.textContent = lbl(item);
-        div.addEventListener('mousedown', function(e) {
-          e.preventDefault();
-          commit(item);
-        });
-        dropEl.appendChild(div);
+      matched.forEach(function (item) {
+        var d = document.createElement('div');
+        d.className = 'pqf-combo-item'; d.textContent = lbl(item);
+        d.addEventListener('mousedown', function (e) { e.preventDefault(); commit(item); });
+        dropEl.appendChild(d);
       });
       dropEl.style.display = 'block';
     }
-
     function commit(item) {
-      var label = lbl(item);
-      var nces  = nc(item);
+      var label = lbl(item), esc = label.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
       inputEl.value = label;
-      var esc = label.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-      hiddenSel.innerHTML = '<option value="' + esc + '" data-nces="' + nces + '" selected>' + esc + '</option>';
+      hiddenSel.innerHTML = '<option value="' + esc + '" data-nces="' + nc(item) + '" selected>' + esc + '</option>';
       hiddenSel.value = label;
-      dropEl.style.display = 'none';
-      _active = -1;
+      dropEl.style.display = 'none'; _active = -1;
       hiddenSel.dispatchEvent(new Event('change', { bubbles: true }));
     }
-
     function moveFocus(dir) {
       var els = dropEl.querySelectorAll('.pqf-combo-item');
       if (!els.length) return;
       _active = Math.max(0, Math.min(els.length - 1, _active + dir));
-      Array.prototype.forEach.call(els, function(el, i) {
+      Array.prototype.forEach.call(els, function (el, i) {
         el.classList.toggle('pqf-combo-active', i === _active);
         if (i === _active) el.scrollIntoView({ block: 'nearest' });
       });
     }
-
-    inputEl.addEventListener('input', function() {
-      if (!inputEl.value) hiddenSel.value = '';
+    inputEl.addEventListener('input', function () {
+      if (hiddenSel.value) { hiddenSel.value = ''; hiddenSel.dispatchEvent(new Event('change', { bubbles: true })); }
       renderDrop(inputEl.value);
     });
-
-    inputEl.addEventListener('focus', function() { renderDrop(inputEl.value); });
-
-    inputEl.addEventListener('blur', function() {
-      setTimeout(function() {
+    inputEl.addEventListener('focus', function () { renderDrop(inputEl.value); });
+    inputEl.addEventListener('blur', function () {
+      setTimeout(function () {
         dropEl.style.display = 'none';
         var typed = inputEl.value.trim();
         if (typed && !hiddenSel.value) {
-          // typed something but didn't pick — check for exact match
           var found = null;
-          for (var i = 0; i < _items.length; i++) {
-            if (lbl(_items[i]).toLowerCase() === typed.toLowerCase()) { found = _items[i]; break; }
-          }
-          if (found) { commit(found); } else { inputEl.value = ''; }
-        } else if (!typed) {
-          hiddenSel.value = '';
+          for (var i = 0; i < _items.length; i++) if (lbl(_items[i]).toLowerCase() === typed.toLowerCase()) { found = _items[i]; break; }
+          if (found) commit(found); else inputEl.value = '';
         }
       }, 200);
     });
-
-    inputEl.addEventListener('keydown', function(e) {
-      if (e.key === 'ArrowDown') {
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (dropEl.style.display === 'none') renderDrop(inputEl.value); moveFocus(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); moveFocus(-1); }
+      else if (e.key === 'Enter') {
         e.preventDefault();
-        if (dropEl.style.display === 'none') renderDrop(inputEl.value);
-        moveFocus(1);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        moveFocus(-1);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        var active = dropEl.querySelector('.pqf-combo-active') || dropEl.querySelector('.pqf-combo-item');
-        if (active) active.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-      } else if (e.key === 'Escape') {
-        dropEl.style.display = 'none';
-        inputEl.blur();
-      }
+        var a = dropEl.querySelector('.pqf-combo-active') || dropEl.querySelector('.pqf-combo-item');
+        if (a) a.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      } else if (e.key === 'Escape') { dropEl.style.display = 'none'; inputEl.blur(); }
     });
-
     combos[key] = {
-      setOptions: function(items, isObj, placeholder) {
-        _items  = items || [];
-        _isObj  = !!isObj;
-        inputEl.placeholder = placeholder || '';
-        inputEl.value       = '';
-        inputEl.disabled    = _items.length === 0;
-        hiddenSel.value     = '';
-        dropEl.style.display = 'none';
+      setOptions: function (items, isObj, ph) {
+        _items = items || []; _isObj = !!isObj;
+        inputEl.placeholder = ph || ''; inputEl.value = ''; inputEl.disabled = _items.length === 0;
+        hiddenSel.value = ''; dropEl.style.display = 'none';
       },
-      reset: function(placeholder) {
-        _items  = [];
-        _isObj  = false;
-        inputEl.value       = '';
-        inputEl.placeholder = placeholder || '';
-        inputEl.disabled    = true;
-        hiddenSel.value     = '';
-        dropEl.style.display = 'none';
+      reset: function (ph) {
+        _items = []; _isObj = false;
+        inputEl.value = ''; inputEl.placeholder = ph || ''; inputEl.disabled = true;
+        hiddenSel.value = ''; dropEl.style.display = 'none';
       },
-      setDisabled: function(on) { inputEl.disabled = on; },
-      getValue:    function()   { return hiddenSel.value; }
     };
   }
+  ['country', 'state'].forEach(makeCombobox);
 
-  // Close any open combo dropdown when clicking outside
-  document.addEventListener('mousedown', function(e) {
-    ['state','city','district','school'].forEach(function(key) {
-      var drop = document.getElementById('pqf_' + key + '_drop');
-      var inp  = document.getElementById('pqf_' + key + '_input');
-      if (drop && inp && !drop.contains(e.target) && e.target !== inp) {
-        drop.style.display = 'none';
-      }
+  document.addEventListener('mousedown', function (e) {
+    [['pqf_country_drop', 'pqf_country_input'], ['pqf_state_drop', 'pqf_state_input'], ['lf_find_drop', 'lf_find_input']].forEach(function (p) {
+      var drop = $(p[0]), inp = $(p[1]);
+      if (drop && inp && !drop.contains(e.target) && e.target !== inp) drop.style.display = 'none';
     });
   });
 
-  makeCombobox('state');
-  makeCombobox('city');
-  makeCombobox('district');
-  makeCombobox('school');
-  makeCombobox('country');
-  makeCombobox('manual_state');
-
-  /* WORLD_COUNTRIES is populated from config.json by applyConfig();
-     combos.country.setOptions(...) is called in setupAfterConfigLoad(). */
-
-  /* ── Manual mode helpers ──────────────────────────────────── */
-
-  function isManualUS() {
-    var el = document.getElementById('pqf_manual_country');
-    return el && el.value.trim().toLowerCase() === 'united states';
+  function resetCombo(key, ph) { sel[key].innerHTML = '<option value=""></option>'; sel[key].value = ''; combos[key].reset(ph); }
+  function fillCombo(key, items, ph, isObj) {
+    combos[key].setOptions(items, isObj, items.length ? ph : 'No options found');
   }
 
-  function toggleManualMode(on, autoTriggered, prefilledState) {
-    manualMode = on;
-    var dropGrid           = document.getElementById('pqf_dropdown_grid');
-    var cantFindWrap       = document.getElementById('pqf_cant_find_wrap');
-    var manualPanel        = document.getElementById('pqf_manual_panel');
-    var manualCountryField = document.getElementById('pqf_manual_country_field');
-    var manualStateField   = document.getElementById('pqf_manual_state_field');
-    var manualBackBtn      = document.getElementById('pqf_manual_back');
+  /* ── Location rules ───────────────────────────────────────── */
+  function country() { return sel.country.value; }
+  function state()   { return sel.state.value; }
+  function isUS()    { return country() === 'United States'; }
+  function needsState(c) { return c === 'United States' || c === 'Canada' || c === 'Australia'; }
+  function locationReady() { return !!country() && (!needsState(country()) || !!state()); }
 
-    var cantFindDistrictWrap = document.getElementById('pqf_cant_find_district_wrap');
-    dropGrid.style.display     = on ? 'none' : '';
-    cantFindWrap.style.display = on ? 'none' : (sel.country.value === 'United States' ? '' : 'none');
-    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = on ? 'none' : (sel.country.value === 'United States' ? '' : 'none');
-    manualPanel.style.display  = on ? ''     : 'none';
-
-    // Country field: always show when panel is open; lock it if auto-triggered
-    if (manualCountryField) {
-      manualCountryField.style.display = on ? '' : 'none';
-    }
-    var countryInput = document.getElementById('pqf_manual_country');
-    if (countryInput) {
-      countryInput.readOnly    = !!(on && autoTriggered);
-      countryInput.style.color = (on && autoTriggered) ? '#888' : '';
-    }
-    // State field: show for US (editable) or CA/AU (locked with pre-filled value)
-    if (manualStateField) {
-      manualStateField.style.display = (on && (isManualUS() || prefilledState)) ? '' : 'none';
-    }
-    var manualStateInput = document.getElementById('pqf_manual_state_input');
-    if (manualStateInput) {
-      manualStateInput.readOnly    = !!(on && prefilledState);
-      manualStateInput.style.color = (on && prefilledState) ? '#888' : '';
-      if (on && prefilledState) manualStateInput.classList.add('pqf-locked');
-      else                      manualStateInput.classList.remove('pqf-locked');
-      var stateWrapTMM = document.getElementById('pqf_manual_state_wrap');
-      if (stateWrapTMM) {
-        if (on && prefilledState) stateWrapTMM.classList.add('pqf-locked-wrap');
-        else                      stateWrapTMM.classList.remove('pqf-locked-wrap');
-      }
-    }
-    // City: lock if a cascade city was already selected
-    var manualCityInput = document.getElementById('pqf_manual_city');
-    var cascadeCity = sel.city.value;
-    if (on && cascadeCity) {
-      if (manualCityInput) {
-        manualCityInput.value             = cascadeCity;
-        manualCityInput.readOnly          = true;
-        manualCityInput.style.color       = '#888';
-        manualCityInput.style.background  = '#F4F4F5';
-        manualCityInput.style.borderColor = '#E8E4FF';
-        manualCityInput.style.cursor      = 'default';
-      }
-    } else if (!on && manualCityInput) {
-      manualCityInput.readOnly          = false;
-      manualCityInput.style.color       = '';
-      manualCityInput.style.background  = '';
-      manualCityInput.style.borderColor = '';
-      manualCityInput.style.cursor      = '';
-    }
-    // Change back-button label
-    if (manualBackBtn) {
-      var lbl = (on && autoTriggered && prefilledState) ? '\u2190 Change state'
-              : (on && autoTriggered)                   ? '\u2190 Change country'
-              : '\u2190 Back to search';
-      manualBackBtn.textContent = lbl;
-    }
-
-    if (on) clearNces();
-
-    ['country', 'city', 'district', 'school'].forEach(function (k) {
-      sel[k].required = !on;
-    });
-    sel.state.required = on ? false : isUS();
-
-    ['pqf_manual_country', 'pqf_manual_city', 'pqf_manual_district', 'pqf_manual_school'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.required = on;
-    });
-    var manualState = document.getElementById('pqf_manual_state');
-    if (manualState) manualState.required = on && isManualUS();
+  function isExhibitEState() {
+    if (!isUS() || !state()) return false;
+    var s = state().toLowerCase();
+    return EXHIBIT_E_STATES.some(function (x) { return x.toLowerCase() === s; });
   }
 
-  document.getElementById('pqf_cant_find').addEventListener('click', function () {
-    var mc = document.getElementById('pqf_manual_country');
-    mc.value = 'United States';
-    updateDistrictLabel('United States');
-    var cascadeState = sel.state.value;
-    if (cascadeState) {
-      var msi = document.getElementById('pqf_manual_state_input');
-      if (msi) msi.value = cascadeState;
-    }
-    toggleManualMode(true, true, cascadeState || null);
-    document.getElementById('pqf_manual_city').focus();
-  });
+  /** The standard agreement that applies to the selected country. */
+  function standardAgreement() {
+    var c = country();
+    if (c === 'United States') return { code: 'NDPA', name: 'NDPA', desc: 'The National Data Privacy Agreement from the Student Data Privacy Consortium (SDPC), the standard student data privacy agreement for US school districts.' };
+    if (c === 'Sweden')        return { code: 'PUB-avtal', name: 'PUB-avtal', desc: 'Soundtrap’s personuppgiftsbiträdesavtal, already used by many Swedish schools and municipalities.' };
+    return { code: 'DPA', name: 'DPA', desc: 'Soundtrap’s Data Processing Agreement, already used by schools and municipalities around the world.' };
+  }
 
-  document.getElementById('pqf_cant_find_school').addEventListener('click', function () {
-    var hint = document.getElementById('pqf_cant_find_school_hint');
-    if (!sel.district.value) {
-      if (hint) { hint.textContent = 'Please select your district first.'; hint.className = 'pqf-hint pqf-error'; }
-      return;
-    }
-    if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
-    toggleSchoolOnlyMode(true);
-    document.getElementById('pqf_manual_school').focus();
-  });
+  function orgLabelFor(c) {
+    if (c === 'Sweden' || c === 'Norway' || c === 'Denmark') return ['Municipality or school', 'e.g. Stockholms stad'];
+    if (c === 'United Kingdom') return ['School, academy trust or local authority', 'e.g. London Borough of Camden'];
+    if (c === 'Canada')         return ['School board or school', 'e.g. Toronto District School Board'];
+    if (c === 'Australia')      return ['School or education department', 'e.g. Department of Education, Victoria'];
+    return ['School or organization', ''];
+  }
 
-  document.getElementById('pqf_manual_back').addEventListener('click', function () {
-    if (schoolManualMode) { toggleSchoolOnlyMode(false); return; }
-    var country = sel.country.value;
-    var wasStateTriggered   = (country === 'Canada' || country === 'Australia');
-    var wasCountryTriggered = !wasStateTriggered && country && country !== 'United States';
-    toggleManualMode(false);
-    clearNces();
-    if (wasStateTriggered) {
-      // Go back to state/province selection — keep country, clear state and downstream
-      sel.state.value = '';
-      if (combos.state) combos.state.setOptions(
-        country === 'Canada' ? CA_PROVINCES : AU_STATES,
-        false, country === 'Canada' ? 'Select a province\u2026' : 'Select a state\u2026'
-      );
-      resetSelect('city',     'Select a state first');
-      resetSelect('district', 'Select a city first');
-      resetSelect('school',   'Select a district first');
-      clearEnrollment();
-    } else if (wasCountryTriggered) {
-      sel.country.value = '';
-      if (combos.country) combos.country.setOptions(WORLD_COUNTRIES, false, 'Select a country\u2026');
-      resetSelect('state',    'Select a state\u2026');
-      resetSelect('city',     'Select a state first');
-      resetSelect('district', 'Select a city first');
-      resetSelect('school',   'Select a district first');
-      clearEnrollment();
-      var stField = document.getElementById('pqf_state_field');
-      if (stField) stField.style.display = 'none';
-    }
-    // Clear manual panel fields
-    var mc = document.getElementById('pqf_manual_country');
-    if (mc) { mc.value = ''; mc.readOnly = false; mc.style.color = ''; }
-    if (combos.manual_state) combos.manual_state.setOptions(US_STATES, false, 'Select a state\u2026');
-    var msi = document.getElementById('pqf_manual_state_input');
-    if (msi) { msi.value = ''; msi.readOnly = false; msi.style.color = ''; }
-    var stateField = document.getElementById('pqf_manual_state_field');
-    if (stateField) stateField.style.display = 'none';
-    ['pqf_manual_country','pqf_manual_state','pqf_manual_city',
-     'pqf_manual_district','pqf_manual_school'].forEach(function(id) {
-      var el   = document.getElementById(id);
-      var hint = document.getElementById(id + '_hint');
-      if (el)   el.value = '';
-      if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
-    });
-    updateSpeedUpSection();
-  });
-
-  /**
-   * School-only mode: district is pre-filled + locked from the cascade,
-   * user types only the school name. Separate from full manualMode.
-   */
-  function toggleSchoolOnlyMode(on) {
-    schoolManualMode = on;
-
-    var dropGrid      = document.getElementById('pqf_dropdown_grid');
-    var cantFindWrap  = document.getElementById('pqf_cant_find_wrap');
-    var manualPanel   = document.getElementById('pqf_manual_panel');
-    var manualTitle   = manualPanel ? manualPanel.querySelector('.pqf-manual-title') : null;
-    var backBtn       = document.getElementById('pqf_manual_back');
-
-    var countryField  = document.getElementById('pqf_manual_country_field');
-    var stateField    = document.getElementById('pqf_manual_state_field');
-    var cityField     = document.getElementById('pqf_manual_city_field');
-    var districtField = document.getElementById('pqf_manual_district_field');
-    var districtInput = document.getElementById('pqf_manual_district');
-    var schoolInput   = document.getElementById('pqf_manual_school');
-    var countryInput  = document.getElementById('pqf_manual_country');
-    var cityInput     = document.getElementById('pqf_manual_city');
-
-    var cantFindDistrictWrap2 = document.getElementById('pqf_cant_find_district_wrap');
-    if (on) {
-      // Switch display: hide cascade, show manual panel
-      if (dropGrid)              dropGrid.style.display              = 'none';
-      if (cantFindWrap)          cantFindWrap.style.display          = 'none';
-      if (cantFindDistrictWrap2) cantFindDistrictWrap2.style.display = 'none';
-      if (manualPanel)           manualPanel.style.display           = '';
-
-      // Country: show + lock with "United States"
-      if (countryField) countryField.style.display = '';
-      if (countryInput) {
-        countryInput.value      = 'United States';
-        countryInput.readOnly   = true;
-        countryInput.style.color = '#888';
-      }
-
-      // State: show + lock if pre-selected, otherwise hide
-      var stateInput = document.getElementById('pqf_manual_state_input');
-      var cascadeState = sel.state.value;
-      var stateWrap = document.getElementById('pqf_manual_state_wrap');
-      if (cascadeState && stateField) {
-        stateField.style.display = '';
-        if (stateInput) { stateInput.value = cascadeState; stateInput.readOnly = true; stateInput.classList.add('pqf-locked'); }
-        if (stateWrap)  stateWrap.classList.add('pqf-locked-wrap');
-      } else {
-        if (stateField) stateField.style.display = 'none';
-      }
-
-      // City: show + lock if pre-selected, otherwise hide
-      var cascadeCity = sel.city.value;
-      if (cascadeCity && cityField) {
-        cityField.style.display = '';
-        if (cityInput) {
-          cityInput.value             = cascadeCity;
-          cityInput.readOnly          = true;
-          cityInput.style.color       = '#888';
-          cityInput.style.background  = '#F4F4F5';
-          cityInput.style.borderColor = '#E8E4FF';
-          cityInput.style.cursor      = 'default';
-        }
-      } else {
-        if (cityField) cityField.style.display = 'none';
-      }
-
-      // Show district — pre-filled + locked
-      if (districtField) districtField.style.display = '';
-      if (districtInput) {
-        districtInput.value       = sel.district.value;
-        districtInput.readOnly    = true;
-        districtInput.style.background  = '#F4F4F5';
-        districtInput.style.color       = 'rgba(22,22,22,0.55)';
-        districtInput.style.borderColor = '#E8E4FF';
-        districtInput.style.cursor      = 'default';
-        districtInput.required          = false;
-      }
-
-      // Required: only school name
-      if (countryInput) countryInput.required = false;
-      if (cityInput)    cityInput.required    = false;
-      if (schoolInput)  schoolInput.required  = true;
-
-      // Update panel chrome
-      if (manualTitle) manualTitle.textContent  = 'Enter your school name';
-      if (backBtn)     backBtn.textContent       = '\u2190 Back to search';
-
-      clearNces();
-
+  /* Country → State */
+  sel.country.addEventListener('change', function () {
+    var c = country();
+    resetCombo('state', 'Select a state…');
+    resetFind('Select a state first');
+    setUsManual(false);
+    var stateField = $('pqf_state_field');
+    if (needsState(c)) {
+      stateField.style.display = '';
+      $('pqf_state_label_text').textContent = c === 'Canada' ? 'Province / territory' : (c === 'Australia' ? 'State / territory' : 'State');
+      var list = c === 'Canada' ? CA_PROVINCES
+               : c === 'Australia' ? AU_STATES
+               : (US_STATES.length ? US_STATES : ((_index && _index.states && _index.states['united states']) || []));
+      fillCombo('state', list, c === 'Canada' ? 'Select a province…' : 'Select a state…');
     } else {
-      // Restore cascade
-      if (dropGrid)              dropGrid.style.display              = '';
-      if (cantFindWrap)          cantFindWrap.style.display          = sel.country.value === 'United States' ? '' : 'none';
-      if (cantFindDistrictWrap2) cantFindDistrictWrap2.style.display = sel.country.value === 'United States' ? '' : 'none';
-      if (manualPanel)           manualPanel.style.display           = 'none';
-
-      // Restore field visibility
-      if (countryField) countryField.style.display = 'none';
-      if (countryInput) { countryInput.readOnly = false; countryInput.style.color = ''; countryInput.value = ''; }
-      if (stateField)   stateField.style.display  = 'none';
-      var stateInputOff = document.getElementById('pqf_manual_state_input');
-      if (stateInputOff) { stateInputOff.readOnly = false; stateInputOff.style.color = ''; stateInputOff.value = ''; stateInputOff.classList.remove('pqf-locked'); }
-      var stateWrapOff = document.getElementById('pqf_manual_state_wrap');
-      if (stateWrapOff) stateWrapOff.classList.remove('pqf-locked-wrap');
-      if (cityField)    cityField.style.display    = '';
-      if (cityInput)    { cityInput.readOnly = false; cityInput.style.color = ''; cityInput.style.background = ''; cityInput.style.borderColor = ''; cityInput.style.cursor = ''; cityInput.value = ''; }
-      if (districtField) districtField.style.display = '';
-
-      // Unlock district
-      if (districtInput) {
-        districtInput.readOnly          = false;
-        districtInput.style.background  = '';
-        districtInput.style.color       = '';
-        districtInput.style.borderColor = '';
-        districtInput.style.cursor      = '';
-        districtInput.value             = '';
-        districtInput.required          = false;
-      }
-
-      // Clear school / website
-      ['pqf_manual_school', 'pqf_manual_website'].forEach(function(id) {
-        var el   = document.getElementById(id);
-        var hint = document.getElementById(id + '_hint');
-        if (el)   el.value = '';
-        if (hint) { hint.textContent = ''; hint.className = 'pqf-hint'; }
-      });
-      if (schoolInput) schoolInput.required = false;
-
-      // Restore panel chrome
-      if (manualTitle) manualTitle.textContent = 'Enter your school details manually';
+      stateField.style.display = 'none';
     }
-  }
-
-  /* US_STATES populated from config.json; combos.manual_state.setOptions(...) in setupAfterConfigLoad(). */
-
-  /* CA_PROVINCES + AU_STATES populated from config.json by applyConfig(). */
-
-
-  /* ── Legal form: section visibility logic ─────────────────── */
-
-  function getRequestType() {
-    var radios = document.querySelectorAll('input[name="request_type"]');
-    for (var i = 0; i < radios.length; i++) {
-      if (radios[i].checked) return radios[i].value;
-    }
-    return '';
-  }
-
-  function isVpatChecked() {
-    var cb = document.getElementById('lf_vpat');
-    return cb && cb.checked;
-  }
-
-  function updateFormSections() {
-    var type    = getRequestType();
-    var isPurch = (type === 'Purchase');
-    var isPR    = (type === 'Purchase' || type === 'Renewal');
-    var hasType = (type !== '');
-
-    show('lf_order_section',         hasType);
-    show('lf_summary_section',       hasType);
-    show('lf_purchase_date_section', isPurch);
-    show('lf_upload_section',        hasType);
-
-    var summaryEl = document.getElementById('lf_summary');
-    if (summaryEl) summaryEl.required = hasType;
-
-    updateSpeedUpSection();
-  }
-
-  function show(id, visible) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = visible ? '' : 'none';
-  }
-
-  function getCurrentCountryForLegal() {
-    return manualMode
-      ? (document.getElementById('pqf_manual_country').value || '').trim()
-      : sel.country.value;
-  }
-
-  function getCurrentStateForLegal() {
-    if (manualMode) {
-      var msi = document.getElementById('pqf_manual_state_input');
-      return msi ? msi.value.trim() : '';
-    }
-    return sel.state.value;
-  }
-
-  function updateSpeedUpSection() {
-    var type = getRequestType();
-    if (!type) { show('lf_speedup_section', false); return; }
-
-    var country = getCurrentCountryForLegal();
-    var state   = getCurrentStateForLegal();
-
-    var isUS       = (country === 'United States');
-    var isSweden   = (country === 'Sweden');
-    var isDPA      = !isSweden && (DPA_COUNTRIES.indexOf(country) !== -1);
-    var stateLc    = state.toLowerCase();
-    var isExhibitE = isUS && EXHIBIT_E_STATES.some(function(s) { return s.toLowerCase() === stateLc; });
-
-    show('lf_ndpa_row',      isUS);
-    show('lf_exhibit_e_row', isExhibitE);
-    show('lf_pub_avtal_row', isSweden);
-    show('lf_dpa_row',       isDPA);
-
-    var anyVisible = isUS || isExhibitE || isSweden || isDPA;
-    show('lf_speedup_section', anyVisible);
-
-    // After showing/hiding rows, re-evaluate upload + summary visibility
-    updateSpeedUpDependents();
-  }
-
-  function updateSpeedUpDependents() {
-    var rows = [
-      { rowId: 'lf_ndpa_row',      selId: 'lf_ndpa'      },
-      { rowId: 'lf_exhibit_e_row', selId: 'lf_exhibit_e' },
-      { rowId: 'lf_pub_avtal_row', selId: 'lf_pub_avtal' },
-      { rowId: 'lf_dpa_row',       selId: 'lf_dpa'       },
-    ];
-
-    var anyYes = false;  // at least one visible option answered "Yes"
-
-    rows.forEach(function(f) {
-      var row = document.getElementById(f.rowId);
-      if (!row || row.style.display === 'none') return;
-      var v = (document.getElementById(f.selId) || {}).value || '';
-      if (v === 'Yes') anyYes = true;
-    });
-
-    // Hide upload + summary as soon as any option is "Yes"
-    var needsDocs = !anyYes;
-    show('lf_upload_section',  needsDocs);
-    show('lf_summary_section', needsDocs);
-    var summaryEl = document.getElementById('lf_summary');
-    if (summaryEl) summaryEl.required = needsDocs;
-  }
-
-  /* ── Event: request type radio change ─────────────────────── */
-  var rtGroup = document.getElementById('lf_request_type_group');
-  if (rtGroup) {
-    rtGroup.addEventListener('change', function() {
-      updateFormSections();
-      // clear request-type error
-      var hint = document.getElementById('lf_request_type_hint');
-      if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
-    });
-  }
-
-  /* ── Event: VPAT checkbox ─────────────────────────────────── */
-  var vpatCb = document.getElementById('lf_vpat');
-  if (vpatCb) vpatCb.addEventListener('change', function() { updateFormSections(); });
-
-  /* ── Event: speed-up dropdowns → show/hide upload + summary ── */
-  ['lf_ndpa', 'lf_exhibit_e', 'lf_pub_avtal', 'lf_dpa'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.addEventListener('change', function() { updateSpeedUpDependents(); });
+    var ol = orgLabelFor(c);
+    $('lf_org_label').textContent = ol[0];
+    $('lf_org').placeholder = ol[1];
+    fieldErr('pqf_country_hint', '');
+    refresh();
   });
 
-  /* ── Event: role dropdown → show/hide "Other" field ───────── */
-  var roleEl = document.getElementById('lf_role');
-  if (roleEl) {
-    roleEl.addEventListener('change', function() {
-      show('lf_role_other_field', this.value === 'Other');
-      var otherEl = document.getElementById('lf_role_other');
-      if (otherEl) otherEl.required = (this.value === 'Other');
-      var hint = document.getElementById('lf_role_hint');
-      if (hint && this.value) { hint.style.display = 'none'; }
+  /* State → load that state's schools + districts into the typeahead (US) */
+  sel.state.addEventListener('change', function () {
+    fieldErr('pqf_state_hint', '');
+    resetFind('Select a state first');
+    if (isUS() && state()) {
+      var st = state();
+      resetFind('Loading schools and districts…');
+      $('lf_find_wrap').classList.add('pqf-loading');
+      prefetchStateSchools(st);
+      (_stateSchoolsPromise || Promise.resolve(null)).then(function () {
+        if (state() !== st) return;            // state changed while loading
+        $('lf_find_wrap').classList.remove('pqf-loading');
+        buildFindIndex(st);
+      });
+    }
+    refresh();
+  });
+
+  /* ── School/district typeahead (US) ───────────────────────────
+     One search box over every district and school in the selected
+     state. Built from the NCES index (district names + cities) and the
+     per-state schools file. Same approach as the quote forms. */
+  var _findItems = [];   // [{ label, sub, type:'district'|'school', district, city, school, nces }]
+  var _findPick  = null; // the item the customer picked
+
+  function buildFindIndex(st) {
+    _findItems = [];
+    var sd = (_index && _index.stateData && _index.stateData['united states|' + st.toLowerCase()]) || {};
+    var byCity = sd.districts || {};
+    // A district is listed under every city it serves: keep one entry per district.
+    var districts = {}, order = [];
+    Object.keys(byCity).forEach(function (city) {
+      (byCity[city] || []).forEach(function (d) {
+        var k = d.toLowerCase();
+        if (!districts[k]) { districts[k] = { name: d, city: city }; order.push(k); }
+      });
     });
+    var addr = (_stateSchools && _stateSchools._districtAddr) || {};
+    order.forEach(function (k) {
+      var d = districts[k];
+      var city = ((addr[k] && addr[k].city) || d.city).toUpperCase();   // district office city
+      _findItems.push({ label: d.name, sub: city + ' · whole district', type: 'district', district: d.name, city: city, school: '', nces: '' });
+      ((_stateSchools && _stateSchools[k]) || []).forEach(function (s) {
+        var name = typeof s === 'object' ? s.name : String(s);
+        var sCity = ((s && s.city) || city).toUpperCase();
+        _findItems.push({ label: name, sub: d.name + ', ' + sCity, type: 'school', district: d.name, city: sCity, school: name, nces: (s && s.nces) || '' });
+      });
+    });
+    var inp = $('lf_find_input');
+    inp.disabled = _findItems.length === 0;
+    inp.placeholder = _findItems.length ? 'Start typing your school or district…' : 'No school data for this state';
+    if (!_findItems.length && isUS()) setUsManual(true);   // no data → straight to manual entry
   }
 
-  /* ── Event: reseller dropdown → show/hide reseller name ────── */
-  var orderMethodSel = document.getElementById('lf_order_method');
-  if (orderMethodSel) {
-    orderMethodSel.addEventListener('change', function() {
-      var isReseller = (this.value === 'Reseller');
-      show('lf_reseller_name_field', isReseller);
-      var rn = document.getElementById('lf_reseller_name');
-      if (rn) rn.required = isReseller;
-    });
+  function resetFind(ph) {
+    _findItems = []; _findPick = null;
+    var inp = $('lf_find_input');
+    inp.value = ''; inp.disabled = true; inp.placeholder = ph || '';
+    $('lf_find_drop').style.display = 'none';
+    $('lf_find_wrap').classList.remove('pqf-loading');
   }
 
-  /* ── File upload logic ─────────────────────────────────────── */
+  (function initFind() {
+    var inp = $('lf_find_input'), drop = $('lf_find_drop'), active = -1, MAX = 50;
+
+    function render(q) {
+      drop.innerHTML = ''; active = -1;
+      var lq = (q || '').toLowerCase().trim();
+      if (!lq) { drop.style.display = 'none'; return; }
+      var matched = _findItems.filter(function (it) { return it.label.toLowerCase().indexOf(lq) >= 0; });
+      // Names starting with what was typed first, then districts before schools
+      matched.sort(function (a, b) {
+        var sa = (a.label.toLowerCase().indexOf(lq) === 0 ? 0 : 2) + (a.type === 'district' ? 0 : 1);
+        var sb = (b.label.toLowerCase().indexOf(lq) === 0 ? 0 : 2) + (b.type === 'district' ? 0 : 1);
+        return sa - sb || a.label.localeCompare(b.label);
+      });
+      if (!matched.length) {
+        var m = document.createElement('div'); m.className = 'pqf-combo-empty';
+        m.textContent = 'No matches. Use “I can’t find my district or school” below.';
+        drop.appendChild(m); drop.style.display = 'block'; return;
+      }
+      matched.slice(0, MAX).forEach(function (item) {
+        var div = document.createElement('div');
+        div.className = 'pqf-combo-item';
+        div.innerHTML = '<span>' + escHtml(item.label) + (item.type === 'district' ? '<span class="lf-find-badge">District</span>' : '') + '</span>' +
+                        '<span class="lf-find-sub">' + escHtml(item.sub) + '</span>';
+        div.addEventListener('mousedown', function (e) { e.preventDefault(); pick(item); });
+        drop.appendChild(div);
+      });
+      if (matched.length > MAX) {
+        var more = document.createElement('div'); more.className = 'pqf-combo-empty';
+        more.textContent = 'Keep typing to narrow ' + matched.length + ' results…';
+        drop.appendChild(more);
+      }
+      drop.style.display = 'block';
+    }
+    function pick(item) {
+      _findPick = item;
+      inp.value = item.label;
+      drop.style.display = 'none';
+      fieldErr('lf_find_hint', '');
+    }
+    function move(dir) {
+      var els = drop.querySelectorAll('.pqf-combo-item');
+      if (!els.length) return;
+      active = Math.max(0, Math.min(els.length - 1, active + dir));
+      Array.prototype.forEach.call(els, function (el, i) {
+        el.classList.toggle('pqf-combo-active', i === active);
+        if (i === active) el.scrollIntoView({ block: 'nearest' });
+      });
+    }
+    inp.addEventListener('input', function () { _findPick = null; render(inp.value); });
+    inp.addEventListener('focus', function () { if (!_findPick) render(inp.value); });
+    inp.addEventListener('blur', function () {
+      setTimeout(function () { drop.style.display = 'none'; if (!_findPick) inp.value = ''; }, 200);
+    });
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); if (drop.style.display === 'none') render(inp.value); move(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+      else if (e.key === 'Enter') { e.preventDefault(); var a = drop.querySelector('.pqf-combo-active') || drop.querySelector('.pqf-combo-item'); if (a) a.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); }
+      else if (e.key === 'Escape') { drop.style.display = 'none'; }
+    });
+  }());
+
+  function prefetchStateSchools(st) {
+    if (!SCHOOLS_BASE_URL) return;
+    var slug = st.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (_stateSchoolsKey === slug) return;
+    _stateSchools = null; _stateSchoolsKey = slug;
+    _stateSchoolsPromise = fetch(SCHOOLS_BASE_URL + slug + '.json')
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (data) { if (_stateSchoolsKey === slug) _stateSchools = data; return data; })
+      .catch(function () { return null; });
+  }
+
+  function loadIndex(done) {
+    if (!INDEX_URL) { done(); return; }
+    fetch(INDEX_URL)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (json) { _index = json.data !== undefined ? json.data : json; })
+      .catch(function () { _index = null; })
+      .then(done);
+  }
+
+  /* US manual entry ("I can't find my district or school") */
+  function setUsManual(on) {
+    usManual = on;
+    $('lf_us_cascade').style.display = on ? 'none' : '';
+    $('lf_us_manual').style.display  = on ? '' : 'none';
+    if (on) {
+      if (_findPick) {
+        $('lf_m_city').value = _findPick.city;
+        $('lf_m_district').value = _findPick.district;
+        $('lf_m_school').value = _findPick.school;
+      }
+    }
+  }
+  $('lf_cant_find').addEventListener('click', function () { setUsManual(true); $('lf_m_city').focus(); });
+  $('lf_manual_back').addEventListener('click', function () { setUsManual(false); });
+
+  /* ── Needs ────────────────────────────────────────────────── */
+  var NEED_IDS = { exhibitE: 'lf_need_exhibit_e', standard: 'lf_need_standard', signed: 'lf_need_signed', review: 'lf_need_review', vpat: 'lf_need_vpat' };
+
+  function getNeeds() {
+    if (!locationReady()) return [];
+    return Object.keys(NEED_IDS).filter(function (k) {
+      var cb = $(NEED_IDS[k]);
+      if (k === 'exhibitE' && !isExhibitEState()) return false;
+      return cb && cb.checked;
+    });
+  }
+  function has(needs, k) { return needs.indexOf(k) !== -1; }
+
+  /** Rewrites the need cards for the selected location. */
+  function renderNeedCards() {
+    var ag = standardAgreement(), exE = isExhibitEState(), st = state();
+    $('lf_standard_title').textContent = 'A copy of our standard ' + ag.name;
+    $('lf_standard_desc').textContent  = ag.desc + ' Sign it and return it through this form.';
+    $('lf_signed_desc').textContent    = 'Already signed our standard ' + ag.name + (exE ? ' or an Exhibit E' : '') + '? Upload it and we’ll countersign it.';
+
+    $('lf_need_exhibit_e_card').style.display = exE ? '' : 'none';
+    if (exE) {
+      $('lf_exhibit_e_title').textContent = 'Join the existing ' + st + ' agreement (Exhibit E)';
+      $('lf_exhibit_e_desc').textContent  = 'Soundtrap has already signed a student data privacy agreement in ' + st +
+        '. Your district can join it by signing a short Exhibit E, so there’s nothing new to negotiate.';
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.lf-state-name'), function (el) { el.textContent = st; });
+
+    // Explainer: only the agreements relevant to this location
+    $('lf_explain_exhibit_e').style.display = exE ? '' : 'none';
+    $('lf_explain_ndpa').style.display = ag.code === 'NDPA' ? '' : 'none';
+    $('lf_explain_pub').style.display  = ag.code === 'PUB-avtal' ? '' : 'none';
+    $('lf_explain_dpa').style.display  = ag.code === 'DPA' ? '' : 'none';
+  }
+
+  /** Next-step bullets for the chosen needs (also used on the success panel). */
+  function nextSteps(needs) {
+    var ag = standardAgreement(), out = [];
+    if (has(needs, 'exhibitE')) out.push('<strong>Exhibit E:</strong> once we receive your signed Exhibit E, we countersign it and email it back within <strong>5 business days</strong>.');
+    if (has(needs, 'standard')) out.push('<strong>Standard ' + escHtml(ag.name) + ':</strong> emailed to you within a few minutes. When it’s signed, return it through this form (choose “Return a signed agreement”).');
+    if (has(needs, 'signed'))   out.push('<strong>Signed agreement:</strong> we countersign it and email you the fully signed copy within <strong>5 business days</strong>.');
+    if (has(needs, 'review'))   out.push('<strong>Document review:</strong> our contracts team replies within <strong>2 weeks</strong>. Several documents, or long and complex ones, can take longer; we’ll let you know if so.');
+    if (has(needs, 'vpat'))     out.push('<strong>VPAT:</strong> emailed to you within a few minutes.');
+    out.push('Questions in the meantime? Email <a href="mailto:' + CONTACT_EMAIL + '">' + CONTACT_EMAIL + '</a>.');
+    return out.map(function (s) { return '<li>' + s + '</li>'; }).join('');
+  }
+
+  /* ── Central visibility logic ─────────────────────────────── */
+  function refresh() {
+    var ready = locationReady();
+    show('lf_needs_section', ready);
+    if (ready) renderNeedCards();
+
+    var needs         = getNeeds();
+    var any           = needs.length > 0;
+    var needsOrg      = needs.some(function (k) { return k !== 'vpat'; });
+    var needsDocs     = has(needs, 'exhibitE') || has(needs, 'signed') || has(needs, 'review');
+    var uploadReq     = has(needs, 'signed') || has(needs, 'review');
+
+    show('lf_org_section', needsOrg);
+    $('lf_us_cascade').style.display = (needsOrg && isUS() && !usManual) ? '' : 'none';
+    $('lf_us_manual').style.display  = (needsOrg && isUS() && usManual)  ? '' : 'none';
+    $('lf_intl_org').style.display   = (needsOrg && !isUS()) ? '' : 'none';
+
+    show('lf_purchase_section', needsOrg);
+
+    show('lf_docs_section', needsDocs);
+    show('lf_exhibit_e_callout', has(needs, 'exhibitE'));
+    show('lf_signed_callout', has(needs, 'signed'));
+    show('lf_review_fields', has(needs, 'review'));
+    $('lf_upload_required').style.display = uploadReq ? '' : 'none';
+    $('lf_upload_label').textContent =
+        has(needs, 'review') ? 'Upload the documents to review'
+      : has(needs, 'signed') ? 'Upload your signed agreement'
+      : 'Upload your signed Exhibit E (optional)';
+
+    show('lf_contact_section', any);
+    show('lf_vpat_org_field', any && !needsOrg);
+    show('lf_breach_block', needsDocs);
+    syncBreachSame();
+
+    show('lf_footer', any);
+    $('lf_next_list').innerHTML = any ? nextSteps(needs) : '';
+    var instantOnly = any && needs.every(function (k) { return k === 'vpat' || k === 'standard'; });
+    $('lf_submit').textContent = instantOnly ? 'Email me the documents' : 'Submit request';
+
+    // Number the visible sections (1 and 2 are fixed)
+    var n = 3;
+    [['lf_org_section', 'lf_org_title', isUS() ? 'Your school or district' : 'Your school or organization'],
+     ['lf_purchase_section', 'lf_purchase_title', 'Where are you in the purchasing process?'],
+     ['lf_docs_section', 'lf_docs_title', has(needs, 'review') ? 'Your documents' : 'Your signed agreement'],
+     ['lf_contact_section', 'lf_contact_title', 'Your details']].forEach(function (s) {
+      if (!$(s[0]).classList.contains('lf-hidden')) $(s[1]).textContent = (n++) + '. ' + s[2];
+    });
+
+    if (any) fieldErr('lf_needs_hint', '');
+  }
+
+  Object.keys(NEED_IDS).forEach(function (k) { $(NEED_IDS[k]).addEventListener('change', refresh); });
+
+  $('lf_order_method').addEventListener('change', function () { show('lf_reseller_name_field', this.value === 'Reseller'); });
+  $('lf_role').addEventListener('change', function () { show('lf_role_other_field', this.value === 'Other'); fieldErr('lf_role_hint', ''); });
+  document.querySelectorAll('input[name="purchase_stage"]').forEach(function (r) {
+    r.addEventListener('change', function () { fieldErr('lf_purchase_hint', ''); });
+  });
+
+  /* Breach contact "Same as me" */
+  function syncBreachSame() {
+    var same = $('lf_breach_same').checked;
+    $('lf_breach_fields').style.display = same ? 'none' : '';
+  }
+  $('lf_breach_same').addEventListener('change', syncBreachSame);
+
+  /* ── File upload ──────────────────────────────────────────── */
   (function () {
-    var zone    = document.getElementById('lf_upload_zone');
-    var input   = document.getElementById('lf_files');
-    var listEl  = document.getElementById('lf_file_list');
-    if (!zone || !input || !listEl) return;
-
-    zone.addEventListener('click', function() { input.click(); });
-
-    input.addEventListener('change', function() {
-      addFiles(this.files);
-      this.value = ''; // reset so same file can be re-added after removal
-    });
-
-    zone.addEventListener('dragover', function(e) {
-      e.preventDefault(); zone.classList.add('lf-drag-over');
-    });
-    zone.addEventListener('dragleave', function() {
-      zone.classList.remove('lf-drag-over');
-    });
-    zone.addEventListener('drop', function(e) {
-      e.preventDefault(); zone.classList.remove('lf-drag-over');
-      addFiles(e.dataTransfer.files);
-    });
+    var zone = $('lf_upload_zone'), input = $('lf_files'), listEl = $('lf_file_list');
+    zone.addEventListener('click', function () { input.click(); });
+    input.addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+    zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.classList.add('lf-drag-over'); });
+    zone.addEventListener('dragleave', function () { zone.classList.remove('lf-drag-over'); });
+    zone.addEventListener('drop', function (e) { e.preventDefault(); zone.classList.remove('lf-drag-over'); addFiles(e.dataTransfer.files); });
 
     function addFiles(files) {
       for (var i = 0; i < files.length; i++) {
         var f = files[i];
-        if (f.size > 10 * 1024 * 1024) {
-          alert(f.name + ' exceeds the 10 MB limit and was not added.');
-          continue;
-        }
-        // Avoid duplicates by name+size
-        var dup = uploadedFiles.some(function(u) {
-          return u.name === f.name && u.size === f.size;
-        });
-        if (!dup) uploadedFiles.push(f);
+        if (f.size > 10 * 1024 * 1024) { alert(f.name + ' is larger than 10 MB and was not added.'); continue; }
+        if (!uploadedFiles.some(function (u) { return u.name === f.name && u.size === f.size; })) uploadedFiles.push(f);
       }
       renderFileList();
+      if (uploadedFiles.length) fieldErr('lf_files_hint', '');
     }
-
+    function fmtSize(b) { return b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB'; }
     function renderFileList() {
       listEl.innerHTML = '';
-      uploadedFiles.forEach(function(f, idx) {
+      uploadedFiles.forEach(function (f, idx) {
         var item = document.createElement('div');
         item.className = 'lf-file-item';
-        item.innerHTML =
-          '<span>' + escHtml(f.name) + ' <small>(' + fmtSize(f.size) + ')</small></span>' +
-          '<button type="button" class="lf-file-remove" data-idx="' + idx + '" aria-label="Remove">×</button>';
+        item.innerHTML = '<span>' + escHtml(f.name) + ' <small>(' + fmtSize(f.size) + ')</small></span>' +
+          '<button type="button" class="lf-file-remove" aria-label="Remove">×</button>';
+        item.querySelector('button').addEventListener('click', function () { uploadedFiles.splice(idx, 1); renderFileList(); });
         listEl.appendChild(item);
       });
-      listEl.querySelectorAll('.lf-file-remove').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          uploadedFiles.splice(parseInt(this.getAttribute('data-idx'), 10), 1);
-          renderFileList();
-        });
-      });
     }
-
-    function escHtml(s) {
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-    function fmtSize(bytes) {
-      if (bytes < 1024) return bytes + ' B';
-      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / 1048576).toFixed(1) + ' MB';
-    }
+    window.__lfRenderFileList = renderFileList;
   }());
 
-  /* ── Validation ────────────────────────────────────────────── */
-  function fieldErr(id, msg) {
-    var hint = document.getElementById(id);
-    if (!hint) return;
-    if (msg) { hint.textContent = msg; hint.style.display = ''; }
-    else      { hint.textContent = ''; hint.style.display = 'none'; }
-  }
-
+  /* ── Validation ───────────────────────────────────────────── */
   function validate() {
     var ok = true;
+    function req(cond, hintId, msg) { if (!cond) { fieldErr(hintId, msg); ok = false; } else fieldErr(hintId, ''); }
 
-    // Request type
-    if (!getRequestType()) {
-      var rth = document.getElementById('lf_request_type_hint');
-      if (rth) { rth.textContent = 'Please select a request type.'; rth.style.display = ''; }
-      ok = false;
-    }
+    req(!!country(), 'pqf_country_hint', 'Please select your country.');
+    if (needsState(country())) req(!!state(), 'pqf_state_hint', 'Please select your ' + $('pqf_state_label_text').textContent.toLowerCase() + '.');
+    if (!locationReady()) return false;
 
-    // Location
-    if (schoolManualMode) {
-      var schoolErr = (document.getElementById('pqf_manual_school').value || '').trim()
-        ? '' : 'Please enter the school name.';
-      fieldErr('pqf_manual_school_hint', schoolErr);
-      if (schoolErr) ok = false;
-    } else if (manualMode) {
-      var mReq = [
-        { id:'pqf_manual_country',  msg:'Please enter the country.'         },
-        { id:'pqf_manual_city',     msg:'Please enter the city.'            },
-        { id:'pqf_manual_district', msg:'Please enter the school district.' },
-        { id:'pqf_manual_school',   msg:'Please enter the school name.'     },
-      ];
-      if (isManualUS()) mReq.push({ id:'pqf_manual_state', msg:'Please enter the state.' });
-      mReq.forEach(function(f) {
-        var v = (document.getElementById(f.id) || {}).value || '';
-        var e = v.trim() ? '' : f.msg;
-        fieldErr(f.id + '_hint', e);
-        if (e) ok = false;
-      });
-    } else {
-      var locKeys = isUS()
-        ? ['country','state','city','district','school']
-        : ['country','city','district','school'];
-      locKeys.forEach(function(k) {
-        var v = sel[k] ? sel[k].value : '';
-        var e = v ? '' : 'Please select a ' + k + '.';
-        setHint(k, e, !!e);
-        if (e) ok = false;
-      });
-    }
+    var needs = getNeeds();
+    req(needs.length > 0, 'lf_needs_hint', 'Please select at least one option.');
+    if (!needs.length) return false;
 
-    // Order details (all request types)
-    var type = getRequestType();
-    if (type) {
-      var ordPlaced = document.querySelector('input[name="order_placed"]:checked');
-      if (type === 'Purchase' || type === 'Renewal') {
-        if (!ordPlaced) { fieldErr('lf_order_placed_hint', 'Please indicate whether an order has been placed.'); ok = false; }
-        else             fieldErr('lf_order_placed_hint', '');
+    var needsOrg  = needs.some(function (k) { return k !== 'vpat'; });
+    var needsDocs = has(needs, 'exhibitE') || has(needs, 'signed') || has(needs, 'review');
+
+    if (needsOrg) {
+      if (isUS() && !usManual) {
+        req(!!_findPick, 'lf_find_hint', 'Please pick your school or district from the list, or use “I can’t find my district or school”.');
+      } else if (isUS()) {
+        req(!!val('lf_m_city'),     'lf_m_city_hint',     'Please enter your city.');
+        req(!!val('lf_m_district'), 'lf_m_district_hint', 'Please enter your school district.');
+      } else {
+        req(!!val('lf_org'),       'lf_org_hint',       'Please enter the name of your school or organization.');
+        req(!!val('lf_intl_city'), 'lf_intl_city_hint', 'Please enter your city.');
       }
-
-      var seatsEl = document.getElementById('lf_seats');
-      var seatsV  = seatsEl ? parseInt(seatsEl.value, 10) : NaN;
-      if (!seatsEl || !seatsEl.value || isNaN(seatsV) || seatsV < 1) {
-        fieldErr('lf_seats_hint', 'Please enter the number of seats.'); ok = false;
-      } else fieldErr('lf_seats_hint', '');
-
-      // Reseller method is optional — only validate reseller name if "Reseller" is selected
-      var ordMethodSel = document.getElementById('lf_order_method');
-      if (ordMethodSel && ordMethodSel.value === 'Reseller') {
-        var rn = (document.getElementById('lf_reseller_name') || {}).value || '';
-        if (!rn.trim()) { fieldErr('lf_reseller_name_hint', 'Please enter the reseller name.'); ok = false; }
-        else             fieldErr('lf_reseller_name_hint', '');
-      }
+      req(!!document.querySelector('input[name="purchase_stage"]:checked'), 'lf_purchase_hint', 'Please choose where you are in the purchasing process.');
     }
 
-    // Speed-up dropdowns (required when visible)
-    [
-      { rowId: 'lf_ndpa_row',      selId: 'lf_ndpa',      hintId: 'lf_ndpa_hint',      label: 'NDPA'      },
-      { rowId: 'lf_exhibit_e_row', selId: 'lf_exhibit_e', hintId: 'lf_exhibit_e_hint', label: 'Exhibit E' },
-      { rowId: 'lf_pub_avtal_row', selId: 'lf_pub_avtal', hintId: 'lf_pub_avtal_hint', label: 'Pub-Avtal' },
-      { rowId: 'lf_dpa_row',       selId: 'lf_dpa',       hintId: 'lf_dpa_hint',       label: 'DPA'       },
-    ].forEach(function(f) {
-      var row = document.getElementById(f.rowId);
-      if (row && row.style.display !== 'none') {
-        var v = (document.getElementById(f.selId) || {}).value || '';
-        if (!v) { fieldErr(f.hintId, 'Please select an option for the ' + f.label + '.'); ok = false; }
-        else     fieldErr(f.hintId, '');
-      }
-    });
+    if (has(needs, 'review')) req(!!val('lf_summary'), 'lf_summary_hint', 'Please tell us what you’d like us to review.');
+    if (has(needs, 'signed') || has(needs, 'review')) req(uploadedFiles.length > 0, 'lf_files_hint', 'Please upload at least one document.');
 
-    // Summary
-    if (type && type !== 'VPAT') {
-      var sumV = (document.getElementById('lf_summary') || {}).value || '';
-      if (!sumV.trim()) { fieldErr('lf_summary_hint', 'Please provide a request summary.'); ok = false; }
-      else               fieldErr('lf_summary_hint', '');
+    req(!!val('pqf_firstname'), 'pqf_firstname_hint', 'Please enter your first name.');
+    req(!!val('pqf_lastname'),  'pqf_lastname_hint',  'Please enter your last name.');
+    req(isEmail(val('pqf_email')), 'pqf_email_hint', 'Please enter a valid email address.');
+    req(!!val('lf_role'), 'lf_role_hint', 'Please select your role.');
+    if (val('lf_role') === 'Other') req(!!val('lf_role_other'), 'lf_role_other_hint', 'Please specify your role.');
+
+    if (needsDocs && !$('lf_breach_same').checked) {
+      req(!!val('lf_breach_name'), 'lf_breach_name_hint', 'Please enter the breach contact’s name.');
+      req(isEmail(val('lf_breach_email')), 'lf_breach_email_hint', 'Please enter a valid email for the breach contact.');
     }
-
-    // Contact
-    var fn = (document.getElementById('pqf_firstname') || {}).value || '';
-    var ln = (document.getElementById('pqf_lastname')  || {}).value || '';
-    var em = (document.getElementById('pqf_email')     || {}).value || '';
-    if (!fn.trim()) { setHint('firstname', 'First name is required.', true); ok = false; }
-    else              setHint('firstname', '', false);
-    if (!ln.trim()) { setHint('lastname',  'Last name is required.',  true); ok = false; }
-    else              setHint('lastname', '', false);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.trim())) {
-      setHint('email', 'Enter a valid email address.', true); ok = false;
-    } else setHint('email', '', false);
-
-    var roleV = (document.getElementById('lf_role') || {}).value || '';
-    if (!roleV) { fieldErr('lf_role_hint', 'Please select your role.'); ok = false; }
-    else         fieldErr('lf_role_hint', '');
-
-    if (roleV === 'Other') {
-      var roV = (document.getElementById('lf_role_other') || {}).value || '';
-      if (!roV.trim()) { fieldErr('lf_role_other_hint', 'Please specify your role.'); ok = false; }
-      else              fieldErr('lf_role_other_hint', '');
-    }
-
-    // Breach contact
-    var bn = (document.getElementById('lf_breach_name')  || {}).value || '';
-    var be = (document.getElementById('lf_breach_email') || {}).value || '';
-    if (!bn.trim()) { fieldErr('lf_breach_name_hint',  'Breach contact name is required.'); ok = false; }
-    else             fieldErr('lf_breach_name_hint', '');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(be.trim())) {
-      fieldErr('lf_breach_email_hint', 'Enter a valid breach contact email.'); ok = false;
-    } else fieldErr('lf_breach_email_hint', '');
-
     return ok;
   }
 
-  /* ── Build payload & submit ────────────────────────────────── */
+  /* ── Payload & submit ─────────────────────────────────────── */
   function readFilesAsBase64(files, cb) {
-    var result = [];
-    var idx    = 0;
-    function next() {
-      if (idx >= files.length) { cb(result); return; }
-      var f  = files[idx++];
-      var fr = new FileReader();
-      fr.onload = function(e) {
-        // strip the data:...;base64, prefix
-        var b64 = e.target.result.split(',')[1] || '';
-        result.push({ name: f.name, type: f.type, size: f.size, data: b64 });
-        next();
-      };
+    var out = [], i = 0;
+    (function next() {
+      if (i >= files.length) { cb(out); return; }
+      var f = files[i++], fr = new FileReader();
+      fr.onload = function (e) { out.push({ name: f.name, type: f.type, size: f.size, data: (e.target.result.split(',')[1] || '') }); next(); };
       fr.readAsDataURL(f);
-    }
-    next();
+    }());
   }
 
   function buildPayload(fileObjects) {
-    var territory = computeTerritory();
+    var needs = getNeeds();
+    var needsOrg  = needs.some(function (k) { return k !== 'vpat'; });
+    var needsDocs = has(needs, 'exhibitE') || has(needs, 'signed') || has(needs, 'review');
+    var city = '', district = '', school = '', nces = '', manualEntry = '';
 
-    var country, state, city, district, school, manualEntry;
-    if (schoolManualMode) {
-      country = sel.country.value; state = sel.state.value; city = sel.city.value;
-      district = sel.district.value;
-      school = (document.getElementById('pqf_manual_school').value || '').trim();
-      manualEntry = 'school-only';
-    } else if (manualMode) {
-      country  = (document.getElementById('pqf_manual_country').value  || '').trim();
-      state    = (document.getElementById('pqf_manual_state')          || {value:''}).value.trim();
-      city     = (document.getElementById('pqf_manual_city').value     || '').trim();
-      district = (document.getElementById('pqf_manual_district').value || '').trim();
-      school   = (document.getElementById('pqf_manual_school').value   || '').trim();
-      manualEntry = 'true';
+    if (needsOrg) {
+      if (isUS() && !usManual) {
+        var p = _findPick || {};
+        city = p.city || ''; district = p.district || ''; school = p.school || ''; nces = p.nces || '';
+        manualEntry = 'No';
+      } else if (isUS()) {
+        city = val('lf_m_city'); district = val('lf_m_district'); school = val('lf_m_school'); manualEntry = 'Yes';
+      } else {
+        city = val('lf_intl_city'); district = val('lf_org'); school = val('lf_intl_school'); manualEntry = 'Yes';
+      }
     } else {
-      country = sel.country.value; state = sel.state.value;
-      city = sel.city.value; district = sel.district.value;
-      school = sel.school.value; manualEntry = 'false';
+      school = val('lf_vpat_org');
     }
 
-    var requestType = getRequestType();
-    var ordPlaced   = (document.querySelector('input[name="order_placed"]:checked')  || {}).value || '';
-    var ordMethod   = (document.getElementById('lf_order_method') || {}).value || '';
+    var same = $('lf_breach_same').checked;
+    var fullName = (val('pqf_firstname') + ' ' + val('pqf_lastname')).trim();
+    var stageEl = document.querySelector('input[name="purchase_stage"]:checked');
 
     return {
-      requestType:       requestType,
-      vpatRequested:     isVpatChecked() ? 'Yes' : 'No',
-      country:           country,
-      state:             state,
-      city:              city,
-      district:          district,
-      school:            school,
-      manualEntry:       manualEntry,
-      orderPlaced:       ordPlaced,
-      seats:             (document.getElementById('lf_seats')          || {}).value || '',
-      orderMethod:       ordMethod,
-      resellerName:      (document.getElementById('lf_reseller_name')  || {}).value || '',
-      ndpa:              (document.getElementById('lf_ndpa')           || {}).value  || '',
-      exhibitE:          (document.getElementById('lf_exhibit_e')      || {}).value  || '',
-      pubAvtal:          (document.getElementById('lf_pub_avtal')      || {}).value  || '',
-      dpa:               (document.getElementById('lf_dpa')            || {}).value  || '',
-      summary:           (document.getElementById('lf_summary')        || {}).value  || '',
-      firstName:         (document.getElementById('pqf_firstname')     || {}).value  || '',
-      lastName:          (document.getElementById('pqf_lastname')      || {}).value  || '',
-      email:             (document.getElementById('pqf_email')         || {}).value  || '',
-      role:              (document.getElementById('lf_role')           || {}).value  || '',
-      roleOther:         (document.getElementById('lf_role_other')     || {}).value  || '',
-      breachContactName: (document.getElementById('lf_breach_name')    || {}).value  || '',
-      breachContactEmail:(document.getElementById('lf_breach_email')   || {}).value  || '',
-      purchaseDate:      (document.getElementById('lf_purchase_date')  || {}).value  || '',
-      files:             fileObjects,
-      salesRepName:      territory.rep,
-      salesRepEmail:     territory.email,
-      salesRepPod:       territory.pod,
+      formVersion:        2,
+      needs:              needs,
+      standardAgreement:  standardAgreement().code,
+      exhibitEState:      has(needs, 'exhibitE') ? state() : '',
+      country:            country(),
+      state:              state(),
+      city:               city,
+      district:           district,
+      school:             school,
+      nces:               nces,
+      manualEntry:        manualEntry,
+      purchaseStage:      needsOrg && stageEl ? stageEl.value : '',
+      seats:              needsOrg ? val('lf_seats') : '',
+      orderMethod:        needsOrg ? val('lf_order_method') : '',
+      resellerName:       needsOrg && val('lf_order_method') === 'Reseller' ? val('lf_reseller_name') : '',
+      summary:            has(needs, 'review') ? val('lf_summary') : '',
+      neededBy:           has(needs, 'review') ? val('lf_needed_by') : '',
+      firstName:          val('pqf_firstname'),
+      lastName:           val('pqf_lastname'),
+      email:              val('pqf_email'),
+      role:               val('lf_role'),
+      roleOther:          val('lf_role') === 'Other' ? val('lf_role_other') : '',
+      breachContactName:  needsDocs ? (same ? fullName : val('lf_breach_name')) : '',
+      breachContactEmail: needsDocs ? (same ? val('pqf_email') : val('lf_breach_email')) : '',
+      files:              needsDocs ? fileObjects : [],
     };
   }
 
-  form.addEventListener('submit', function(e) {
+  var form = $('lfForm'), submitBtn = $('lf_submit'), errorBanner = $('lf_error_banner');
+
+  form.addEventListener('submit', function (e) {
     e.preventDefault();
-    successBanner.classList.remove('pqf-visible');
     errorBanner.classList.remove('pqf-visible');
-
     if (!validate()) {
-      // scroll to first visible error
-      var firstErr = form.querySelector('.pqf-error[style*="display"]:not([style*="none"]),' +
-        '.pqf-hint.pqf-error:not([style*="none"])');
-      if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var first = Array.prototype.filter.call(form.querySelectorAll('.pqf-hint.pqf-error'), function (h) {
+        return h.style.display !== 'none' && h.textContent && h.offsetParent !== null;
+      })[0];
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    var label = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
 
-    submitBtn.disabled    = true;
-    submitBtn.textContent = 'Submitting…';
-
-    readFilesAsBase64(uploadedFiles, function(fileObjects) {
+    var needs = getNeeds();
+    var docsNeeded = has(needs, 'exhibitE') || has(needs, 'signed') || has(needs, 'review');
+    readFilesAsBase64(docsNeeded ? uploadedFiles : [], function (fileObjects) {
       var payload = buildPayload(fileObjects);
-
-      fetch(API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify(payload),
-      })
-      .then(function(res) { return res.json(); })
-      .then(function(json) {
-        if (json && json.success) {
-          // Save profile for welcome-back banner
+      fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json(); })
+        .then(function (json) {
+          if (!json || !json.success) throw new Error((json && json.error) || 'Unknown error');
           try {
-            var profileToSave = {
-              firstname:         (document.getElementById('pqf_firstname')  || {}).value || '',
-              lastname:          (document.getElementById('pqf_lastname')   || {}).value || '',
-              email:             (document.getElementById('pqf_email')      || {}).value || '',
-              role:              (document.getElementById('lf_role')        || {}).value || '',
-              roleOther:         (document.getElementById('lf_role_other')  || {}).value || '',
-              breachContactName: (document.getElementById('lf_breach_name') || {}).value || '',
-              breachContactEmail:(document.getElementById('lf_breach_email')|| {}).value || '',
-            };
-            localStorage.setItem('pqf_profile', JSON.stringify(profileToSave));
-          } catch(e) {}
-          // Reset
-          form.reset();
-          uploadedFiles = [];
-          document.getElementById('lf_file_list').innerHTML = '';
-          toggleStateField(false);
-          resetSelect('state',    'Select a country first');
-          resetSelect('city',     'Select a state first');
-          resetSelect('district', 'Select a city first');
-          resetSelect('school',   'Select a district first');
-          if (manualMode)       toggleManualMode(false);
-          if (schoolManualMode) toggleSchoolOnlyMode(false);
-          clearNces();
-          updateFormSections();
-          successBanner.classList.add('pqf-visible');
-        } else {
+            localStorage.setItem('pqf_profile', JSON.stringify({
+              firstname: payload.firstName, lastname: payload.lastName, email: payload.email,
+              role: payload.role, roleOther: payload.roleOther,
+            }));
+          } catch (err) {}
+          showSuccess(payload);
+        })
+        .catch(function () {
           errorBanner.classList.add('pqf-visible');
-        }
-      })
-      .catch(function() { errorBanner.classList.add('pqf-visible'); })
-      .finally(function() {
-        submitBtn.disabled    = false;
-        submitBtn.textContent = 'Submit Request';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+          submitBtn.disabled = false;
+          submitBtn.textContent = label;
+        });
     });
   });
 
-  /* ── Cascade utility functions ───────────────────────────────── */
-
-  function districtLabelFor(country) {
-    var c = (country || '').trim();
-    if (c === 'United Kingdom')           return 'Local Education Authority (LEA)';
-    if (c === 'Norway' || c === 'Sweden') return 'Kommune';
-    if (c === 'Australia')                return 'Department of Education';
-    if (c === 'Canada')                   return 'School Board';
-    if (c === 'United States' || c === '') return 'School District';
-    return 'Municipality';
+  function showSuccess(payload) {
+    _lastSubmitted = payload;
+    $('lf_success_name').textContent  = payload.firstName;
+    $('lf_success_email').textContent = payload.email;
+    $('lf_success_next').innerHTML    = nextSteps(payload.needs);
+    form.style.display = 'none';
+    $('lf_success_panel').style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  function districtPlaceholderFor(country) {
-    var c = (country || '').trim();
-    if (c === 'United States')  return 'e.g. Los Angeles Unified';
-    if (c === 'Australia')      return "e.g. Victoria\u2019s Department of Education";
-    if (c === 'United Kingdom') return 'e.g. London Borough of Camden';
-    if (c === 'Norway')         return 'e.g. Oslo Kommune';
-    if (c === 'Sweden')         return 'e.g. Stockholms stad';
-    if (c === 'Canada')         return 'e.g. Toronto District School Board';
-    return '';
-  }
-  function cityPlaceholderFor(country) {
-    return (country || '').trim() === 'United States' ? 'e.g. Los Angeles' : '';
-  }
-  function stateLabelFor(country) {
-    if (country === 'Canada')    return 'Province / Territory';
-    if (country === 'Australia') return 'State / Territory';
-    return 'State';
-  }
-  function updateStateLabel(country) {
-    var lbl = document.getElementById('pqf_state_label');
-    if (!lbl) return;
-    var req = lbl.querySelector('.pqf-required');
-    lbl.textContent = stateLabelFor(country) + '\u00a0';
-    if (req) lbl.appendChild(req);
-  }
-  function updateManualStateLabel(country) {
-    var lbl = document.getElementById('pqf_manual_state_label');
-    if (!lbl) return;
-    var req = lbl.querySelector('.pqf-required');
-    lbl.textContent = stateLabelFor(country) + '\u00a0';
-    if (req) lbl.appendChild(req);
-  }
-  function updateDistrictLabel(country) {
-    var lbl = document.getElementById('pqf_manual_district_label');
-    if (!lbl) return;
-    var req = lbl.querySelector('.pqf-required');
-    lbl.textContent = districtLabelFor(country) + '\u00a0';
-    if (req) lbl.appendChild(req);
-    var distInput = document.getElementById('pqf_manual_district');
-    if (distInput) distInput.placeholder = districtPlaceholderFor(country);
-    var cityInput = document.getElementById('pqf_manual_city');
-    if (cityInput) cityInput.placeholder = cityPlaceholderFor(country);
-  }
+  $('lf_new_request').addEventListener('click', function () { window.location.reload(); });
 
-  function setLoading(key, on) {
-    var wrap = document.getElementById('pqf_' + key + '_wrap');
-    if (!wrap) return;
-    if (on) wrap.classList.add('pqf-loading');
-    else     wrap.classList.remove('pqf-loading');
-    sel[key].disabled = on;
-    if (combos[key]) combos[key].setDisabled(on);
-  }
-
-  function setHint(key, msg, isError) {
-    var el = document.getElementById('pqf_' + key + '_hint');
-    if (!el) return;
-    el.textContent = msg || '';
-    el.className = 'pqf-hint' + (isError ? ' pqf-error' : '');
-  }
-
-  function resetSelect(key, placeholder) {
-    var s = sel[key];
-    if (!s) return;
-    s.innerHTML = '';
-    var opt = document.createElement('option');
-    opt.value = '';
-    opt.textContent = placeholder;
-    s.appendChild(opt);
-    s.disabled = true;
-    setHint(key, '');
-    if (combos[key]) combos[key].reset(placeholder);
-  }
-
-  function populateSelect(key, items, placeholder) {
-    var s = sel[key];
-    if (!s) return;
-    s.innerHTML = '';
-    var first = document.createElement('option');
-    first.value = '';
-    first.textContent = items.length ? placeholder : 'No options found';
-    s.appendChild(first);
-    items.forEach(function (item) {
-      var opt = document.createElement('option');
-      opt.value = item;
-      opt.textContent = item;
-      s.appendChild(opt);
-    });
-    s.disabled = items.length === 0;
-    setHint(key, items.length === 0 ? 'No results for the selected filters.' : '', items.length === 0);
-    if (combos[key]) combos[key].setOptions(items, false, items.length ? placeholder : 'No options found');
-  }
-
-  function populateSchoolSelect(items, placeholder) {
-    var s = sel.school;
-    if (!s) return;
-    s.innerHTML = '';
-    var first = document.createElement('option');
-    first.value = '';
-    first.textContent = items.length ? placeholder : 'No options found';
-    s.appendChild(first);
-    items.forEach(function (item) {
-      var opt = document.createElement('option');
-      var name = (item !== null && typeof item === 'object') ? (item.name || '') : String(item);
-      var nces = (item !== null && typeof item === 'object') ? (item.nces || '') : '';
-      opt.value = name;
-      opt.textContent = name;
-      opt.setAttribute('data-nces', nces);
-      s.appendChild(opt);
-    });
-    s.disabled = items.length === 0;
-    setHint('school', items.length === 0 ? 'No results for the selected filters.' : '', items.length === 0);
-    clearNces();
-    var objItems = items.map(function(item) {
-      if (item !== null && typeof item === 'object') return item;
-      return { name: String(item), nces: '' };
-    });
-    if (combos.school) combos.school.setOptions(objItems, true, items.length ? placeholder : 'No options found');
-  }
-
-  function clearNces() {
-    var ncesInput = document.getElementById('pqf_nces');
-    if (ncesInput) ncesInput.value = '';
-  }
-
-  // Auto-fill NCES when a school is selected
-  sel.school.addEventListener('change', function () {
-    var ncesInput = document.getElementById('pqf_nces');
-    if (!ncesInput) return;
-    var selected = sel.school.options[sel.school.selectedIndex];
-    ncesInput.value = (selected && selected.getAttribute('data-nces')) || '';
-  });
-
-  /* ── Client-side cache ───────────────────────────────────────── */
-  var _clientCache = {};
-  function clientCacheKey(params) {
-    return ['action','country','state','city','district']
-      .map(function(k) { return (params[k] || '').toLowerCase(); })
-      .join(':');
-  }
-
-  function fetchOptions(params, onSuccess, onError) {
-    var ck = clientCacheKey(params);
-    if (_clientCache[ck]) { onSuccess(_clientCache[ck]); return; }
-    var url = API_URL + '?' + Object.keys(params)
-      .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); })
-      .join('&');
-    fetch(url)
-      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      .then(function (json) {
-        if (!json.success) throw new Error(json.error || 'Unknown error');
-        var data = json.data || [];
-        _clientCache[ck] = data;
-        onSuccess(data);
-      })
-      .catch(function (err) { onError(err.message || 'Network error'); });
-  }
-
-  function isUS() { return sel.country.value === 'United States'; }
-
-  function toggleStateField(visible) {
-    var stateField = document.getElementById('pqf_state_field');
-    if (stateField) {
-      stateField.style.display = visible ? '' : 'none';
-      sel.state.required = visible;
-    }
-  }
-
-  function schoolsFileSlug(country, state) {
-    var s = (state || country).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    return s;
-  }
-
-  function prefetchStateSchools(country, state) {
-    if (!SCHOOLS_BASE_URL) return;
-    var slug = schoolsFileSlug(country, state);
-    if (_stateSchoolsKey === slug) return;
-    _stateSchools        = null;
-    _districtEnrollment  = {};
-    _stateSchoolsKey     = slug;
-    _stateSchoolsPromise = fetch(SCHOOLS_BASE_URL + slug + '.json', { cache: 'no-cache' })
-      .then(function(res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      .then(function(data) {
-        if (_stateSchoolsKey === slug) {
-          _stateSchools       = data;
-          _districtEnrollment = (data && data._enrollment) || {};
-        }
-        return data;
-      })
-      .catch(function() {
-        if (_stateSchoolsKey === slug) _stateSchools = null;
-        return null;
-      });
-  }
-
-  /* Load full hierarchy index on init — one fetch, state/city/district data */
-  function loadIndex() {
-    // Prefer the static GitHub JSON (fast CDN); fall back to Apps Script
-    var fetchUrl = INDEX_URL || (API_URL + '?action=getIndex');
-    fetch(fetchUrl)
-      .then(function(res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(function(json) {
-        // GitHub file contains the raw index object; Apps Script wraps it in {success, data}
-        _index = json.data !== undefined ? json.data : json;
-      })
-      .catch(function() {
-        // Silent failure — US cascade will show no states if index unavailable
-        setHint('country', 'Some location data could not load. Please try refreshing.', true);
-      });
-  }
-
-  /* Country → State (US only) or City — instant, from index */
-  sel.country.addEventListener('change', function () {
-    var country = sel.country.value;
-
-    resetSelect('state', 'Select a state\u2026');
-    resetSelect('city', 'Select a state first');
-    resetSelect('district', 'Select a city first');
-    resetSelect('school', 'Select a district first');
-    clearNces();
-    clearEnrollment();
-
-    if (!country) { toggleStateField(false); return; }
-
-    // "Can't find your school?" only makes sense for the US cascade flow
-    var cantFindWrap = document.getElementById('pqf_cant_find_wrap');
-    var cantFindDistrictWrap = document.getElementById('pqf_cant_find_district_wrap');
-    if (cantFindWrap) cantFindWrap.style.display = country === 'United States' ? '' : 'none';
-    if (cantFindDistrictWrap) cantFindDistrictWrap.style.display = country === 'United States' ? '' : 'none';
-
-    if (country === 'United States') {
-      updateStateLabel(country);
-      toggleStateField(true);
-      var states = (_index && _index.states && _index.states[country.toLowerCase()]) || [];
-      populateSelect('state', states, states.length ? 'Select a state\u2026' : 'Loading\u2026');
-    } else if (country === 'Canada' || country === 'Australia') {
-      updateStateLabel(country);
-      toggleStateField(true);
-      var regionList = country === 'Canada' ? CA_PROVINCES : AU_STATES;
-      populateSelect('state', regionList, 'Select a ' + (country === 'Canada' ? 'province\u2026' : 'state\u2026'));
-    } else {
-      toggleStateField(false);
-      // Other countries: switch directly to manual entry with country pre-filled
-      document.getElementById('pqf_manual_country').value = country;
-      updateDistrictLabel(country);
-      toggleManualMode(true, true);
-    }
-    updateSpeedUpSection();
-  });
-
-  /* State → City — instant, from index; also kicks off school prefetch */
-  sel.state.addEventListener('change', function () {
-    resetSelect('city', 'Select a city…');
-    resetSelect('district', 'Select a city first');
-    resetSelect('school', 'Select a district first');
-    clearNces();
-    clearEnrollment();
-
-    var state   = sel.state.value;
-    var country = sel.country.value;
-    if (!state) return;
-
-    // Canada / Australia: no city/district cascade — open manual panel with country+state pre-filled
-    if (country === 'Canada' || country === 'Australia') {
-      document.getElementById('pqf_manual_country').value = country;
-      document.getElementById('pqf_manual_state').value   = state;
-      var msi = document.getElementById('pqf_manual_state_input');
-      if (msi) msi.value = state;
-      updateManualStateLabel(country);
-      updateDistrictLabel(country);
-      toggleManualMode(true, true, true); // autoTriggered=true, prefilledState=true
-      document.getElementById('pqf_manual_city').focus();
-      return;
-    }
-
-    // United States: cascade via index
-    if (!_index) return;
-    var sdKey  = country.toLowerCase() + '|' + state.toLowerCase();
-    var sd     = (_index.stateData[sdKey] || {});
-    var cities = (sd.cities || []);
-    populateSelect('city', cities, 'Select a city…');
-
-    // Start fetching all schools for this state silently in the background.
-    prefetchStateSchools(country, state);
-  });
-
-  /* City → District — instant, from index */
-  sel.city.addEventListener('change', function () {
-    resetSelect('district', 'Select a district…');
-    resetSelect('school', 'Select a district first');
-    clearNces();
-    clearEnrollment();
-
-    var city = sel.city.value;
-    if (!city || !_index) return;
-
-    var sdKey     = sel.country.value.toLowerCase() + '|' + sel.state.value.toLowerCase();
-    var sd        = (_index.stateData[sdKey] || {});
-    var districts = ((sd.districts || {})[city.toLowerCase()] || []);
-    populateSelect('district', districts, 'Select a district…');
-  });
-
-  function showEnrollment(districtValue) {
-    var input = document.getElementById('pqf_enrollment');
-    if (!input) return;
-    var enrollment = _districtEnrollment[(districtValue || '').toLowerCase()];
-    input.value = enrollment ? enrollment.toLocaleString() : '';
-    updateAccountManager();
-  }
-
-  function clearEnrollment() {
-    var input = document.getElementById('pqf_enrollment');
-    if (input) input.value = '';
-    updateAccountManager();
-  }
-
-  // State change also triggers speed-up option recalculation
-  sel.state.addEventListener('change', function() { updateSpeedUpSection(); }, true);
-
-  // Email change can affect ROW named account assignment
-  document.getElementById('pqf_email').addEventListener('input', function() { updateAccountManager(); });
-
-  /* District → School — instant from prefetched state file; falls back to Apps Script */
-  sel.district.addEventListener('change', function () {
-    resetSelect('school', 'Select a school…');
-    clearNces();
-    showEnrollment(this.value);
-
-    var district = sel.district.value;
-    if (!district) { clearEnrollment(); return; }
-
-    var districtLc = district.toLowerCase();
-
-    function populateFromPrefetch() {
-      var schools = (_stateSchools && _stateSchools[districtLc]) || [];
-      populateSchoolSelect(schools, 'Select a school…');
-      setLoading('school', false);
-    }
-
-    function fetchFromAPI() {
-      fetchOptions(
-        { action: 'getSchools', country: sel.country.value,
-          state: sel.state.value, city: sel.city.value, district: district },
-        function(data) { populateSchoolSelect(data, 'Select a school…'); setLoading('school', false); },
-        function(err)  { setLoading('school', false); setHint('school', 'Error: ' + err, true); }
-      );
-    }
-
-    setLoading('school', true);
-
-    if (_stateSchools) {
-      // Prefetch already complete — instant
-      populateFromPrefetch();
-    } else if (_stateSchoolsPromise) {
-      // Prefetch still in flight — wait for it, then populate
-      _stateSchoolsPromise.then(function(data) {
-        if (data) populateFromPrefetch();
-        else      fetchFromAPI();
-      });
-    } else {
-      // No prefetch (e.g. schoolsBaseUrl not configured) — fall back to Apps Script
-      fetchFromAPI();
-    }
-  });
-
-  function prefillFromProfile(p) {
-    try {
-      var setVal = function(id, v) { var el = document.getElementById(id); if (el && v) el.value = v; };
-      setVal('pqf_firstname',  p.firstname  || '');
-      setVal('pqf_lastname',   p.lastname   || '');
-      setVal('pqf_email',      p.email      || '');
-      setVal('lf_breach_name', p.breachContactName  || '');
-      setVal('lf_breach_email',p.breachContactEmail || '');
-      // Role dropdown
-      var roleEl = document.getElementById('lf_role');
-      if (roleEl && p.role) {
-        roleEl.value = p.role;
-        show('lf_role_other_field', p.role === 'Other');
-        if (p.role === 'Other') setVal('lf_role_other', p.roleOther || '');
-      }
-    } catch(e) {}
-  }
-
+  /* ── Welcome back (pre-fill contact details) ──────────────── */
   function initWelcomeBanner() {
     try {
-      var raw = localStorage.getItem('pqf_profile');
-      if (!raw) return;
-      var p = JSON.parse(raw);
+      var p = JSON.parse(localStorage.getItem('pqf_profile') || 'null');
       if (!p || (!p.firstname && !p.email)) return;
-
-      var school = p.schoolDisplay || p.manual_school || p.manual_district || p.school || p.district || '';
-      document.getElementById('pqf_welcome_name').textContent = p.firstname || p.email;
-      var schoolEl = document.getElementById('pqf_welcome_school');
-      schoolEl.textContent = school ? ' (' + school + ')' : '';
-      document.getElementById('pqf_welcome_back').style.display = '';
-
-      document.getElementById('pqf_welcome_use').addEventListener('click', function () {
-        document.getElementById('pqf_welcome_back').style.display = 'none';
-        prefillFromProfile(p);
+      $('pqf_welcome_name').textContent = p.firstname || p.email;
+      $('pqf_welcome_back').style.display = '';
+      $('pqf_welcome_use').addEventListener('click', function () {
+        $('pqf_welcome_back').style.display = 'none';
+        if (p.firstname) $('pqf_firstname').value = p.firstname;
+        if (p.lastname)  $('pqf_lastname').value  = p.lastname;
+        if (p.email)     $('pqf_email').value     = p.email;
+        var roleOk = p.role && Array.prototype.some.call($('lf_role').options, function (o) { return o.value === p.role; });
+        if (roleOk) {
+          $('lf_role').value = p.role;
+          show('lf_role_other_field', p.role === 'Other');
+          if (p.role === 'Other') $('lf_role_other').value = p.roleOther || '';
+        }
       });
-      document.getElementById('pqf_welcome_clear').addEventListener('click', function () {
+      $('pqf_welcome_clear').addEventListener('click', function () {
         localStorage.removeItem('pqf_profile');
-        document.getElementById('pqf_welcome_back').style.display = 'none';
+        $('pqf_welcome_back').style.display = 'none';
       });
-    } catch (e) { /* localStorage may be unavailable */ }
-  }
-
-  /* ── Setup that depends on config data (combo box options) ── */
-  function setupAfterConfigLoad() {
-    if (combos.country)      combos.country.setOptions(WORLD_COUNTRIES, false, 'Select a country…');
-    if (combos.manual_state) combos.manual_state.setOptions(US_STATES,  false, 'Select a state…');
-  }
-
-  function showConfigErrorBanner(err) {
-    var banner = document.getElementById('lf_error_banner');
-    if (banner) {
-      banner.textContent = 'Could not load form configuration. Please refresh the page or contact legal@soundtrap.com. (' + (err && err.message || err) + ')';
-      banner.style.display = 'block';
-    } else {
-      alert('Could not load form configuration. Please refresh the page.');
-    }
+    } catch (e) {}
   }
 
   /* ── Init ─────────────────────────────────────────────────── */
   loadConfig(function (err) {
     if (err) {
-      showConfigErrorBanner(err);
+      errorBanner.textContent = 'Could not load the form. Please refresh the page or email ' + CONTACT_EMAIL + '.';
+      errorBanner.classList.add('pqf-visible');
+      show('lf_footer', true);
+      submitBtn.style.display = 'none';
       return;
     }
-    setupAfterConfigLoad();
-    loadIndex();
-    toggleStateField(true); // show state by default; hidden dynamically for non-US
-    updateFormSections();   // all conditional sections start hidden until type is chosen
+    loadIndex(function () {
+      fillCombo('country', WORLD_COUNTRIES, 'Select a country…');
+      refresh();
+    });
     initWelcomeBanner();
   });
 
