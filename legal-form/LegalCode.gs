@@ -353,7 +353,7 @@ function nextStepsHtml_(data) {
   var n = data.needs, items = [];
   var ag = data.standardAgreement || 'agreement';
   if (n.indexOf('exhibitE') !== -1) items.push('<strong>Exhibit E' + (data.exhibitEState ? ' (' + escHtml(data.exhibitEState) + ')' : '') + ':</strong> once we receive your signed Exhibit E, we countersign it and email it back within <strong>5 business days</strong>. If you haven’t uploaded it yet, sign it through the SDPC Resource Registry or reply to this email with the signed copy.');
-  if (n.indexOf('standard') !== -1) items.push('<strong>Standard ' + escHtml(ag) + ':</strong> attached. When it’s signed, return it through the same form (choose “Return a signed agreement”) and we’ll countersign it within 5 business days.');
+  if (n.indexOf('standard') !== -1) items.push('<strong>Standard ' + escHtml(ag) + ':</strong> attached. When it’s signed, return it through the same form (choose our standard ' + escHtml(ag) + ', then “I’ve already signed it”) and we’ll countersign it within 5 business days.');
   if (n.indexOf('signed')   !== -1) items.push('<strong>Signed agreement:</strong> we countersign it and email you the fully signed copy within <strong>5 business days</strong>.');
   if (n.indexOf('review')   !== -1) items.push('<strong>Document review:</strong> our contracts team will reply within <strong>2 weeks</strong>. Several documents, or long and complex ones, can take longer; we’ll let you know if so.');
   if (n.indexOf('vpat')     !== -1) items.push('<strong>VPAT:</strong> attached.');

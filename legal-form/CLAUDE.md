@@ -10,15 +10,17 @@ Customer-facing form for privacy and legal documents. The HTML is hosted on GitH
 ## Flow (v2)
 
 1. **Location**: country, plus state/province for US, Canada, Australia.
-2. **What do you need?** (multi-select cards, tailored to the location):
+2. **What do you need?** Two cards (one or both): **Agreements & legal documents** and **Our accessibility report (VPAT)**. Choosing agreements reveals **"How would you like to proceed?"**, a single choice tailored to the location (simplified from five cards in Nov 2026). Each choice maps to a `needs` key the backend understands:
 
-| Key (`needs`) | Card | Shown when | What happens |
+| Choice | Key (`needs`) | Shown when | What happens |
 |---|---|---|---|
-| `exhibitE` | Join the existing {State} agreement (Exhibit E), "Fastest" badge | US state in `config.legal.exhibitEStates` | Rep notified, contracts@ CC, due in 5 business days |
-| `standard` | A copy of our standard NDPA / PUB-avtal / DPA | Always | **Emailed automatically**; rep gets an FYI |
-| `signed` | Return a signed agreement (upload required) | Always | Rep notified, contracts@ CC, due in 5 business days |
-| `review` | Review of our own agreement or documents (upload + description required) | Always | Rep notified, contracts@ CC, due in 10 business days ("at least 2 weeks") |
-| `vpat` | Our accessibility report (VPAT) | Always | **Emailed automatically**; nobody notified |
+| Join the existing {State} agreement (Exhibit E), "Fastest" badge | `exhibitE` | US state in `config.legal.exhibitEStates` | Rep notified, contracts@ CC, due in 5 business days |
+| Soundtrap's standard NDPA / PUB-avtal / DPA → "Email me a copy to sign" | `standard` | Always | **Emailed automatically**; rep gets an FYI |
+| Soundtrap's standard … → "I've already signed it" (upload required) | `signed` | Always | Rep notified, contracts@ CC, due in 5 business days |
+| Our own documents for review (DPA, contract, terms, questionnaires…; upload + description required) | `review` | Always | Rep notified, contracts@ CC, due in 10 business days ("at least 2 weeks") |
+| VPAT card | `vpat` | Always | **Emailed automatically**; nobody notified |
+
+A submission has at most one agreement key plus optionally `vpat`.
 
 Standard agreement by country: **US → NDPA**, **Sweden → PUB-avtal**, **everywhere else → DPA**. `config.legal.dpaCountries` is no longer used by this form.
 

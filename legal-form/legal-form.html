@@ -804,6 +804,18 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
 .lf-secondary-btn:hover { background: #F0EEFF; }
 @media (max-width: 520px) { .lf-success-panel { padding: 28px 24px; } }
 
+/* "How would you like to proceed?" (agreement route) */
+.lf-route-block { margin-top: 24px; padding-top: 20px; border-top: 1px solid #E8E4FF; }
+.lf-route-title { font-size: 14px; margin-bottom: 10px; }
+.lf-route-grid { display: flex; flex-direction: column; gap: 10px; }
+.lf-route-card { padding: 14px 16px; }
+.lf-route-card .lf-radio-text strong { font-size: 14px; }
+.lf-route-card .lf-radio-text span { font-size: 12.5px; line-height: 1.45; }
+.lf-route-card .lf-radio-text .lf-need-meta { font-size: 11.5px !important; margin-top: 4px; }
+.lf-route-card .lf-radio-text strong .lf-badge { font-size: 10px; line-height: 1.4; }
+.lf-route-sub { display: flex; flex-direction: column; gap: 8px; margin: -2px 0 2px 28px; }
+.lf-route-sub .lf-route-card { padding: 10px 14px; }
+
 /* School/district typeahead results (same look as the quote forms) */
 .lf-find-sub { display: block; font-size: 12px; color: #6B6880; margin-top: 2px; }
 .lf-find-badge {
@@ -891,47 +903,15 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       <!-- ══ 2. WHAT DO YOU NEED? ════════════════════════════════ -->
       <div class="pqf-section lf-hidden" id="lf_needs_section" style="padding-top:40px;">
         <div class="pqf-section-title">2. What do you need?</div>
-        <p class="pqf-intro-note" style="margin-bottom:16px;">Select everything that applies.</p>
+        <p class="pqf-intro-note" style="margin-bottom:16px;">Select one or both.</p>
 
         <div class="lf-need-grid" id="lf_need_grid">
-
-          <label class="lf-check-row lf-need-card" id="lf_need_exhibit_e_card">
-            <input type="checkbox" name="need" value="exhibitE" id="lf_need_exhibit_e">
-            <span class="lf-check-box"></span>
-            <span class="lf-check-content">
-              <strong><span id="lf_exhibit_e_title">Join your state&rsquo;s existing agreement (Exhibit E)</span><span class="lf-badge">Fastest</span></strong>
-              <span class="lf-need-desc" id="lf_exhibit_e_desc"></span>
-              <span class="lf-need-meta">Countersigned within 5 business days</span>
-            </span>
-          </label>
-
           <label class="lf-check-row lf-need-card">
-            <input type="checkbox" name="need" value="standard" id="lf_need_standard">
+            <input type="checkbox" name="need" value="agreement" id="lf_need_agreement">
             <span class="lf-check-box"></span>
             <span class="lf-check-content">
-              <strong id="lf_standard_title">A copy of our standard agreement</strong>
-              <span class="lf-need-desc" id="lf_standard_desc"></span>
-              <span class="lf-need-meta">Emailed to you right away</span>
-            </span>
-          </label>
-
-          <label class="lf-check-row lf-need-card">
-            <input type="checkbox" name="need" value="signed" id="lf_need_signed">
-            <span class="lf-check-box"></span>
-            <span class="lf-check-content">
-              <strong>Return a signed agreement</strong>
-              <span class="lf-need-desc" id="lf_signed_desc">Already signed our standard agreement? Upload it and we&rsquo;ll countersign it.</span>
-              <span class="lf-need-meta">Countersigned within 5 business days</span>
-            </span>
-          </label>
-
-          <label class="lf-check-row lf-need-card">
-            <input type="checkbox" name="need" value="review" id="lf_need_review">
-            <span class="lf-check-box"></span>
-            <span class="lf-check-content">
-              <strong>Review of our own agreement or documents</strong>
-              <span class="lf-need-desc">Your district&rsquo;s own data privacy agreement, contract, privacy questionnaire or other documents, for Soundtrap to review and sign.</span>
-              <span class="lf-need-meta">At least 2 weeks &middot; longer for several or complex documents</span>
+              <strong>Agreements &amp; legal documents</strong>
+              <span class="lf-need-desc">Sign a data privacy agreement, or send us your own contract, terms, privacy questionnaire or other documents to review and sign.</span>
             </span>
           </label>
 
@@ -944,21 +924,77 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
               <span class="lf-need-meta">Emailed to you right away</span>
             </span>
           </label>
-
         </div>
         <span class="pqf-hint pqf-error" id="lf_needs_hint" style="display:none;margin-top:8px;"></span>
 
-        <details class="lf-explainer">
-          <summary>Not sure which one you need?</summary>
-          <dl>
-            <div id="lf_explain_exhibit_e"><dt>Exhibit E</dt><dd>Many US states have a statewide student data privacy agreement that Soundtrap has already signed. Your district signs a short Exhibit E to join it, so there&rsquo;s nothing new to negotiate. This is usually the fastest route.</dd></div>
-            <div id="lf_explain_ndpa"><dt>NDPA (National Data Privacy Agreement)</dt><dd>The standard student data privacy agreement from the Student Data Privacy Consortium (SDPC), used by US school districts to meet FERPA, COPPA and state privacy laws.</dd></div>
-            <div id="lf_explain_pub"><dt>PUB-avtal</dt><dd>Soundtrap&rsquo;s personuppgiftsbiträdesavtal (data processing agreement), already used by many Swedish schools and municipalities.</dd></div>
-            <div id="lf_explain_dpa"><dt>DPA (Data Processing Agreement)</dt><dd>Soundtrap&rsquo;s standard agreement on how we process personal data on your behalf, already used by schools and municipalities around the world.</dd></div>
-            <div><dt>Your own documents</dt><dd>If your district requires its own agreement, contract terms or privacy questionnaire, upload it and our contracts team will review it.</dd></div>
-            <div><dt>VPAT (Voluntary Product Accessibility Template)</dt><dd>A report on how Soundtrap meets accessibility standards. Often requested by procurement or IT teams.</dd></div>
-          </dl>
-        </details>
+        <!-- Step 2b: how to proceed with the agreement (one choice) -->
+        <div id="lf_route_block" class="lf-route-block lf-hidden">
+          <div class="pqf-label lf-route-title">How would you like to proceed?</div>
+          <div class="lf-route-grid" role="radiogroup" aria-label="How would you like to proceed?">
+
+            <label class="lf-radio-pill lf-route-card" id="lf_route_exhibit_e_card">
+              <input type="radio" name="route" value="exhibitE" id="lf_route_exhibit_e">
+              <span class="lf-radio-dot"></span>
+              <span class="lf-radio-text">
+                <strong><span id="lf_exhibit_e_title">Join your state&rsquo;s existing agreement (Exhibit E)</span><span class="lf-badge">Fastest</span></strong>
+                <span id="lf_exhibit_e_desc"></span>
+                <span class="lf-need-meta">Countersigned within 5 business days</span>
+              </span>
+            </label>
+
+            <label class="lf-radio-pill lf-route-card">
+              <input type="radio" name="route" value="standard" id="lf_route_standard">
+              <span class="lf-radio-dot"></span>
+              <span class="lf-radio-text">
+                <strong id="lf_standard_title">Soundtrap&rsquo;s standard agreement</strong>
+                <span id="lf_standard_desc"></span>
+              </span>
+            </label>
+
+            <div id="lf_standard_mode" class="lf-route-sub lf-hidden" role="radiogroup" aria-label="Standard agreement">
+              <label class="lf-radio-pill lf-route-card">
+                <input type="radio" name="standard_mode" value="copy" id="lf_mode_copy">
+                <span class="lf-radio-dot"></span>
+                <span class="lf-radio-text">
+                  <strong>Email me a copy to sign</strong>
+                  <span class="lf-need-meta">Emailed to you right away</span>
+                </span>
+              </label>
+              <label class="lf-radio-pill lf-route-card">
+                <input type="radio" name="standard_mode" value="signed" id="lf_mode_signed">
+                <span class="lf-radio-dot"></span>
+                <span class="lf-radio-text">
+                  <strong>I&rsquo;ve already signed it</strong>
+                  <span>Upload it and we&rsquo;ll countersign it.</span>
+                  <span class="lf-need-meta">Countersigned within 5 business days</span>
+                </span>
+              </label>
+              <span class="pqf-hint pqf-error" id="lf_standard_mode_hint" style="display:none;"></span>
+            </div>
+
+            <label class="lf-radio-pill lf-route-card">
+              <input type="radio" name="route" value="review" id="lf_route_review">
+              <span class="lf-radio-dot"></span>
+              <span class="lf-radio-text">
+                <strong>Our own documents for review</strong>
+                <span>Your district&rsquo;s DPA, contract, terms, privacy or security questionnaire, or anything else that needs our review or signature.</span>
+                <span class="lf-need-meta">At least 2 weeks &middot; longer for several or complex documents</span>
+              </span>
+            </label>
+          </div>
+          <span class="pqf-hint pqf-error" id="lf_route_hint" style="display:none;margin-top:8px;"></span>
+
+          <details class="lf-explainer">
+            <summary>Not sure which to choose?</summary>
+            <dl>
+              <div id="lf_explain_exhibit_e"><dt>Exhibit E</dt><dd>Many US states have a statewide student data privacy agreement that Soundtrap has already signed. Your district signs a short Exhibit E to join it, so there&rsquo;s nothing new to negotiate. This is usually the fastest route.</dd></div>
+              <div id="lf_explain_ndpa"><dt>NDPA (National Data Privacy Agreement)</dt><dd>The standard student data privacy agreement from the Student Data Privacy Consortium (SDPC), used by US school districts to meet FERPA, COPPA and state privacy laws.</dd></div>
+              <div id="lf_explain_pub"><dt>PUB-avtal</dt><dd>Soundtrap&rsquo;s personuppgiftsbiträdesavtal (data processing agreement), already used by many Swedish schools and municipalities.</dd></div>
+              <div id="lf_explain_dpa"><dt>DPA (Data Processing Agreement)</dt><dd>Soundtrap&rsquo;s standard agreement on how we process personal data on your behalf, already used by schools and municipalities around the world.</dd></div>
+              <div><dt>Your own documents</dt><dd>If your district requires its own agreement, contract terms, or a privacy or security questionnaire, upload it and our contracts team will review it.</dd></div>
+            </dl>
+          </details>
+        </div>
       </div>
 
       <!-- ══ 3. SCHOOL / DISTRICT ════════════════════════════════ -->
@@ -1616,30 +1652,41 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   $('lf_manual_back').addEventListener('click', function () { setUsManual(false); });
 
   /* ── Needs ────────────────────────────────────────────────── */
-  var NEED_IDS = { exhibitE: 'lf_need_exhibit_e', standard: 'lf_need_standard', signed: 'lf_need_signed', review: 'lf_need_review', vpat: 'lf_need_vpat' };
+  /* Step 2: "Agreements & legal documents" and/or "VPAT".
+     Agreements then ask "How would you like to proceed?" (one choice), which
+     maps onto the request types the backend already knows:
+       exhibitE | standard (email me a copy) | signed (already signed) | review */
+  function radioVal(name) { var r = document.querySelector('input[name="' + name + '"]:checked'); return r ? r.value : ''; }
 
   function getNeeds() {
     if (!locationReady()) return [];
-    return Object.keys(NEED_IDS).filter(function (k) {
-      var cb = $(NEED_IDS[k]);
-      if (k === 'exhibitE' && !isExhibitEState()) return false;
-      return cb && cb.checked;
-    });
+    var needs = [];
+    if ($('lf_need_agreement').checked) {
+      var route = radioVal('route');
+      if (route === 'exhibitE' && isExhibitEState()) needs.push('exhibitE');
+      else if (route === 'standard') {
+        var mode = radioVal('standard_mode');
+        if (mode === 'copy')   needs.push('standard');
+        if (mode === 'signed') needs.push('signed');
+      } else if (route === 'review') needs.push('review');
+    }
+    if ($('lf_need_vpat').checked) needs.push('vpat');
+    return needs;
   }
   function has(needs, k) { return needs.indexOf(k) !== -1; }
 
-  /** Rewrites the need cards for the selected location. */
+  /** Rewrites the agreement options for the selected location. */
   function renderNeedCards() {
     var ag = standardAgreement(), exE = isExhibitEState(), st = state();
-    $('lf_standard_title').textContent = 'A copy of our standard ' + ag.name;
-    $('lf_standard_desc').textContent  = ag.desc + ' Sign it and return it through this form.';
-    $('lf_signed_desc').textContent    = 'Already signed our standard ' + ag.name + (exE ? ' or an Exhibit E' : '') + '? Upload it and we’ll countersign it.';
+    $('lf_standard_title').textContent = 'Soundtrap\u2019s standard ' + ag.name;
+    $('lf_standard_desc').textContent  = ag.desc;
 
-    $('lf_need_exhibit_e_card').style.display = exE ? '' : 'none';
+    $('lf_route_exhibit_e_card').style.display = exE ? '' : 'none';
+    if (!exE && $('lf_route_exhibit_e').checked) $('lf_route_exhibit_e').checked = false;
     if (exE) {
       $('lf_exhibit_e_title').textContent = 'Join the existing ' + st + ' agreement (Exhibit E)';
       $('lf_exhibit_e_desc').textContent  = 'Soundtrap has already signed a student data privacy agreement in ' + st +
-        '. Your district can join it by signing a short Exhibit E, so there’s nothing new to negotiate.';
+        '. Your district can join it by signing a short Exhibit E, so there\u2019s nothing new to negotiate.';
     }
     Array.prototype.forEach.call(document.querySelectorAll('.lf-state-name'), function (el) { el.textContent = st; });
 
@@ -1654,7 +1701,7 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
   function nextSteps(needs) {
     var ag = standardAgreement(), out = [];
     if (has(needs, 'exhibitE')) out.push('<strong>Exhibit E:</strong> once we receive your signed Exhibit E, we countersign it and email it back within <strong>5 business days</strong>.');
-    if (has(needs, 'standard')) out.push('<strong>Standard ' + escHtml(ag.name) + ':</strong> emailed to you within a few minutes. When it’s signed, return it through this form (choose “Return a signed agreement”).');
+    if (has(needs, 'standard')) out.push('<strong>Standard ' + escHtml(ag.name) + ':</strong> emailed to you within a few minutes. When it’s signed, return it through this form (choose our standard ' + escHtml(ag.name) + ', then “I’ve already signed it”).');
     if (has(needs, 'signed'))   out.push('<strong>Signed agreement:</strong> we countersign it and email you the fully signed copy within <strong>5 business days</strong>.');
     if (has(needs, 'review'))   out.push('<strong>Document review:</strong> our contracts team replies within <strong>2 weeks</strong>. Several documents, or long and complex ones, can take longer; we’ll let you know if so.');
     if (has(needs, 'vpat'))     out.push('<strong>VPAT:</strong> emailed to you within a few minutes.');
@@ -1667,6 +1714,9 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     var ready = locationReady();
     show('lf_needs_section', ready);
     if (ready) renderNeedCards();
+    var agreementOn = ready && $('lf_need_agreement').checked;
+    show('lf_route_block', agreementOn);
+    show('lf_standard_mode', agreementOn && radioVal('route') === 'standard');
 
     var needs         = getNeeds();
     var any           = needs.length > 0;
@@ -1710,10 +1760,13 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
       if (!$(s[0]).classList.contains('lf-hidden')) $(s[1]).textContent = (n++) + '. ' + s[2];
     });
 
-    if (any) fieldErr('lf_needs_hint', '');
+    if ($('lf_need_agreement').checked || $('lf_need_vpat').checked) fieldErr('lf_needs_hint', '');
+    if (radioVal('route')) fieldErr('lf_route_hint', '');
+    if (radioVal('standard_mode')) fieldErr('lf_standard_mode_hint', '');
   }
 
-  Object.keys(NEED_IDS).forEach(function (k) { $(NEED_IDS[k]).addEventListener('change', refresh); });
+  ['lf_need_agreement', 'lf_need_vpat'].forEach(function (id) { $(id).addEventListener('change', refresh); });
+  document.querySelectorAll('input[name="route"], input[name="standard_mode"]').forEach(function (r) { r.addEventListener('change', refresh); });
 
   $('lf_order_method').addEventListener('change', function () { show('lf_reseller_name_field', this.value === 'Reseller'); });
   $('lf_role').addEventListener('change', function () { show('lf_role_other_field', this.value === 'Other'); fieldErr('lf_role_hint', ''); });
@@ -1771,8 +1824,14 @@ input[type="number"].pqf-input { -moz-appearance: textfield; }
     if (!locationReady()) return false;
 
     var needs = getNeeds();
-    req(needs.length > 0, 'lf_needs_hint', 'Please select at least one option.');
-    if (!needs.length) return false;
+    var agreementOn = $('lf_need_agreement').checked;
+    req(agreementOn || $('lf_need_vpat').checked, 'lf_needs_hint', 'Please select at least one option.');
+    if (agreementOn) {
+      var route = radioVal('route');
+      req(!!route, 'lf_route_hint', 'Please choose how you\u2019d like to proceed.');
+      if (route === 'standard') req(!!radioVal('standard_mode'), 'lf_standard_mode_hint', 'Please choose whether you need a copy or have already signed it.');
+    }
+    if (!needs.length || (agreementOn && !needs.some(function (k) { return k !== 'vpat'; }))) return false;
 
     var needsOrg  = needs.some(function (k) { return k !== 'vpat'; });
     var needsDocs = has(needs, 'exhibitE') || has(needs, 'signed') || has(needs, 'review');
