@@ -34,7 +34,7 @@ Local clone: `/Users/matteo/Claude/soundtrap-school-data/`
 | `public-quote-form/` | Customer-facing quote form. GH Pages HTML + Apps Script backend. **LIVE.** |
 | `internal-quote-form/` | Sales-rep quote form. Apps Script HtmlService, `@soundtrap.com`-gated. **LIVE.** |
 | `internal-order-form/` | Order equivalent of internal quote form. **SCAFFOLD ONLY — not deployed.** |
-| `legal-form/` | DPA / Exhibit E request form. GH Pages HTML + Apps Script backend. **LIVE.** |
+| `legal-form/` | Privacy & legal documents form. GH Pages HTML + Apps Script backend. v1 **LIVE**; v2 restructure on branch `legal-form/restructure` (see `legal-form/CLAUDE.md`). |
 | `trial-form/` | Trial signup prototype. |
 
 **Key hosted URLs** (GitHub Pages, `https://matteo524.github.io/soundtrap-school-data/...`):

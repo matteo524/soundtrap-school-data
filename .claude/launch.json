@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8080", "--directory", "public-quote-form"],
       "port": 8080
+    },
+    {
+      "name": "legal-form",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8090", "--directory", "legal-form"],
+      "port": 8090
     }
   ]
 }

@@ -1,123 +1,132 @@
 /**
  * ============================================================
- *  Soundtrap for Education — Legal & Agreement Request Form
- *  Google Apps Script backend
+ *  Soundtrap for Education — Privacy & Legal Documents form
+ *  Google Apps Script backend (form v2, Nov 2026)
  * ============================================================
  *
- *  SETUP (one-time):
- *  1. Create a new Google Sheet. Copy its ID from the URL
- *     (the string between /d/ and /edit) → paste into SHEET_ID.
- *  2. Create a Google Drive folder for uploaded files. Copy its
- *     ID from the URL → paste into DRIVE_FOLDER_ID.
- *  3. Run initSheet() once manually to create the header row.
- *  4. Deploy → New deployment → Web app:
- *       Execute as: Me
- *       Who has access: Anyone
- *  5. Copy the deployment URL → paste into LF_CONFIG.appsScriptUrl
- *     in legal-form.html.
+ *  What a submission can ask for (payload.needs):
+ *    vpat      — our VPAT                     → emailed automatically, nobody notified
+ *    standard  — a copy of the standard PUB-avtal (Sweden only)
+ *                                            → emailed automatically, rep gets an FYI
+ *    adobeSign — customer has reviewed the standard SDPA (US) / PUB-avtal /
+ *                DPA (rest of world) and wants it sent via Adobe Sign
+ *    exhibitE  — join an existing US state agreement (Exhibit E)
+ *    review    — review of the customer's own documents
+ *                                            → rep notified, contracts@ in CC
+ *
+ *  SETUP
+ *  1. Script Properties (Project Settings → Script Properties):
+ *       DOC_ID_VPAT       (optional) Drive file ID of the VPAT. Defaults to
+ *                         "Soundtrap VPAT 2025.pdf" in the Legal Drive folder.
+ *       DOC_ID_PUB_AVTAL  (optional) Drive file ID of the PUB-avtal PDF. Defaults to
+ *                         "Soundtrap PUB-avtal.pdf" in the Legal Drive folder.
+ *     Legal Drive folder: 1hal9TVwTM8H-uAa8FDPGFWO86zMYDSIG
+ *       SLACK_WEBHOOK_URL (optional) Incoming Webhook for notifications
+ *     Google Docs are sent as PDF; PDFs and Word files are sent as they are.
+ *     To change a document, point its property at a new file. No redeploy needed.
+ *  2. Run initSheet() once to create the "Legal Requests v2" tab.
+ *  3. Deploy → New deployment → Web app (Execute as: Me, Who has access: Anyone),
+ *     then paste the URL into LF_CONFIG.appsScriptUrl in legal-form.html.
  * ============================================================
  */
 
 // ── Configuration ────────────────────────────────────────────
-var SHEET_ID         = '1B5dWNG9FwX8EkHJjWbtoidOityOmUbXk9wnM5urYSpA';
-var DRIVE_FOLDER_ID  = '1rE-s08iV9JyIo5R_k6S_lmelR9GTsqOk';
-var SHEET_TAB_NAME   = 'Legal Requests';
-var FALLBACK_EMAIL   = 'legal@soundtrap.com'; // catches submissions with no matched rep
+var SHEET_ID        = '1B5dWNG9FwX8EkHJjWbtoidOityOmUbXk9wnM5urYSpA';
+var DRIVE_FOLDER_ID = '1rE-s08iV9JyIo5R_k6S_lmelR9GTsqOk';
+var SHEET_TAB_NAME  = 'Legal Requests v2';   // v1 rows stay in "Legal Requests"
+var CONTRACTS_EMAIL = 'contracts@soundtrap.com';
+var FROM_NAME       = 'Soundtrap for Education';
 
-// ── Sheet column headers (order must match appendRow call) ───
+var BUSINESS_DAYS_AGREEMENT = 5;    // Exhibit E + signed standard agreements
+var BUSINESS_DAYS_REVIEW    = 10;   // custom review ("at least 2 weeks")
+
+/** Documents sent automatically. Keys match payload.standardAgreement + 'vpat'. */
+var AUTO_DOCS = {
+  'vpat':      { prop: 'DOC_ID_VPAT',      fileName: 'Soundtrap VPAT.pdf',      label: 'Soundtrap VPAT (accessibility report)',
+                 defaultId: '1kJHa9neLC77DKj1lYT9bwUSdOv9yiG9-' },   // "Soundtrap VPAT 2025.pdf", same Drive folder
+  'PUB-avtal': { prop: 'DOC_ID_PUB_AVTAL', fileName: 'Soundtrap PUB-avtal.pdf', label: 'Soundtrap standard PUB-avtal',
+                 defaultId: '1QV1RviQTToxJgfw2tBjRtpkJsGNK5SNw' },   // Drive folder 1hal9TVwTM8H-uAa8FDPGFWO86zMYDSIG
+};
+
+/** Standard agreements, by payload.standardAgreement (for emails). */
+var STANDARD_AGREEMENTS = {
+  'SDPA':      { name: 'Student Data Privacy Agreement', url: 'https://www.soundtrap.com/legal/sdpa' },
+  'DPA':       { name: 'DPA',                            url: 'https://www.soundtrap.com/legal/dpa' },
+  'PUB-avtal': { name: 'PUB-avtal',                      url: '' },
+};
+
+var NEED_LABELS = {
+  vpat:     'VPAT',
+  standard:  'Standard agreement copy',
+  adobeSign: 'Adobe Sign request (standard agreement)',
+  exhibitE:  'Exhibit E',
+  review:   'Document review',
+};
+
+// ── Sheet columns (written by header name) ───────────────────
 var COLUMNS = [
-  'Timestamp',
-  'Request Type', 'VPAT Requested',
-  'Country', 'State', 'City', 'District', 'School', 'Manual Entry',
-  'Order Placed', 'Seats', 'Order Method', 'Reseller Name',
-  'NDPA', 'Exhibit E', 'Pub-Avtal', 'DPA',
-  'Summary',
-  'First Name', 'Last Name', 'Email',
-  'Role', 'Role Other',
+  'Timestamp', 'Status', 'Due By',
+  'Needs', 'Standard Agreement', 'Exhibit E State',
+  'Country', 'State', 'City', 'District / Organization', 'School', 'NCES', 'Manual Entry',
+  'Purchase Stage', 'Seats', 'Order Method', 'Reseller Name',
+  'Summary', 'Needed By',
+  'First Name', 'Last Name', 'Email', 'Role', 'Role Other',
   'Breach Contact Name', 'Breach Contact Email',
-  'Purchase Date',
-  'File URLs',
+  'Signer Name', 'Signer Title', 'Signer Email',
+  'File URLs', 'Documents Sent', 'Document Errors',
   'Sales Rep Name', 'Sales Rep Email', 'Sales Rep Pod',
 ];
 
 // ── Shared config (single source of truth) ───────────────────
-// JSON on GitHub Pages — see /config/README.md in the repo.
-var CONFIG_URL              = 'https://matteo524.github.io/soundtrap-school-data/config/config.json';
-var CONFIG_CACHE_KEY        = 'SHARED_CONFIG_v1';
-var CONFIG_CACHE_TTL_SECONDS = 600;  // 10 minutes
+var CONFIG_URL               = 'https://matteo524.github.io/soundtrap-school-data/config/config.json';
+var CONFIG_CACHE_KEY         = 'SHARED_CONFIG_v1';
+var CONFIG_CACHE_TTL_SECONDS = 600;
 var _configMemo = null;
 
-/**
- * Loads the shared config (territory, lists, legal lists, etc.) from GitHub Pages.
- * Cached in: 1) memory for this invocation, 2) CacheService for ~10 min, 3) network on cold cache.
- * Throws on failure — callers should treat as fatal.
- */
 function loadConfig_() {
   if (_configMemo) return _configMemo;
-
   try {
-    var cache = CacheService.getScriptCache();
-    var cached = cache.get(CONFIG_CACHE_KEY);
-    if (cached) {
-      _configMemo = JSON.parse(cached);
-      return _configMemo;
-    }
+    var cached = CacheService.getScriptCache().get(CONFIG_CACHE_KEY);
+    if (cached) { _configMemo = JSON.parse(cached); return _configMemo; }
   } catch (_e) { /* fall through */ }
 
-  var resp = UrlFetchApp.fetch(CONFIG_URL, {
-    muteHttpExceptions: true,
-    headers: { 'Cache-Control': 'no-cache' },
-  });
+  var resp = UrlFetchApp.fetch(CONFIG_URL, { muteHttpExceptions: true, headers: { 'Cache-Control': 'no-cache' } });
   if (resp.getResponseCode() !== 200) {
     throw new Error('Failed to load shared config from ' + CONFIG_URL + ' — HTTP ' + resp.getResponseCode());
   }
   var text = resp.getContentText();
   _configMemo = JSON.parse(text);
-
-  try {
-    CacheService.getScriptCache().put(CONFIG_CACHE_KEY, text, CONFIG_CACHE_TTL_SECONDS);
-  } catch (_e) { /* best-effort */ }
-
+  try { CacheService.getScriptCache().put(CONFIG_CACHE_KEY, text, CONFIG_CACHE_TTL_SECONDS); } catch (_e) {}
   return _configMemo;
 }
 
-/**
- * Compute the assigned sales rep from country / state / district / email.
- * @param {string} country
- * @param {string} state
- * @param {string} district
- * @param {string} email
- * @return {{ pod:string, rep:string, email:string }}
- */
+/** Assigned sales rep from country / state / district / email (same rules as v1). */
 function computeTerritory(country, state, district, email) {
-  var TERRITORY  = loadConfig_().territory;
-  var stateLc    = (state    || '').toLowerCase();
+  var T = loadConfig_().territory;
+  var stateLc = (state || '').toLowerCase();
   var districtLc = (district || '').toLowerCase();
   var emailDomain = (email || '').indexOf('@') !== -1 ? email.split('@')[1].toLowerCase() : '';
-
   var pod;
 
   if (country === 'United States') {
-    if (districtLc && TERRITORY.usNamed2 && TERRITORY.usNamed2.indexOf(districtLc) !== -1) {
+    if (districtLc && T.usNamed2 && T.usNamed2.indexOf(districtLc) !== -1) {
       pod = 'US Named Accounts 2';
-    } else if (districtLc && (TERRITORY.usNamed.indexOf(districtLc) !== -1 ||
+    } else if (districtLc && (T.usNamed.indexOf(districtLc) !== -1 ||
         districtLc.indexOf('new york city geographic district') === 0)) {
       pod = 'US Named Accounts';
     } else {
-      pod = TERRITORY.statePod[stateLc] || 'Scaled Accounts';
+      pod = T.statePod[stateLc] || 'Scaled Accounts';
     }
   } else if (country === 'Canada') {
     pod = 'Canada';
   } else if (country === 'United Kingdom') {
     pod = 'UK';
   } else if (country) {
-    pod = (emailDomain && TERRITORY.rowNamedDomains.indexOf(emailDomain) !== -1)
-      ? 'ROW Named Accounts' : 'ROW';
+    pod = (emailDomain && T.rowNamedDomains.indexOf(emailDomain) !== -1) ? 'ROW Named Accounts' : 'ROW';
   } else {
     pod = '';
   }
-
-  var repData = pod ? (TERRITORY.podRep[pod] || {}) : {};
+  var repData = pod ? (T.podRep[pod] || {}) : {};
   return { pod: pod || '', rep: repData.name || '', email: repData.email || '' };
 }
 
@@ -126,53 +135,111 @@ function computeTerritory(country, state, district, email) {
 // ─────────────────────────────────────────────────────────────
 
 function doGet(e) {
-  var out = ContentService.createTextOutput(
-    JSON.stringify({ success: true, message: 'Legal Form API' })
-  );
-  out.setMimeType(ContentService.MimeType.JSON);
-  return out;
+  return jsonResponse({ success: true, message: 'Legal Form API v2' });
 }
 
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
+    if (data.formVersion !== 2) {
+      throw new Error('Unsupported form version. Please refresh the page and try again.');
+    }
+    data.needs = (data.needs || []).filter(function (k) { return NEED_LABELS[k]; });
+    if (!data.needs.length) throw new Error('No request type selected.');
+    if (!data.email) throw new Error('Email is required.');
 
-    // 1. Save uploaded files to Drive
-    var fileUrls = saveFiles(data.files || []);
+    var needs = data.needs;
+    var agreementOnly = needs.every(function (k) { return k === 'vpat' || k === 'standard'; });
 
-    // 2. Compute territory
-    var territory = computeTerritory(
-      data.country   || '',
-      data.state     || '',
-      data.district  || '',
-      data.email     || ''
-    );
+    // 1. Uploaded files → Drive
+    var fileUrls = saveFiles(data.files || [], data);
 
-    // 3. Append row to Sheet
-    writeToSheet(data, fileUrls, territory);
+    // 2. Territory
+    var territory = computeTerritory(data.country || '', data.state || '', data.district || '', data.email || '');
 
-    // 4. Send emails
-    sendConfirmation(data, fileUrls, territory);
-    sendRepNotification(data, fileUrls, territory);
+    // 3. Documents to send automatically
+    var docs = collectAutoDocs_(data);
 
-    // 5. Slack notification (best-effort, non-fatal)
-    try {
-      sendSlackNotification_(data, fileUrls, territory);
-    } catch (_slackErr) { /* best-effort */ }
+    // 4. Sheet
+    var dueBy = dueDate_(needs);
+    writeToSheet(data, fileUrls, territory, docs, dueBy);
+
+    // 5. Customer email (with attachments)
+    sendConfirmation(data, fileUrls, docs);
+
+    // 6. Internal notifications (VPAT-only requests notify nobody)
+    var internalNeeded = needs.some(function (k) { return k !== 'vpat'; });
+    if (internalNeeded) {
+      sendInternalNotification(data, fileUrls, territory, docs, dueBy, agreementOnly);
+      try { sendSlackNotification_(data, fileUrls, territory, dueBy); } catch (_s) { /* best-effort */ }
+    }
+    if (docs.errors.length) sendDocErrorAlert_(data, docs);
 
     return jsonResponse({ success: true });
-
   } catch (err) {
     return jsonResponse({ success: false, error: err.message });
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Sheet helpers
+//  Automatic documents
+// ─────────────────────────────────────────────────────────────
+
+/** Returns { blobs: [Blob], labels: [string], errors: [string] } for the requested documents. */
+function collectAutoDocs_(data) {
+  var keys = [];
+  if (data.needs.indexOf('vpat') !== -1) keys.push('vpat');
+  if (data.needs.indexOf('standard') !== -1 && AUTO_DOCS[data.standardAgreement]) keys.push(data.standardAgreement);
+
+  var props = PropertiesService.getScriptProperties();
+  var out = { blobs: [], labels: [], errors: [] };
+  keys.forEach(function (k) {
+    var doc = AUTO_DOCS[k];
+    try {
+      var id = props.getProperty(doc.prop) || doc.defaultId;
+      if (!id) throw new Error('Script Property ' + doc.prop + ' is not set');
+      out.blobs.push(fileAsAttachment_(id, doc.fileName));
+      out.labels.push(doc.label);
+    } catch (err) {
+      out.errors.push(doc.label + ': ' + err.message);
+    }
+  });
+  return out;
+}
+
+/** Google Docs → PDF; anything else is attached as-is. */
+function fileAsAttachment_(fileId, fileName) {
+  var file = DriveApp.getFileById(fileId);
+  var mime = file.getMimeType();
+  if (mime === MimeType.GOOGLE_DOCS) return file.getAs(MimeType.PDF).setName(fileName);
+  var blob = file.getBlob();
+  if (mime !== MimeType.PDF) return blob.setName(file.getName());
+  return blob.setName(fileName);
+}
+
+/** Checks every document property resolves to a readable file. Run manually from the editor. */
+function checkDocuments() {
+  var props = PropertiesService.getScriptProperties();
+  Object.keys(AUTO_DOCS).forEach(function (k) {
+    var doc = AUTO_DOCS[k];
+    var id = props.getProperty(doc.prop) || doc.defaultId;
+    if (!id) { Logger.log('✗ ' + doc.prop + ' is not set'); return; }
+    try {
+      var f = DriveApp.getFileById(id);
+      var b = fileAsAttachment_(id, doc.fileName);
+      Logger.log('✓ ' + doc.prop + ' → "' + f.getName() + '" (sent as ' + b.getName() + ', ' + Math.round(b.getBytes().length / 1024) + ' KB)');
+    } catch (err) {
+      Logger.log('✗ ' + doc.prop + ' (' + id + '): ' + err.message);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Sheet
 // ─────────────────────────────────────────────────────────────
 
 function getSheet() {
-  var ss    = SpreadsheetApp.openById(SHEET_ID);
+  var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = ss.getSheetByName(SHEET_TAB_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_TAB_NAME);
@@ -183,194 +250,247 @@ function getSheet() {
   return sheet;
 }
 
-function writeToSheet(data, fileUrls, territory) {
+function writeToSheet(data, fileUrls, territory, docs, dueBy) {
+  var needs = data.needs;
+  var actionable = needs.some(function (k) { return k === 'exhibitE' || k === 'adobeSign' || k === 'review'; });
+  var row = {
+    'Timestamp':               new Date(),
+    'Status':                  actionable ? 'New' : (docs.errors.length ? 'Send manually' : 'Sent automatically'),
+    'Due By':                  dueBy || '',
+    'Needs':                   needs.map(function (k) { return NEED_LABELS[k]; }).join(', '),
+    'Standard Agreement':      data.standardAgreement || '',
+    'Exhibit E State':         data.exhibitEState || '',
+    'Country':                 data.country || '',
+    'State':                   data.state || '',
+    'City':                    data.city || '',
+    'District / Organization': data.district || '',
+    'School':                  data.school || '',
+    'NCES':                    data.nces || '',
+    'Manual Entry':            data.manualEntry || '',
+    'Purchase Stage':          data.purchaseStage || '',
+    'Seats':                   data.seats || '',
+    'Order Method':            data.orderMethod || '',
+    'Reseller Name':           data.resellerName || '',
+    'Summary':                 data.summary || '',
+    'Needed By':               data.neededBy || '',
+    'First Name':              data.firstName || '',
+    'Last Name':               data.lastName || '',
+    'Email':                   data.email || '',
+    'Role':                    data.role || '',
+    'Role Other':              data.roleOther || '',
+    'Breach Contact Name':     data.breachContactName || '',
+    'Breach Contact Email':    data.breachContactEmail || '',
+    'Signer Name':             data.signerName || '',
+    'Signer Title':            data.signerTitle || '',
+    'Signer Email':            data.signerEmail || '',
+    'File URLs':               fileUrls.join('\n'),
+    'Documents Sent':          docs.labels.join(', '),
+    'Document Errors':         docs.errors.join('\n'),
+    'Sales Rep Name':          territory.rep || '',
+    'Sales Rep Email':         territory.email || '',
+    'Sales Rep Pod':           territory.pod || '',
+  };
   var sheet = getSheet();
-  sheet.appendRow([
-    new Date(),                   // Timestamp
-    data.requestType   || '',     // Request Type
-    data.vpatRequested || 'No',   // VPAT Requested
-    data.country       || '',     // Country
-    data.state         || '',     // State
-    data.city          || '',     // City
-    data.district      || '',     // District
-    data.school        || '',     // School
-    data.manualEntry   || '',     // Manual Entry
-    data.orderPlaced   || '',     // Order Placed
-    data.seats         || '',     // Seats
-    data.orderMethod   || '',     // Order Method
-    data.resellerName  || '',     // Reseller Name
-    data.ndpa          || '',     // NDPA
-    data.exhibitE      || '',     // Exhibit E
-    data.pubAvtal      || '',     // Pub-Avtal
-    data.dpa           || '',     // DPA
-    data.summary       || '',     // Summary
-    data.firstName     || '',     // First Name
-    data.lastName      || '',     // Last Name
-    data.email         || '',     // Email
-    data.role          || '',     // Role
-    data.roleOther     || '',     // Role Other
-    data.breachContactName  || '', // Breach Contact Name
-    data.breachContactEmail || '', // Breach Contact Email
-    data.purchaseDate  || '',     // Purchase Date
-    fileUrls.join('\n'),          // File URLs
-    territory.rep      || '',     // Sales Rep Name
-    territory.email    || '',     // Sales Rep Email
-    territory.pod      || '',     // Sales Rep Pod
-  ]);
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  sheet.appendRow(headers.map(function (h) { return row.hasOwnProperty(h) ? row[h] : ''; }));
 }
 
-// ── One-time setup ───────────────────────────────────────────
 function initSheet() {
   getSheet();
-  Logger.log('Sheet initialised: ' + SHEET_TAB_NAME);
+  Logger.log('Sheet ready: ' + SHEET_TAB_NAME);
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Drive file saving
+//  Drive (uploaded files)
 // ─────────────────────────────────────────────────────────────
 
-function saveFiles(files) {
+function saveFiles(files, data) {
   if (!files || !files.length) return [];
   var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-  var urls   = [];
-
-  files.forEach(function(f) {
+  var prefix = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd') +
+               ' - ' + (data.district || data.school || data.email || 'request') + ' - ';
+  var urls = [];
+  files.forEach(function (f) {
     try {
-      var blob = Utilities.newBlob(
-        Utilities.base64Decode(f.data),
-        f.type || 'application/octet-stream',
-        f.name || 'attachment'
-      );
+      var blob = Utilities.newBlob(Utilities.base64Decode(f.data), f.type || 'application/octet-stream',
+                                   prefix + (f.name || 'attachment'));
       var file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      // Signed agreements can contain personal data: share inside soundtrap.com only.
+      try { file.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.VIEW); } catch (_e) {}
       urls.push(file.getUrl());
     } catch (err) {
       Logger.log('File save error: ' + err.message);
     }
   });
-
   return urls;
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Email: confirmation to submitter
+//  Email: customer confirmation (+ attached documents)
 // ─────────────────────────────────────────────────────────────
 
-function sendConfirmation(data, fileUrls, territory) {
-  if (!data.email) return;
+function sendConfirmation(data, fileUrls, docs) {
+  var needs = data.needs;
+  var instantOnly = needs.every(function (k) { return k === 'vpat' || k === 'standard'; });
+  var subject = instantOnly ? 'Your Soundtrap documents' : 'We’ve received your request — Soundtrap for Education';
 
-  var school    = data.school || data.district || '';
-  var repLine   = territory.rep
-    ? '<p>Your assigned representative is <strong>' + territory.rep + '</strong> ' +
-      '(<a href="mailto:' + territory.email + '">' + territory.email + '</a>). ' +
-      'They will be in touch shortly.</p>'
+  var attachedLine = docs.labels.length
+    ? '<p>Attached to this email: <strong>' + docs.labels.map(escHtml).join('</strong> and <strong>') + '</strong>.</p>'
+    : '';
+  var missingLine = docs.errors.length
+    ? '<p>We couldn’t attach every document automatically. Our contracts team will send the rest to you shortly.</p>'
     : '';
 
-  var subject = 'Your Soundtrap Legal Request has been received';
-
-  var body =
-    '<div style="font-family:Helvetica Neue,Helvetica,Arial,sans-serif;max-width:600px;color:#161616;">' +
-    '<div style="background:#161616;padding:24px 32px;border-radius:8px 8px 0 0;border-top:4px solid #6551F2;">' +
-    '<p style="color:#FDFDF5;font-size:22px;font-weight:700;margin:0;">Soundtrap for Education</p>' +
-    '</div>' +
-    '<div style="background:#FDFDF5;padding:28px 32px;border-radius:0 0 8px 8px;">' +
+  var body = emailShell_(
     '<p>Hi ' + escHtml(data.firstName || 'there') + ',</p>' +
-    '<p>Thank you — we have received your <strong>' + escHtml(data.requestType || 'legal') + '</strong> request' +
-    (school ? ' for <strong>' + escHtml(school) + '</strong>' : '') + '.</p>' +
-    repLine +
-    '<h3 style="color:#6551F2;margin-top:24px;">Request details</h3>' +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
-    tr('Request type', data.requestType + (data.vpatRequested === 'Yes' ? ' + VPAT' : '')) +
-    tr('Institution', [data.school, data.district, data.city, data.state, data.country].filter(Boolean).join(', ')) +
-    (data.summary ? tr('Summary', escHtml(data.summary)) : '') +
-    (data.vpatRequested === 'Yes' ? tr('VPAT', 'Requested') : '') +
-    (data.ndpa    === 'Yes' ? tr('NDPA',      'Requested') : '') +
-    (data.exhibitE=== 'Yes' ? tr('Exhibit E', 'Requested') : '') +
-    (data.pubAvtal=== 'Yes' ? tr('Pub-Avtal', 'Requested') : '') +
-    (data.dpa     === 'Yes' ? tr('DPA',       'Requested') : '') +
-    '</table>' +
-    (fileUrls.length ? '<p style="margin-top:16px;font-size:13px;color:#555;">' +
-      fileUrls.length + ' document(s) uploaded.</p>' : '') +
-    '<p style="margin-top:24px;font-size:12px;color:#888;">If you have questions in the meantime, ' +
-    'email <a href="mailto:legal@soundtrap.com">legal@soundtrap.com</a>.</p>' +
-    '</div></div>';
+    '<p>Thank you for your request' + (orgName_(data) ? ' for <strong>' + escHtml(orgName_(data)) + '</strong>' : '') + '.</p>' +
+    attachedLine + missingLine +
+    '<h3 style="color:#6551F2;margin:24px 0 8px;">What happens next</h3>' +
+    '<ul style="padding-left:18px;margin:0;">' + nextStepsHtml_(data) + '</ul>' +
+    (fileUrls.length ? '<p style="margin-top:16px;font-size:13px;color:#555;">We received ' + fileUrls.length + ' uploaded document(s).</p>' : '') +
+    '<p style="margin-top:24px;font-size:13px;color:#555;">Questions? Just reply to this email or write to ' +
+    '<a href="mailto:' + CONTRACTS_EMAIL + '">' + CONTRACTS_EMAIL + '</a>.</p>'
+  );
 
   MailApp.sendEmail({
-    to:       data.email,
-    subject:  subject,
-    htmlBody: body,
+    to:          data.email,
+    subject:     subject,
+    htmlBody:    body,
+    name:        FROM_NAME,
+    replyTo:     CONTRACTS_EMAIL,
+    attachments: docs.blobs,
+  });
+}
+
+function nextStepsHtml_(data) {
+  var n = data.needs, items = [];
+  var agName = (STANDARD_AGREEMENTS[data.standardAgreement] || {}).name || data.standardAgreement || 'agreement';
+  if (n.indexOf('exhibitE') !== -1) items.push('<strong>Exhibit E' + (data.exhibitEState ? ' (' + escHtml(data.exhibitEState) + ')' : '') + ':</strong> once we receive your signed Exhibit E, we countersign it and email it back within <strong>5 business days</strong>. If you haven’t uploaded it yet, sign it through the SDPC Resource Registry or reply to this email with the signed copy.');
+  if (n.indexOf('standard') !== -1) items.push('<strong>Standard ' + escHtml(agName) + ':</strong> attached. Once you\u2019ve reviewed it, return to the same form and choose \u201CI have already reviewed it\u201D to receive it via Adobe Sign for signature.');
+  if (n.indexOf('adobeSign') !== -1) items.push('<strong>Standard ' + escHtml(agName) + ':</strong> we\u2019ll send it via <strong>Adobe Sign</strong> to ' + escHtml(data.signerName || 'the signer') + (data.signerEmail ? ' (' + escHtml(data.signerEmail) + ')' : '') + ' within <strong>5 business days</strong>. Once everyone has signed, Adobe Sign emails you the completed copy.');
+  if (n.indexOf('review')   !== -1) items.push('<strong>Document review:</strong> our contracts team will reply within <strong>2 weeks</strong>. Several documents, or long and complex ones, can take longer; we’ll let you know if so.');
+  if (n.indexOf('vpat')     !== -1) items.push('<strong>VPAT:</strong> attached.');
+  return items.map(function (s) { return '<li style="margin-bottom:8px;">' + s + '</li>'; }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Email: internal notification (rep, + contracts@ when action is needed)
+// ─────────────────────────────────────────────────────────────
+
+function sendInternalNotification(data, fileUrls, territory, docs, dueBy, agreementOnly) {
+  var repEmail = territory.email || '';
+  var to = repEmail || CONTRACTS_EMAIL;
+  var cc = (!agreementOnly && to !== CONTRACTS_EMAIL) ? CONTRACTS_EMAIL : '';
+
+  var needLabels = data.needs.map(function (k) { return NEED_LABELS[k]; });
+  var where = data.state || data.country || '';
+  var subject = (agreementOnly ? 'FYI: standard ' + (agreementName_(data) || 'agreement') + ' requested' : 'Legal request: ' + needLabels.join(', ')) +
+                ' — ' + (orgName_(data) || 'Unknown organization') + (where ? ' (' + where + ')' : '');
+
+  var intro = agreementOnly
+    ? '<p>A customer in your territory requested our standard <strong>' + escHtml(agreementName_(data)) +
+      '</strong>. No action is needed from contracts; this is a heads-up for the account.</p>'
+    : '<p><strong>Action needed by contracts.</strong> Due by <strong>' + escHtml(dueBy) + '</strong>.</p>' +
+      (data.needs.indexOf('adobeSign') !== -1
+        ? '<p>Send the standard <strong>' + escHtml(agreementName_(data)) + '</strong> via <strong>Adobe Sign</strong> to ' +
+          escHtml(data.signerName) + ', ' + escHtml(data.signerTitle) + ' (<a href="mailto:' + escHtml(data.signerEmail) + '">' + escHtml(data.signerEmail) + '</a>).</p>'
+        : '');
+
+  var fileList = fileUrls.length
+    ? '<h3 style="color:#6551F2;">Uploaded documents</h3><ul>' +
+      fileUrls.map(function (u) { return '<li><a href="' + u + '">' + u + '</a></li>'; }).join('') + '</ul>'
+    : '';
+
+  var body = emailShell_(
+    intro +
+    '<h3 style="color:#6551F2;margin-top:16px;">Request</h3>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+    tr('Needs',              escHtml(needLabels.join(', '))) +
+    tr('Standard agreement', escHtml(data.standardAgreement)) +
+    tr('Exhibit E state',    escHtml(data.exhibitEState)) +
+    tr('Needed by',          escHtml(data.neededBy)) +
+    tr('Summary',            escHtml(data.summary).replace(/\n/g, '<br>')) +
+    tr('Docs sent',          escHtml(docs.labels.join(', '))) +
+    '</table>' +
+    '<h3 style="color:#6551F2;margin-top:16px;">Organization</h3>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+    tr('District / organization', escHtml(data.district)) +
+    tr('School',            escHtml(data.school)) +
+    tr('City',              escHtml(data.city)) +
+    tr('State',             escHtml(data.state)) +
+    tr('Country',           escHtml(data.country)) +
+    tr('NCES',              escHtml(data.nces)) +
+    tr('Manual entry',      escHtml(data.manualEntry)) +
+    tr('Purchase stage',    escHtml(data.purchaseStage)) +
+    tr('Seats',             escHtml(data.seats)) +
+    tr('Order method',      escHtml(data.orderMethod)) +
+    tr('Reseller',          escHtml(data.resellerName)) +
+    tr('Sales rep',         escHtml(territory.rep ? territory.rep + ' (' + territory.pod + ')' : 'No rep matched')) +
+    '</table>' +
+    '<h3 style="color:#6551F2;margin-top:16px;">Contact</h3>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+    tr('Name',  escHtml((data.firstName || '') + ' ' + (data.lastName || ''))) +
+    tr('Email', '<a href="mailto:' + escHtml(data.email) + '">' + escHtml(data.email) + '</a>') +
+    tr('Role',  escHtml(data.role) + (data.roleOther ? ' — ' + escHtml(data.roleOther) : '')) +
+    (data.signerEmail ? tr('Signer', escHtml(data.signerName) + ', ' + escHtml(data.signerTitle) + ' &lt;' + escHtml(data.signerEmail) + '&gt;') : '') +
+    (data.breachContactEmail ? tr('Breach contact', escHtml(data.breachContactName) + ' &lt;' + escHtml(data.breachContactEmail) + '&gt;') : '') +
+    '</table>' +
+    fileList +
+    '<p style="margin-top:20px;font-size:12px;color:#888;">Logged in the <a href="https://docs.google.com/spreadsheets/d/' + SHEET_ID +
+    '">Legal Requests sheet</a> (tab “' + SHEET_TAB_NAME + '”). Reply to this email to reach the customer.</p>'
+  );
+
+  var opts = { to: to, subject: subject, htmlBody: body, name: FROM_NAME + ' Legal Form', replyTo: data.email };
+  if (cc) opts.cc = cc;
+  MailApp.sendEmail(opts);
+}
+
+/** Tells contracts@ when an automatic document could not be attached, so they send it by hand. */
+function sendDocErrorAlert_(data, docs) {
+  MailApp.sendEmail({
+    to:       CONTRACTS_EMAIL,
+    subject:  'Please send manually: ' + docs.errors.length + ' document(s) for ' + (data.email || 'unknown'),
+    htmlBody: emailShell_(
+      '<p>The legal form could not attach these documents automatically:</p><ul>' +
+      docs.errors.map(function (e) { return '<li>' + escHtml(e) + '</li>'; }).join('') + '</ul>' +
+      '<p>Please send them to <a href="mailto:' + escHtml(data.email) + '">' + escHtml(data.email) + '</a> ' +
+      '(' + escHtml((data.firstName || '') + ' ' + (data.lastName || '')) + ', ' + escHtml(orgName_(data) || data.country) + ').</p>' +
+      '<p>To fix it for future requests, check the DOC_ID_* Script Properties and run <code>checkDocuments()</code> in the Apps Script editor.</p>'
+    ),
+    name: FROM_NAME + ' Legal Form',
   });
 }
 
 // ─────────────────────────────────────────────────────────────
-//  Email: notification to sales rep
+//  Slack
 // ─────────────────────────────────────────────────────────────
 
-function sendRepNotification(data, fileUrls, territory) {
-  var toEmail = territory.email || FALLBACK_EMAIL;
-  var school  = data.school || data.district || 'Unknown';
-  var location = [data.state || data.country].filter(Boolean).join(', ');
+function sendSlackNotification_(data, fileUrls, territory, dueBy) {
+  var webhookUrl = '';
+  try { webhookUrl = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL') || ''; } catch (_e) { return; }
+  if (!webhookUrl) return;
 
-  var subject =
-    'New Legal Request \u2014 ' + (data.requestType || 'Unknown') +
-    ' \u2014 ' + school + (location ? ' (' + location + ')' : '');
-
-  var agreements = [];
-  if (data.ndpa     === 'Yes') agreements.push('NDPA');
-  if (data.exhibitE === 'Yes') agreements.push('Exhibit E');
-  if (data.pubAvtal === 'Yes') agreements.push('Pub-Avtal');
-  if (data.dpa      === 'Yes') agreements.push('DPA');
-
-  var fileSection = '';
-  if (fileUrls.length) {
-    fileSection = '<h3 style="color:#6551F2;">Attached documents</h3><ul>';
-    fileUrls.forEach(function(url) {
-      fileSection += '<li><a href="' + url + '">' + url + '</a></li>';
-    });
-    fileSection += '</ul>';
-  }
-
-  var body =
-    '<div style="font-family:Helvetica Neue,Helvetica,Arial,sans-serif;max-width:680px;color:#161616;">' +
-    '<div style="background:#161616;padding:20px 28px;border-top:4px solid #6551F2;border-radius:8px 8px 0 0;">' +
-    '<p style="color:#FDFDF5;font-size:18px;font-weight:700;margin:0;">New Legal Request</p>' +
-    '</div>' +
-    '<div style="background:#FDFDF5;padding:24px 28px;border-radius:0 0 8px 8px;">' +
-    '<h3 style="color:#6551F2;margin-top:0;">Request details</h3>' +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
-    tr('Request type',     data.requestType + (data.vpatRequested === 'Yes' ? ' + VPAT' : '')) +
-    tr('Country',          data.country) +
-    tr('State',            data.state) +
-    tr('City',             data.city) +
-    tr('District',         data.district) +
-    tr('School',           data.school) +
-    tr('Manual entry',     data.manualEntry) +
-    (data.orderPlaced  ? tr('Order placed',  data.orderPlaced)  : '') +
-    (data.seats        ? tr('Seats',         data.seats)        : '') +
-    (data.orderMethod  ? tr('Order method',  data.orderMethod)  : '') +
-    (data.resellerName ? tr('Reseller',      data.resellerName) : '') +
-    (agreements.length ? tr('Agreements',    agreements.join(', ')) : '') +
-    (data.summary      ? tr('Summary',       escHtml(data.summary)) : '') +
-    '</table>' +
-
-    '<h3 style="color:#6551F2;margin-top:20px;">Contact</h3>' +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
-    tr('Name',         escHtml((data.firstName || '') + ' ' + (data.lastName || ''))) +
-    tr('Email',        '<a href="mailto:' + escHtml(data.email || '') + '">' + escHtml(data.email || '') + '</a>') +
-    tr('Role',         escHtml(data.role) + (data.roleOther ? ' — ' + escHtml(data.roleOther) : '')) +
-    tr('Breach contact', escHtml(data.breachContactName || '') + ' &lt;' + escHtml(data.breachContactEmail || '') + '&gt;') +
-    (data.purchaseDate ? tr('Purchase date', data.purchaseDate) : '') +
-    '</table>' +
-
-    fileSection +
-
-    '<p style="margin-top:20px;font-size:12px;color:#888;">Submitted: ' + new Date().toUTCString() + '</p>' +
-    '</div></div>';
-
-  MailApp.sendEmail({
-    to:       toEmail,
-    subject:  subject,
-    htmlBody: body,
+  var lines = [
+    'Hello, *' + (territory.rep || 'Legal Team') + '*',
+    '',
+    'A new legal request has been submitted in your territory',
+    '<https://docs.google.com/spreadsheets/d/' + SHEET_ID + '|View in Legal Requests sheet>',
+    '',
+    '*Needs:* ' + data.needs.map(function (k) { return NEED_LABELS[k]; }).join(', ') +
+      (data.standardAgreement ? ' (standard: ' + data.standardAgreement + ')' : ''),
+    '*School / District:* ' + (orgName_(data) || '—'),
+    '*Country / State:* ' + [data.country, data.state].filter(Boolean).join(' / '),
+    '*Purchase stage:* ' + (data.purchaseStage || '—'),
+    dueBy ? '*Due by:* ' + dueBy : '',
+    '*Requested by:* ' + ((data.firstName || '') + ' ' + (data.lastName || '')).trim() + ' (' + (data.email || '') + ')',
+    data.summary ? '*Comments:* ' + data.summary : '',
+    fileUrls.length ? '*Attachments:* ' + fileUrls.length + ' file(s)' : '',
+  ];
+  UrlFetchApp.fetch(webhookUrl, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({ text: lines.filter(function (l, i) { return l !== '' || i === 1 || i === 4; }).join('\n') }),
+    muteHttpExceptions: true,
   });
 }
 
@@ -378,13 +498,42 @@ function sendRepNotification(data, fileUrls, territory) {
 //  Utilities
 // ─────────────────────────────────────────────────────────────
 
-function jsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+function agreementName_(data) {
+  return (STANDARD_AGREEMENTS[data.standardAgreement] || {}).name || data.standardAgreement || '';
 }
 
-/** Build a two-column table row for email HTML. */
+function orgName_(data) {
+  return [data.school, data.district].filter(Boolean).join(', ');
+}
+
+/** SLA due date for the request, or '' when nothing needs action. */
+function dueDate_(needs) {
+  var days = 0;
+  if (needs.indexOf('exhibitE') !== -1 || needs.indexOf('adobeSign') !== -1) days = BUSINESS_DAYS_AGREEMENT;
+  if (needs.indexOf('review') !== -1) days = BUSINESS_DAYS_REVIEW;
+  if (!days) return '';
+  var d = new Date();
+  while (days > 0) {
+    d.setDate(d.getDate() + 1);
+    var dow = d.getDay();
+    if (dow !== 0 && dow !== 6) days--;
+  }
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+}
+
+function emailShell_(inner) {
+  return '<div style="font-family:Helvetica Neue,Helvetica,Arial,sans-serif;max-width:640px;color:#161616;font-size:14px;line-height:1.5;">' +
+    '<div style="background:#161616;padding:22px 30px;border-radius:8px 8px 0 0;border-top:4px solid #6551F2;">' +
+    '<p style="color:#FDFDF5;font-size:20px;font-weight:700;margin:0;">Soundtrap for Education</p>' +
+    '</div>' +
+    '<div style="background:#FDFDF5;padding:26px 30px;border-radius:0 0 8px 8px;">' + inner + '</div></div>';
+}
+
+function jsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/** Two-column table row for email HTML; skipped when the value is empty. */
 function tr(label, value) {
   if (!value && value !== 0) return '';
   return '<tr>' +
@@ -394,64 +543,5 @@ function tr(label, value) {
 }
 
 function escHtml(s) {
-  return String(s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Slack notification
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Post a notification to Slack via Incoming Webhook.
- * Webhook URL stored in Script Properties as SLACK_WEBHOOK_URL.
- * Silently no-ops if the property is unset (so dev/test deployments don't spam).
- */
-function sendSlackNotification_(data, fileUrls, territory) {
-  var webhookUrl = '';
-  try {
-    webhookUrl = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL') || '';
-  } catch (_e) { return; }
-  if (!webhookUrl) return;
-
-  var agreements = [];
-  if (data.vpatRequested === 'Yes') agreements.push('VPAT');
-  if (data.ndpa          === 'Yes') agreements.push('NDPA');
-  if (data.exhibitE      === 'Yes') agreements.push('Exhibit E');
-  if (data.pubAvtal      === 'Yes') agreements.push('Pub-Avtal');
-  if (data.dpa           === 'Yes') agreements.push('DPA');
-
-  var repName     = territory.rep   || 'Legal Team';
-  var school      = data.school   || data.district || '';
-  var customerName = ((data.firstName || '') + ' ' + (data.lastName || '')).trim();
-  var createdOn   = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMM d, yyyy HH:mm');
-
-  var sheetUrl = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID;
-
-  var lines = [
-    'Hello, *' + repName + '*',
-    '',
-    'A new legal request has been submitted in your territory',
-    '<' + sheetUrl + '|View in Legal Requests sheet>',
-    '',
-    '*Request Type:* ' + (data.requestType || '') + (agreements.length ? ' (' + agreements.join(', ') + ')' : ''),
-    '*School / District:* ' + school,
-    '*Country:* ' + (data.country || ''),
-    '*State:* ' + (data.state || ''),
-    '*Created on:* ' + createdOn,
-    '*Requested by:* ' + customerName,
-    "*Requestor's comments:* " + (data.summary || '—'),
-    '*Email Address:* ' + (data.email || ''),
-    (fileUrls && fileUrls.length ? '*Attachments:* ' + fileUrls.length + ' file(s)' : ''),
-  ];
-
-  UrlFetchApp.fetch(webhookUrl, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify({ text: lines.filter(function (l) { return l !== ''; }).join('\n') }),
-    muteHttpExceptions: true,
-  });
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
