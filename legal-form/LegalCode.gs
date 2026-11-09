@@ -6,19 +6,21 @@
  *
  *  What a submission can ask for (payload.needs):
  *    vpat      — our VPAT                     → emailed automatically, nobody notified
- *    standard  — a copy of the standard NDPA / DPA / PUB-avtal
+ *    standard  — a copy of the standard PUB-avtal (Sweden only)
  *                                            → emailed automatically, rep gets an FYI
+ *    adobeSign — customer has reviewed the standard SDPA (US) / PUB-avtal /
+ *                DPA (rest of world) and wants it sent via Adobe Sign
  *    exhibitE  — join an existing US state agreement (Exhibit E)
- *    signed    — return a signed standard agreement
  *    review    — review of the customer's own documents
  *                                            → rep notified, contracts@ in CC
  *
  *  SETUP
  *  1. Script Properties (Project Settings → Script Properties):
- *       DOC_ID_VPAT       Drive file ID of the VPAT
- *       DOC_ID_NDPA       Drive file ID of the standard NDPA (US)
- *       DOC_ID_DPA        Drive file ID of the standard DPA (rest of world)
- *       DOC_ID_PUB_AVTAL  Drive file ID of the standard PUB-avtal (Sweden)
+ *       DOC_ID_VPAT       (optional) Drive file ID of the VPAT. Defaults to
+ *                         "Soundtrap VPAT 2025.pdf" in the Legal Drive folder.
+ *       DOC_ID_PUB_AVTAL  (optional) Drive file ID of the PUB-avtal PDF. Defaults to
+ *                         "Soundtrap PUB-avtal.pdf" in the Legal Drive folder.
+ *     Legal Drive folder: 1hal9TVwTM8H-uAa8FDPGFWO86zMYDSIG
  *       SLACK_WEBHOOK_URL (optional) Incoming Webhook for notifications
  *     Google Docs are sent as PDF; PDFs and Word files are sent as they are.
  *     To change a document, point its property at a new file. No redeploy needed.
@@ -40,17 +42,24 @@ var BUSINESS_DAYS_REVIEW    = 10;   // custom review ("at least 2 weeks")
 
 /** Documents sent automatically. Keys match payload.standardAgreement + 'vpat'. */
 var AUTO_DOCS = {
-  'vpat':      { prop: 'DOC_ID_VPAT',      fileName: 'Soundtrap VPAT.pdf',          label: 'Soundtrap VPAT (accessibility report)' },
-  'NDPA':      { prop: 'DOC_ID_NDPA',      fileName: 'Soundtrap NDPA.pdf',          label: 'Soundtrap standard NDPA' },
-  'DPA':       { prop: 'DOC_ID_DPA',       fileName: 'Soundtrap DPA.pdf',           label: 'Soundtrap standard DPA' },
-  'PUB-avtal': { prop: 'DOC_ID_PUB_AVTAL', fileName: 'Soundtrap PUB-avtal.pdf',     label: 'Soundtrap standard PUB-avtal' },
+  'vpat':      { prop: 'DOC_ID_VPAT',      fileName: 'Soundtrap VPAT.pdf',      label: 'Soundtrap VPAT (accessibility report)',
+                 defaultId: '1kJHa9neLC77DKj1lYT9bwUSdOv9yiG9-' },   // "Soundtrap VPAT 2025.pdf", same Drive folder
+  'PUB-avtal': { prop: 'DOC_ID_PUB_AVTAL', fileName: 'Soundtrap PUB-avtal.pdf', label: 'Soundtrap standard PUB-avtal',
+                 defaultId: '1QV1RviQTToxJgfw2tBjRtpkJsGNK5SNw' },   // Drive folder 1hal9TVwTM8H-uAa8FDPGFWO86zMYDSIG
+};
+
+/** Standard agreements, by payload.standardAgreement (for emails). */
+var STANDARD_AGREEMENTS = {
+  'SDPA':      { name: 'Student Data Privacy Agreement', url: 'https://www.soundtrap.com/legal/sdpa' },
+  'DPA':       { name: 'DPA',                            url: 'https://www.soundtrap.com/legal/dpa' },
+  'PUB-avtal': { name: 'PUB-avtal',                      url: '' },
 };
 
 var NEED_LABELS = {
   vpat:     'VPAT',
-  standard: 'Standard agreement copy',
-  exhibitE: 'Exhibit E',
-  signed:   'Signed agreement returned',
+  standard:  'Standard agreement copy',
+  adobeSign: 'Adobe Sign request (standard agreement)',
+  exhibitE:  'Exhibit E',
   review:   'Document review',
 };
 
@@ -63,6 +72,7 @@ var COLUMNS = [
   'Summary', 'Needed By',
   'First Name', 'Last Name', 'Email', 'Role', 'Role Other',
   'Breach Contact Name', 'Breach Contact Email',
+  'Signer Name', 'Signer Title', 'Signer Email',
   'File URLs', 'Documents Sent', 'Document Errors',
   'Sales Rep Name', 'Sales Rep Email', 'Sales Rep Pod',
 ];
@@ -186,7 +196,7 @@ function collectAutoDocs_(data) {
   keys.forEach(function (k) {
     var doc = AUTO_DOCS[k];
     try {
-      var id = props.getProperty(doc.prop);
+      var id = props.getProperty(doc.prop) || doc.defaultId;
       if (!id) throw new Error('Script Property ' + doc.prop + ' is not set');
       out.blobs.push(fileAsAttachment_(id, doc.fileName));
       out.labels.push(doc.label);
@@ -212,7 +222,7 @@ function checkDocuments() {
   var props = PropertiesService.getScriptProperties();
   Object.keys(AUTO_DOCS).forEach(function (k) {
     var doc = AUTO_DOCS[k];
-    var id = props.getProperty(doc.prop);
+    var id = props.getProperty(doc.prop) || doc.defaultId;
     if (!id) { Logger.log('✗ ' + doc.prop + ' is not set'); return; }
     try {
       var f = DriveApp.getFileById(id);
@@ -242,7 +252,7 @@ function getSheet() {
 
 function writeToSheet(data, fileUrls, territory, docs, dueBy) {
   var needs = data.needs;
-  var actionable = needs.some(function (k) { return k === 'exhibitE' || k === 'signed' || k === 'review'; });
+  var actionable = needs.some(function (k) { return k === 'exhibitE' || k === 'adobeSign' || k === 'review'; });
   var row = {
     'Timestamp':               new Date(),
     'Status':                  actionable ? 'New' : (docs.errors.length ? 'Send manually' : 'Sent automatically'),
@@ -270,6 +280,9 @@ function writeToSheet(data, fileUrls, territory, docs, dueBy) {
     'Role Other':              data.roleOther || '',
     'Breach Contact Name':     data.breachContactName || '',
     'Breach Contact Email':    data.breachContactEmail || '',
+    'Signer Name':             data.signerName || '',
+    'Signer Title':            data.signerTitle || '',
+    'Signer Email':            data.signerEmail || '',
     'File URLs':               fileUrls.join('\n'),
     'Documents Sent':          docs.labels.join(', '),
     'Document Errors':         docs.errors.join('\n'),
@@ -351,10 +364,10 @@ function sendConfirmation(data, fileUrls, docs) {
 
 function nextStepsHtml_(data) {
   var n = data.needs, items = [];
-  var ag = data.standardAgreement || 'agreement';
+  var agName = (STANDARD_AGREEMENTS[data.standardAgreement] || {}).name || data.standardAgreement || 'agreement';
   if (n.indexOf('exhibitE') !== -1) items.push('<strong>Exhibit E' + (data.exhibitEState ? ' (' + escHtml(data.exhibitEState) + ')' : '') + ':</strong> once we receive your signed Exhibit E, we countersign it and email it back within <strong>5 business days</strong>. If you haven’t uploaded it yet, sign it through the SDPC Resource Registry or reply to this email with the signed copy.');
-  if (n.indexOf('standard') !== -1) items.push('<strong>Standard ' + escHtml(ag) + ':</strong> attached. When it’s signed, return it through the same form (choose our standard ' + escHtml(ag) + ', then “I’ve already signed it”) and we’ll countersign it within 5 business days.');
-  if (n.indexOf('signed')   !== -1) items.push('<strong>Signed agreement:</strong> we countersign it and email you the fully signed copy within <strong>5 business days</strong>.');
+  if (n.indexOf('standard') !== -1) items.push('<strong>Standard ' + escHtml(agName) + ':</strong> attached. Once you\u2019ve reviewed it, return to the same form and choose \u201CI have already reviewed it\u201D to receive it via Adobe Sign for signature.');
+  if (n.indexOf('adobeSign') !== -1) items.push('<strong>Standard ' + escHtml(agName) + ':</strong> we\u2019ll send it via <strong>Adobe Sign</strong> to ' + escHtml(data.signerName || 'the signer') + (data.signerEmail ? ' (' + escHtml(data.signerEmail) + ')' : '') + ' within <strong>5 business days</strong>. Once everyone has signed, Adobe Sign emails you the completed copy.');
   if (n.indexOf('review')   !== -1) items.push('<strong>Document review:</strong> our contracts team will reply within <strong>2 weeks</strong>. Several documents, or long and complex ones, can take longer; we’ll let you know if so.');
   if (n.indexOf('vpat')     !== -1) items.push('<strong>VPAT:</strong> attached.');
   return items.map(function (s) { return '<li style="margin-bottom:8px;">' + s + '</li>'; }).join('');
@@ -371,13 +384,17 @@ function sendInternalNotification(data, fileUrls, territory, docs, dueBy, agreem
 
   var needLabels = data.needs.map(function (k) { return NEED_LABELS[k]; });
   var where = data.state || data.country || '';
-  var subject = (agreementOnly ? 'FYI: standard ' + (data.standardAgreement || 'agreement') + ' requested' : 'Legal request: ' + needLabels.join(', ')) +
+  var subject = (agreementOnly ? 'FYI: standard ' + (agreementName_(data) || 'agreement') + ' requested' : 'Legal request: ' + needLabels.join(', ')) +
                 ' — ' + (orgName_(data) || 'Unknown organization') + (where ? ' (' + where + ')' : '');
 
   var intro = agreementOnly
-    ? '<p>A customer in your territory requested our standard <strong>' + escHtml(data.standardAgreement) +
+    ? '<p>A customer in your territory requested our standard <strong>' + escHtml(agreementName_(data)) +
       '</strong>. No action is needed from contracts; this is a heads-up for the account.</p>'
-    : '<p><strong>Action needed by contracts.</strong> Due by <strong>' + escHtml(dueBy) + '</strong>.</p>';
+    : '<p><strong>Action needed by contracts.</strong> Due by <strong>' + escHtml(dueBy) + '</strong>.</p>' +
+      (data.needs.indexOf('adobeSign') !== -1
+        ? '<p>Send the standard <strong>' + escHtml(agreementName_(data)) + '</strong> via <strong>Adobe Sign</strong> to ' +
+          escHtml(data.signerName) + ', ' + escHtml(data.signerTitle) + ' (<a href="mailto:' + escHtml(data.signerEmail) + '">' + escHtml(data.signerEmail) + '</a>).</p>'
+        : '');
 
   var fileList = fileUrls.length
     ? '<h3 style="color:#6551F2;">Uploaded documents</h3><ul>' +
@@ -415,6 +432,7 @@ function sendInternalNotification(data, fileUrls, territory, docs, dueBy, agreem
     tr('Name',  escHtml((data.firstName || '') + ' ' + (data.lastName || ''))) +
     tr('Email', '<a href="mailto:' + escHtml(data.email) + '">' + escHtml(data.email) + '</a>') +
     tr('Role',  escHtml(data.role) + (data.roleOther ? ' — ' + escHtml(data.roleOther) : '')) +
+    (data.signerEmail ? tr('Signer', escHtml(data.signerName) + ', ' + escHtml(data.signerTitle) + ' &lt;' + escHtml(data.signerEmail) + '&gt;') : '') +
     (data.breachContactEmail ? tr('Breach contact', escHtml(data.breachContactName) + ' &lt;' + escHtml(data.breachContactEmail) + '&gt;') : '') +
     '</table>' +
     fileList +
@@ -480,6 +498,10 @@ function sendSlackNotification_(data, fileUrls, territory, dueBy) {
 //  Utilities
 // ─────────────────────────────────────────────────────────────
 
+function agreementName_(data) {
+  return (STANDARD_AGREEMENTS[data.standardAgreement] || {}).name || data.standardAgreement || '';
+}
+
 function orgName_(data) {
   return [data.school, data.district].filter(Boolean).join(', ');
 }
@@ -487,7 +509,7 @@ function orgName_(data) {
 /** SLA due date for the request, or '' when nothing needs action. */
 function dueDate_(needs) {
   var days = 0;
-  if (needs.indexOf('exhibitE') !== -1 || needs.indexOf('signed') !== -1) days = BUSINESS_DAYS_AGREEMENT;
+  if (needs.indexOf('exhibitE') !== -1 || needs.indexOf('adobeSign') !== -1) days = BUSINESS_DAYS_AGREEMENT;
   if (needs.indexOf('review') !== -1) days = BUSINESS_DAYS_REVIEW;
   if (!days) return '';
   var d = new Date();

@@ -15,22 +15,30 @@ Customer-facing form for privacy and legal documents. The HTML is hosted on GitH
 | Choice | Key (`needs`) | Shown when | What happens |
 |---|---|---|---|
 | Join the existing {State} agreement (Exhibit E), "Fastest" badge | `exhibitE` | US state in `config.legal.exhibitEStates` | Rep notified, contracts@ CC, due in 5 business days |
-| Soundtrap's standard NDPA / PUB-avtal / DPA → "Email me a copy to sign" | `standard` | Always | **Emailed automatically**; rep gets an FYI |
-| Soundtrap's standard … → "I've already signed it" (upload required) | `signed` | Always | Rep notified, contracts@ CC, due in 5 business days |
-| Our own documents for review (DPA, contract, terms, questionnaires…; upload + description required) | `review` | Always | Rep notified, contracts@ CC, due in 10 business days ("at least 2 weeks") |
+| Soundtrap's standard PUB-avtal → "Email me a copy to review" | `standard` | **Sweden only** | **PDF emailed automatically**; rep gets an FYI. After reviewing, the customer returns to the form for the Adobe Sign option. |
+| Soundtrap's standard agreement → "I have already reviewed it, send me a copy via Adobe Sign for signature" | `adobeSign` | Always | Rep notified, contracts@ CC, due in 5 business days. Asks for the **signer** (name, job title, email; "Same as me" option). |
+| Your own documents for review (DPA, contract, terms, questionnaires…; upload required, optional deadline) | `review` | Always | Rep notified, contracts@ CC, due in 10 business days ("at least 2 weeks") |
 | VPAT card | `vpat` | Always | **Emailed automatically**; nobody notified |
 
 A submission has at most one agreement key plus optionally `vpat`.
 
-Standard agreement by country: **US → NDPA**, **Sweden → PUB-avtal**, **everywhere else → DPA**. `config.legal.dpaCountries` is no longer used by this form.
+Standard agreement by country (`standardAgreement()` in the HTML, `STANDARD_AGREEMENTS` in the backend):
+
+| Country | Agreement (`standardAgreement` code) | Options under it |
+|---|---|---|
+| US | Student Data Privacy Agreement (`SDPA`) | Read it at <https://www.soundtrap.com/legal/sdpa>, then Adobe Sign (auto-selected, only option) |
+| Sweden | PUB-avtal (`PUB-avtal`) | Email me a copy to review / Adobe Sign |
+| Everywhere else | DPA (`DPA`) | Read it at <https://www.soundtrap.com/legal/dpa>, then Adobe Sign (auto-selected, only option) |
+
+Changing country clears the sub-option so the customer chooses again. `config.legal.dpaCountries` is no longer used by this form.
 
 3. **School or district**: only when a need other than VPAT is selected. US uses **one "School or district" typeahead** over every district and school in the selected state, the same approach as the quote forms. It's built from the NCES index plus `schools-{state}.json`, with one entry per district (tagged "District"). The pick fills city, district, school and NCES in the payload. There's an "I can't find my district or school" manual fallback, and the form switches to manual entry automatically if a state has no data. Outside the US the fields are organization (label varies by country, e.g. "Municipality or school"), city, and an optional school.
-4. **Purchase stage**: required radio (Not purchased yet / Order placed / Renewal / Current customer); seats and reseller are optional. Same condition as 3.
-5. **Documents**: for `exhibitE` (upload optional, with how-to steps and a link to the Airtable list of signed state agreements), `signed`, and `review` (also needs a description and an optional deadline).
-6. **Your details**: name, email, role. VPAT-only requests get an optional "School or organization" field. A **breach contact** (with "Same as me") is asked only for `exhibitE` / `signed` / `review`.
+4. **Purchase stage**: required radio (Not purchased yet / Renewal / Current customer); seats and reseller are optional. Same condition as 3.
+5. **Documents** (not a numbered section): the upload block (`#lf_docs_section`) is moved by `refresh()` to sit **directly under the chosen option**. Under Exhibit E: how-to steps, a link to the Airtable list of signed state agreements, and an optional upload. Under "Your own documents for review": a required upload and an optional deadline. There's no free-text description field (`summary` is always empty).
+6. **Your details** (shown as section 5): name, email, role. VPAT-only requests get an optional "School or organization" field. **Who will sign?** (name, job title, email) is asked only for `adobeSign`. A **breach contact** (with "Same as me") is asked for `exhibitE` / `adobeSign` / `review`.
 7. **What happens next**: dynamic bullets with turnaround times, repeated on the success panel and in the confirmation email.
 
-Section numbers 3 to 6 are assigned dynamically, so they stay sequential when sections are hidden.
+Section numbers 3 to 5 (school, purchase stage, your details) are assigned dynamically, so they stay sequential when sections are hidden.
 
 ---
 
@@ -51,7 +59,7 @@ Section numbers 3 to 6 are assigned dynamically, so they stay sequential when se
 
 **Going live with v2 (one-time):**
 1. Paste `LegalCode.gs` into the legal Apps Script project.
-2. Set the Script Properties below and run `checkDocuments()` (it logs ✓/✗ per document), then `initSheet()`.
+2. Run `checkDocuments()` (it logs ✓/✗ per document) and `initSheet()`. Script Properties are only needed for Slack or to override a document.
 3. Deploy → **New deployment** (not a new version of the old one), and copy the URL into `LF_CONFIG.appsScriptUrl`.
 4. Merge and push. The old deployment keeps serving v1 for anyone with the old page cached.
 
@@ -61,13 +69,15 @@ After that, backend changes use Deploy → Manage deployments → edit the v2 de
 
 | Property | Purpose |
 |---|---|
-| `DOC_ID_VPAT` | Drive file ID of the VPAT |
-| `DOC_ID_NDPA` | Standard NDPA (US) |
-| `DOC_ID_DPA` | Standard DPA (rest of world) |
-| `DOC_ID_PUB_AVTAL` | Standard PUB-avtal (Sweden) |
+| `DOC_ID_VPAT` | Optional. Defaults to "Soundtrap VPAT 2025.pdf" (`1kJHa9neLC77DKj1lYT9bwUSdOv9yiG9-`) |
+| `DOC_ID_PUB_AVTAL` | Optional. Defaults to "Soundtrap PUB-avtal.pdf" (`1QV1RviQTToxJgfw2tBjRtpkJsGNK5SNw`) |
+
+Both default files live in the Legal Drive folder `1hal9TVwTM8H-uAa8FDPGFWO86zMYDSIG`. Set a property only to use a different file.
+
+**Updating a document:** either replace the file's content in Drive (Manage versions → Upload new version keeps the same file ID, so nothing else changes), or upload a new file and set the property to its ID. No redeploy is needed in either case.
 | `SLACK_WEBHOOK_URL` | Optional; Slack notifications for everything except VPAT-only |
 
-Google Docs are converted to PDF; PDFs and Word files are attached as-is. **To update a document, point its property at the new file; no redeploy is needed.** If a document can't be attached, the customer is told it will follow, the Sheet row gets status "Send manually", and contracts@ receives an alert.
+Google Docs are converted to PDF; PDFs and Word files are attached as-is. If a document can't be attached, the customer is told it will follow, the Sheet row gets status "Send manually", and contracts@ receives an alert.
 
 ---
 
@@ -75,7 +85,7 @@ Google Docs are converted to PDF; PDFs and Word files are attached as-is. **To u
 
 | | |
 |---|---|
-| Sheet | `SHEET_ID`, tab **`Legal Requests v2`** (v1 rows remain in `Legal Requests`). Rows are written by header name. Columns: Status, Due By, Needs, Standard Agreement, Documents Sent, Document Errors, rep, etc. |
+| Sheet | `SHEET_ID`, tab **`Legal Requests v2`** (v1 rows remain in `Legal Requests`). Rows are written by header name. Columns: Status, Due By, Needs, Standard Agreement, Signer Name/Title/Email, Documents Sent, Document Errors, rep, etc. |
 | Drive folder | `DRIVE_FOLDER_ID`. Uploads are named `YYYY-MM-DD - {org} - {file}` and shared **soundtrap.com-only** (v1 shared them with anyone with the link). |
 
 ---
