@@ -57,6 +57,8 @@ Section numbers 3 to 5 (school, purchase stage, your details) are assigned dynam
 
 **Backend (Apps Script):** Execute as Me, Who has access Anyone. `LF_CONFIG.appsScriptUrl` (top of `legal-form.html`) must point at the **v2** deployment.
 
+**v2 deployment URL (live since Nov 2026):** `https://script.google.com/macros/s/AKfycbx-i9Edo2nexCAR0SfsaYGD26KpcF5SE--epOPmn0ai3iKHLqxYH1ElTaWo5R-F4auF/exec`. A GET returns `{"success":true,"message":"Legal Form API v2"}`. Only `LegalCode.gs` belongs in the Apps Script project; the HTML is served by GitHub Pages.
+
 **Going live with v2 (one-time):**
 1. Paste `LegalCode.gs` into the legal Apps Script project.
 2. Run `checkDocuments()` (it logs ✓/✗ per document) and `initSheet()`. Script Properties are only needed for Slack or to override a document.
