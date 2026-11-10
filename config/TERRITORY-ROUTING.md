@@ -16,11 +16,14 @@ No code edit and no Apps Script redeploy are needed; forms pick it up at runtime
 |-----|-------|---------|
 | `statePod` | `{ "california": "Northwest", … }` | US state (lowercase) → regional pod |
 | `podRep` | `{ "Northwest": { name, email }, … }` | pod/territory name → the rep who owns it |
-| `usNamed` | `[ "los angeles unified", … ]` | US districts (lowercase) that route to **US Named Accounts** regardless of state/enrollment |
+| `usNamed2` | `[ "los angeles unified", … ]` | US districts (lowercase, exact NCES name) that route to **US Named Accounts 2** — checked **before** `usNamed` |
+| `usNamed` | `[ "dallas isd", … ]` | US districts (lowercase) that route to **US Named Accounts** regardless of state/enrollment |
+| `usNamed2AccountIds` | `[ "219578", … ]` | Soundtrap EDU account IDs of the `usNamed2` districts. **Not read by the forms** — used by the weekly Renewal Opps report. Keep in sync with `usNamed2`. |
 | `rowNamedDomains` | `[ ]` | *(currently empty — pod retired)* non-US email domains that route to **ROW Named Accounts** |
 
 The pods currently defined in `podRep`: `Scaled Accounts`, `Northwest`, `Southwest`,
-`Central`, `Northeast`, `Southeast`, `Canada`, `UK`, `ROW`, `US Named Accounts`.
+`Central`, `Northeast`, `Southeast`, `Canada`, `UK`, `ROW`, `US Named Accounts`,
+`US Named Accounts 2`.
 
 ---
 
@@ -31,8 +34,10 @@ Order matters; the first match wins.
 
 ```
 Country = United States
-  1. District name in usNamed (or starts with "new york city geographic district")?
-         → US Named Accounts            (Leandro)
+  1a. District name in usNamed2?
+         → US Named Accounts 2          (Justin — temporary pod)
+  1b. District name in usNamed (or starts with "new york city geographic district")?
+         → US Named Accounts            (Chad — temporarily covering for Leandro)
   2. District enrollment < 3,000?
          → Scaled Accounts              (orders@ … but see the backend override below)
   3. Otherwise (enrollment ≥ 3,000, OR enrollment unknown):
@@ -57,7 +62,11 @@ it's blank/unknown, step 2 is skipped and the account goes to its regional pod.
 | Piece | File | What it does |
 |-------|------|--------------|
 | **Frontend assignment** | `public-quote-form/quote-form.html` → `computeTerritory()` (~line 1677) | Assigns pod→rep client-side; writes **Territory / Account Manager / Account Manager Email** into the submission (Sheet + Salesforce). |
-| **Frontend assignment** | `internal-quote-form/internal-quote-form.html` → `computeTerritory()` (~line 1854) | **Identical** logic — a straight port. Any behavioural change must be made in both. |
+| **Frontend assignment** | `internal-quote-form/internal-quote-form.html` → `computeTerritory()` (~line 1854) | **Identical** logic — a straight port. |
+| **Frontend assignment** | `internal-order-form/internal-order-form.html` → `computeTerritory()` (~line 1875) | **Identical** logic. |
+| **Backend assignment** | `legal-form/LegalCode.gs` → `computeTerritory()` (~line 104) | Same priority order, server-side, for legal requests. |
+
+Any behavioural change to the routing order must be made in **all four** `computeTerritory()` copies.
 | **Backend SMB override** | `public-quote-form/Code.gs` → `sendDistrictRepNotification_()` (~line 485) | **Public form only.** On a **District** quote, if the assigned rep is `orders@soundtrap.com` (Scaled Accounts), re-routes the *rep notification email* to the regional pod rep via `statePod`/`podRep`. |
 
 **Why the override exists:** a small District (enrollment < 3,000) is assigned `Scaled
@@ -97,7 +106,7 @@ Edit that pod's entry in `podRep`:
 "Southeast": { "name": "New Rep", "email": "newrep@soundtrap.com" }
 ```
 If it's *temporary* coverage, keep a `_…Note` comment recording the original owner so it's
-a one-line revert (see `_southeastNote` for the current Chad-covers-Southeast case).
+a one-line revert (see `_usNamedNote2` for the current Chad-covers-US-Named-Accounts case).
 
 ### Move a state to a different pod
 Edit `statePod` — change the state's value to the new pod name (must exist in `podRep`).
@@ -121,27 +130,35 @@ prefix in code, not listed.)
 
 ---
 
-## Current roster (as of this doc)
+## Current roster (matches `config.json` as of 2026-11-10)
 
 | Pod | Rep | Notes |
 |-----|-----|-------|
 | Northwest | Brittany Follet | |
 | Southwest | Maria Opirhory | |
 | Central | Chloe Taylor | |
-| Northeast | Chad Reisfelt | |
-| Southeast | Chad Reisfelt | **Temporary** — covering the vacant seat (Tina Shah left) |
+| Northeast | Michael Pink | Since 2026-09-21 (was Chad Reisfelt) — `_northeastNote` |
+| Southeast | Lance Herrin | Since 2026-09-21 (originally Tina Shah, then Chad covering) — `_southeastNote` |
 | Scaled Accounts | The Soundtrap Team (orders@) | District quotes re-routed to regional pod by the public backend |
 | Canada | Chad Reisfelt | |
 | UK | Michael Beardsley | |
 | ROW | Jennifer Meehleis | Now receives **all** ROW quotes |
-| US Named Accounts | Leandro Otero | |
+| US Named Accounts | Chad Reisfelt | **Temporary** (2026-09-21) — covering for Leandro Otero; restore Leandro when re-staffed — `_usNamedNote2` |
+| US Named Accounts 2 | Justin Polk | **Temporary** pod (2026-09-21) — the districts in `usNamed2`, checked before `usNamed` |
 | ~~ROW Named Accounts~~ | ~~Angelica Johansson~~ | **Retired** — `rowNamedDomains` emptied; all ROW → Jennifer |
+
+If this table and `config.json` ever disagree, **`config.json` is the truth** — update this table.
 
 ---
 
 ## ⚠️ Production gate (unrelated to routing data, but affects who actually gets the email)
 
-`REP_NOTIFICATION_OVERRIDE = 'matteo@soundtrap.com'` in **both** forms' `Code.gs`
-intercepts *every* rep-notification email during testing. While it's set, none of the
-routing above actually reaches the real reps — all notifications go to Matteo. It must be
-cleared to `''` as the final step before production (see `HANDOVER.md`).
+`REP_NOTIFICATION_OVERRIDE` in `public-quote-form/Code.gs` (~line 187) intercepts the
+public form's rep-notification emails during testing. While it's set, none of the routing
+above actually reaches the real reps — the notifications go to the override address. It
+must be cleared to `''` (then the Apps Script redeployed) as the final step before
+production (see `HANDOVER.md`). The internal quote, internal order and legal forms have no
+such override.
+
+**Status as of 2026-11-10: still set** to `'matteo@soundtrap.com'` in the repo source —
+**not yet cleared.** Update this line when it is.
